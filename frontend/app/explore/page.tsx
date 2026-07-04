@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { Tabs } from "@/components/ui/tabs";
-import { VideoCard } from "@/components/video/video-card";
-import { featuredVideos } from "@/lib/constants/sample-content";
+import { EmptyState } from "@/components/feedback/empty-state";
 
 export default function ExplorePage() {
   return (
@@ -16,17 +15,19 @@ export default function ExplorePage() {
         <div className="mt-6">
           <Tabs
             items={[
-              { label: "Trending", isActive: true },
-              { label: "Tech" },
-              { label: "Travel" },
-              { label: "Music" },
+              { label: "All", isActive: true },
+              { label: "Videos" },
+              { label: "Channels" },
+              { label: "Playlists" },
             ]}
           />
         </div>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
-          ))}
+        <div className="mt-16 grid place-items-center">
+          <EmptyState
+            eyebrow="Explore"
+            title="Nothing to explore yet."
+            description="Discoverable videos, channels, and playlists will appear after real API data is available."
+          />
         </div>
       </section>
     </AppShell>

@@ -15,10 +15,14 @@ export default function CaptchaPage() {
           <div className="grid min-h-40 place-items-center rounded-card border border-dashed border-[color:var(--color-border)] bg-[rgba(8,11,19,0.3)] text-center text-[color:var(--color-text-secondary)]">
             <div>
               <ShieldCheck className="mx-auto text-periwinkle" size={34} />
-              <p className="mt-3 text-sm">Turnstile challenge placeholder</p>
+              <p className="mt-3 text-sm">
+                Verification provider is not connected.
+              </p>
             </div>
           </div>
-          <Button size="lg">Verify and continue</Button>
+          <Button disabled size="lg">
+            Verify and continue
+          </Button>
         </div>
       </AuthCard>
     </AuthShell>

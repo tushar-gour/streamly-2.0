@@ -8,10 +8,10 @@
 - Central API client.
 - Auth state store.
 - Route guard helper.
-- App shell navigation.
-- Auth shell.
+- App navigation.
+- Auth layout.
 - Reusable UI primitives.
-- Screen shells for core flows.
+- Screen pages for core flows.
 
 ## Build Order
 
@@ -53,6 +53,6 @@
 
 - Real form submission is not wired.
 - Real protected route redirects are not active.
-- Upload flow is shell-only.
-- Video feed uses sample shell content.
+- Upload flow awaits final API wiring.
+- Video feed intentionally shows empty state until real API data is connected.
 - Frontend test suite is not added yet.

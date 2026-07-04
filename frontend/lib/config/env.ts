@@ -5,5 +5,4 @@ export const frontendConfig = Object.freeze({
   apiBaseUrl:
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/u, "") ??
     defaultApiBaseUrl,
-  mockShellsEnabled: process.env.NEXT_PUBLIC_ENABLE_MOCK_SHELLS !== "false",
 });

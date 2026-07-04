@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { Upload } from "lucide-react";
 
-import { StatCard } from "@/components/cards/stat-card";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -17,26 +18,24 @@ export default function StudioPage() {
               Your videos are moving.
             </h1>
           </div>
-          <Button>
-            <Upload size={16} />
-            Upload video
+          <Button asChild>
+            <Link href="/studio/upload">
+              <Upload size={16} />
+              Upload video
+            </Link>
           </Button>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard label="Views" value="24.8K" helper="This week" />
-          <StatCard
-            label="Watch time"
-            value="1.2K h"
-            helper="Up from last week"
+        <div className="grid min-h-[420px] place-items-center rounded-card border border-[color:var(--color-border)] bg-[rgba(17,21,33,0.72)] p-6">
+          <EmptyState
+            eyebrow="Studio"
+            title="No creator metrics yet."
+            description="Views, watch time, subscribers, and video performance will appear after real creator data is connected."
+            action={
+              <Button asChild variant="secondary">
+                <Link href="/studio/upload">Upload video</Link>
+              </Button>
+            }
           />
-          <StatCard label="Subscribers" value="8.4K" helper="318 new" />
-        </div>
-        <div className="rounded-card border border-[color:var(--color-border)] bg-[rgba(17,21,33,0.72)] p-6">
-          <h2 className="text-xl font-semibold">Upload flow foundation</h2>
-          <p className="mt-2 text-[color:var(--color-text-secondary)]">
-            Select file, upload, processing, details, visibility, and publish
-            steps are prepared as the next implementation phase.
-          </p>
         </div>
       </section>
     </AppShell>

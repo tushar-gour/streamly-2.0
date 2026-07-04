@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { Play, ShieldCheck, Sparkles } from "lucide-react";
+import { ShieldCheck, Sparkles } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { VideoCard } from "@/components/video/video-card";
-import { featuredVideos } from "@/lib/constants/sample-content";
 
 export default function LandingPage() {
   return (
@@ -39,7 +37,7 @@ export default function LandingPage() {
               <Link href="/signup">Create account</Link>
             </Button>
             <Button asChild variant="secondary" size="lg">
-              <Link href="/home">Explore shell</Link>
+              <Link href="/home">Open Streamly</Link>
             </Button>
           </div>
           <div className="mt-10 grid gap-3 text-sm text-[color:var(--color-text-secondary)] sm:grid-cols-3">
@@ -61,25 +59,19 @@ export default function LandingPage() {
 
         <div className="relative">
           <div className="absolute -inset-8 rounded-[40px] bg-[radial-gradient(circle_at_50%_20%,rgba(108,92,231,0.22),transparent_55%)]" />
-          <div className="relative grid gap-4 rounded-hero border border-[color:var(--color-border)] bg-[rgba(13,17,27,0.78)] p-4 shadow-glow">
-            <div className="aspect-[16/7] rounded-card border border-[color:var(--color-border)] bg-[linear-gradient(135deg,#111521,#261f56_45%,#0b1020)] p-8">
-              <div className="flex h-full flex-col justify-end">
+          <div className="relative rounded-hero border border-[color:var(--color-border)] bg-[rgba(13,17,27,0.78)] p-4 shadow-glow">
+            <div className="grid aspect-video place-items-center rounded-card border border-[color:var(--color-border)] bg-[linear-gradient(135deg,#111521,#261f56_45%,#0b1020)] p-8 text-center">
+              <div>
                 <span className="text-sm font-medium uppercase tracking-[0.22em] text-periwinkle">
-                  Featured
+                  Streamly
                 </span>
-                <h2 className="mt-3 max-w-sm text-4xl font-semibold leading-tight">
-                  Beyond the Horizon
+                <h2 className="mt-3 max-w-md text-4xl font-semibold leading-tight">
+                  A calm home for video discovery.
                 </h2>
-                <Button className="mt-6 w-fit" size="sm">
-                  <Play size={16} />
-                  Watch now
-                </Button>
+                <p className="mx-auto mt-4 max-w-sm text-sm text-[color:var(--color-text-secondary)]">
+                  Content appears here after backend data is connected.
+                </p>
               </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {featuredVideos.slice(0, 3).map((video) => (
-                <VideoCard key={video.id} video={video} variant="compact" />
-              ))}
             </div>
           </div>
         </div>

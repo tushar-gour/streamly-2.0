@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { methodOptions } from "@/lib/constants/sample-content";
+import { authMethodOptions } from "@/lib/auth/auth-methods";
 
 export default function LoginMethodsPage() {
   return (
@@ -13,7 +13,7 @@ export default function LoginMethodsPage() {
         description="Pick a secure method to continue."
       >
         <div className="grid gap-3">
-          {methodOptions.map((method) => (
+          {authMethodOptions.map((method) => (
             <Link
               key={method.href}
               className="group flex min-h-20 items-center justify-between rounded-card border border-[color:var(--color-border)] bg-[rgba(8,11,19,0.32)] p-4 transition hover:border-[rgba(141,132,255,0.48)]"

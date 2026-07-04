@@ -2,8 +2,18 @@ import Link from "next/link";
 import { MoreVertical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { VideoSummary } from "@/lib/constants/sample-content";
 import { cn } from "@/lib/utils/class-name";
+
+export type VideoSummary = Readonly<{
+  id: string;
+  title: string;
+  creator: string;
+  views: string;
+  age: string;
+  duration: string;
+  accent: string;
+  progress?: number;
+}>;
 
 type VideoCardProps = Readonly<{
   video: VideoSummary;

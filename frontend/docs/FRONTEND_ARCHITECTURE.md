@@ -23,20 +23,20 @@
 
 ```txt
 frontend/
-  app/                 route shells and layouts
+  app/                 route pages and layouts
   components/          reusable UI, layout, auth, video, feedback components
   hooks/               reusable UI/domain hooks
   lib/
     api/               API client and endpoint modules
     auth/              auth contracts and route guard helpers
     config/            frontend env config
-    constants/         nav and sample shell content
+    constants/         route and navigation constants
     motion/            motion tokens
     theme/             theme provider
     validation/        shared validation rules
     utils/             focused utilities
   stores/              Zustand stores
-  styles/              reserved for future extracted styles
+  styles/              extracted styles when needed
   docs/                product and implementation docs
 ```
 
@@ -57,7 +57,7 @@ or feature-level orchestration components. Shared UI stays presentation-only.
 
 ```mermaid
 flowchart LR
-  User["User action"] --> Route["Next route shell"]
+  User["User action"] --> Route["Next route page"]
   Route --> Store["Auth/UI store"]
   Route --> Query["TanStack Query"]
   Query --> Api["Typed API module"]
@@ -68,7 +68,7 @@ flowchart LR
 ## Route Groups
 
 - Public: landing, login, signup, loading, offline.
-- Optional auth: explore and watch shells.
+- Optional auth: explore and watch pages.
 - Auth required: home, settings, studio.
 - Role gated: admin and future moderation routes.
 
