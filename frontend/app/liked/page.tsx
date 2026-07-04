@@ -1,12 +1,10 @@
-import { RouteEmptyState } from "@/components/layout/route-empty-state";
+import { LikedVideosPanel } from "@/components/library/liked-videos-panel";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default function LikedVideosPage() {
   return (
-    <RouteEmptyState
-      permission={{ authenticated: true }}
-      eyebrow="Liked Videos"
-      title="No liked videos yet."
-      description="Videos you like will appear here after real like data is connected."
-    />
+    <AppShell permission={{ authenticated: true }}>
+      <LikedVideosPanel />
+    </AppShell>
   );
 }

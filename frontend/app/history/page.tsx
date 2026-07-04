@@ -1,12 +1,10 @@
-import { RouteEmptyState } from "@/components/layout/route-empty-state";
+import { HistoryPanel } from "@/components/library/history-panel";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default function HistoryPage() {
   return (
-    <RouteEmptyState
-      permission={{ authenticated: true }}
-      eyebrow="History"
-      title="No watch history yet."
-      description="Videos you watch will appear here after real history data is connected."
-    />
+    <AppShell permission={{ authenticated: true }}>
+      <HistoryPanel />
+    </AppShell>
   );
 }

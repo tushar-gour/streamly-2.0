@@ -4,19 +4,21 @@ import { MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/class-name";
 
-export type VideoSummary = Readonly<{
+export type VideoCardModel = Readonly<{
   id: string;
   title: string;
   creator: string;
   views: string;
   age: string;
   duration: string;
-  accent: string;
+  avatar?: string | null;
+  commentsLabel?: string;
+  thumbnail?: string | null;
   progress?: number;
 }>;
 
 type VideoCardProps = Readonly<{
-  video: VideoSummary;
+  video: VideoCardModel;
   variant?: "compact" | "large" | "history";
 }>;
 
@@ -26,12 +28,16 @@ export function VideoCard({ video, variant = "large" }: VideoCardProps) {
       <Link href={`/watch/${video.id}`} className="block">
         <div
           className={cn(
-            "relative overflow-hidden rounded-card border border-[color:var(--color-border)] bg-gradient-to-br transition duration-180 ease-streamly group-hover:-translate-y-0.5 group-hover:border-[rgba(141,132,255,0.48)]",
-            video.accent,
+            "relative overflow-hidden rounded-card border border-[color:var(--color-border)] bg-[linear-gradient(135deg,#111521,#261f56_45%,#0b1020)] bg-cover bg-center transition duration-180 ease-streamly group-hover:-translate-y-0.5 group-hover:border-[rgba(141,132,255,0.48)]",
             variant === "compact" ? "aspect-[16/10]" : "aspect-video"
           )}
+          style={
+            video.thumbnail
+              ? { backgroundImage: `url(${video.thumbnail})` }
+              : undefined
+          }
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_22%),linear-gradient(180deg,transparent,rgba(0,0,0,0.68))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.68))]" />
           <Badge className="absolute bottom-3 right-3 bg-black/50 text-white">
             {video.duration}
           </Badge>
@@ -46,8 +52,13 @@ export function VideoCard({ video, variant = "large" }: VideoCardProps) {
         </div>
       </Link>
       <div className="mt-3 flex gap-3">
-        <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[rgba(141,132,255,0.16)] text-sm font-semibold text-periwinkle">
-          {video.creator.slice(0, 2)}
+        <div
+          className="grid size-9 shrink-0 place-items-center rounded-full bg-[rgba(141,132,255,0.16)] bg-cover bg-center text-sm font-semibold text-periwinkle"
+          style={
+            video.avatar ? { backgroundImage: `url(${video.avatar})` } : {}
+          }
+        >
+          {video.avatar ? null : video.creator.slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
           <Link
@@ -62,6 +73,11 @@ export function VideoCard({ video, variant = "large" }: VideoCardProps) {
           <p className="text-sm text-[color:var(--color-text-muted)]">
             {video.views} • {video.age}
           </p>
+          {video.commentsLabel ? (
+            <p className="text-sm text-[color:var(--color-text-muted)]">
+              {video.commentsLabel}
+            </p>
+          ) : null}
         </div>
         <button
           aria-label="Video actions"

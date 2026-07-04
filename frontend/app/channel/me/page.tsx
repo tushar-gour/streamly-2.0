@@ -1,19 +1,10 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { RouteEmptyState } from "@/components/layout/route-empty-state";
+import { AppShell } from "@/components/layout/app-shell";
+import { CurrentProfilePanel } from "@/components/profile/current-profile-panel";
 
 export default function CurrentChannelPage() {
   return (
-    <RouteEmptyState
-      eyebrow="Profile"
-      title="Profile data unavailable."
-      description="Your channel profile will appear here after authenticated profile data is connected."
-      action={
-        <Button asChild variant="secondary">
-          <Link href="/settings">Open settings</Link>
-        </Button>
-      }
-    />
+    <AppShell permission={{ authenticated: true }}>
+      <CurrentProfilePanel />
+    </AppShell>
   );
 }

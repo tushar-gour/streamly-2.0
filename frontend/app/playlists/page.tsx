@@ -1,12 +1,10 @@
-import { RouteEmptyState } from "@/components/layout/route-empty-state";
+import { PlaylistsPanel } from "@/components/library/playlists-panel";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default function PlaylistsPage() {
   return (
-    <RouteEmptyState
-      permission={{ authenticated: true }}
-      eyebrow="Playlists"
-      title="No playlists yet."
-      description="Your playlists will appear here after real playlist data is connected."
-    />
+    <AppShell permission={{ authenticated: true }}>
+      <PlaylistsPanel />
+    </AppShell>
   );
 }

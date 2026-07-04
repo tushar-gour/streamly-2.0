@@ -1,7 +1,8 @@
 import { apiRequest } from "@/lib/api/api-client";
+import type { VideoListItem } from "@/lib/api/videos.api";
 
 export const watchHistoryApi = {
   listMine() {
-    return apiRequest<unknown[]>("/api/v1/users/watch-history");
+    return apiRequest<VideoListItem[]>("/api/v1/users/watch-history");
   },
 };

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { Tabs } from "@/components/ui/tabs";
-import { EmptyState } from "@/components/feedback/empty-state";
+import { VideoFeed } from "@/components/video/video-feed";
 
 export default function ExplorePage() {
   return (
@@ -22,11 +22,13 @@ export default function ExplorePage() {
             ]}
           />
         </div>
-        <div className="mt-16 grid place-items-center">
-          <EmptyState
+        <div className="mt-8">
+          <VideoFeed
+            emptyDescription="Public videos will appear here after backend content exists."
+            emptyTitle="Nothing to explore yet."
             eyebrow="Explore"
-            title="Nothing to explore yet."
-            description="Discoverable videos, channels, and playlists will appear after real API data is available."
+            filters={{ limit: 16, sortBy: "views", sortType: "desc" }}
+            title="Popular videos"
           />
         </div>
       </section>

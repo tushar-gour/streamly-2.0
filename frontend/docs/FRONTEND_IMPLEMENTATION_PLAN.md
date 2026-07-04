@@ -15,6 +15,10 @@
 - Protected route guards.
 - Guest route guards.
 - Frontend unit tests.
+- Real public feed binding.
+- Real watch page detail binding.
+- Real channel/profile binding where backend routes exist.
+- Real history, liked videos, playlists, and subscriptions binding.
 - App navigation.
 - Auth layout.
 - Reusable UI primitives.
@@ -22,13 +26,12 @@
 
 ## Build Order
 
-1. Wire real feed and profile data with TanStack Query.
+1. Connect upload flow with progress state machine.
 2. Connect advanced auth platform routes.
-3. Build upload flow with progress state machine.
-4. Build settings and security screens.
-5. Build admin moderation views.
-6. Add visual QA pass against screen images.
-7. Add accessibility audit.
+3. Build settings and security screens.
+4. Build admin moderation views.
+5. Add visual QA pass against screen images.
+6. Add accessibility audit.
 
 ## Current Shell Routes
 
@@ -54,6 +57,7 @@
 - `/channel/[username]`
 - `/channel/me`
 - `/watch/[videoId]`
+- `/playlists/[playlistId]`
 - `/studio`
 - `/studio/upload`
 - `/settings`
@@ -65,6 +69,7 @@
 ## Known Gaps
 
 - Upload flow awaits final API wiring.
-- Video feed intentionally shows empty state until real API data is connected.
 - Advanced auth screens are prepared, but only email/password login is wired.
-- Search, feed, playlist, subscription, notification, and channel routes await real API data binding.
+- Watch later remains a real empty state because no matching backend endpoint is available.
+- Notifications remain a real empty state because no matching backend endpoint is available.
+- Channel pages are authenticated because the current backend channel profile route is protected.

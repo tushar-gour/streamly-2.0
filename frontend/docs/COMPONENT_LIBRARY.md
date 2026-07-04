@@ -43,6 +43,22 @@
 ### Video
 
 - VideoCard
+- VideoFeed
+- VideoWatchPanel
+
+### Library
+
+- VideoCollectionPanel
+- HistoryPanel
+- LikedVideosPanel
+- PlaylistsPanel
+- SubscriptionsPanel
+
+### Channel And Profile
+
+- ChannelProfilePanel
+- CurrentProfilePanel
+- PlaylistDetailPanel
 
 ### Feedback
 
