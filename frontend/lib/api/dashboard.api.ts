@@ -1,0 +1,8 @@
+import { apiRequest } from "@/lib/api/api-client";
+import type { ApiResponse } from "@/lib/api/api.types";
+
+export const dashboardApi = {
+  stats() {
+    return apiRequest<ApiResponse<unknown>>("/api/v1/dashboard/stats");
+  },
+};

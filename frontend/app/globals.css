@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --color-background: #080b13;
+  --color-background-soft: #0d111b;
+  --color-surface: #111521;
+  --color-surface-elevated: #181d2b;
+  --color-accent: #6c5ce7;
+  --color-accent-hover: #7c70f2;
+  --color-accent-pressed: #5a4bd5;
+  --color-accent-soft: #8d84ff;
+  --color-accent-cool: #a79cff;
+  --color-text-primary: #f5f7fa;
+  --color-text-secondary: #b5bbc8;
+  --color-text-muted: #858c9d;
+  --color-border: #252b3a;
+  --focus-ring: rgba(141, 132, 255, 0.45);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-smooth: 260ms;
+  --motion-page: 420ms;
+  --ease-streamly: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-background: #f7f8fb;
+  --color-background-soft: #ffffff;
+  --color-surface: #eef1f7;
+  --color-surface-elevated: #ffffff;
+  --color-accent: #6c5ce7;
+  --color-accent-hover: #5f50da;
+  --color-accent-pressed: #4e42bf;
+  --color-accent-soft: #8d84ff;
+  --color-accent-cool: #6c5ce7;
+  --color-text-primary: #111521;
+  --color-text-secondary: #4b5565;
+  --color-text-muted: #7b8495;
+  --color-border: #dde2ec;
+  --focus-ring: rgba(108, 92, 231, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(108, 92, 231, 0.14),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 82% 6%,
+      rgba(141, 132, 255, 0.08),
+      transparent 30rem
+    ),
+    linear-gradient(180deg, var(--color-background) 0%, #090d17 100%);
+  color: var(--color-text-primary);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(141, 132, 255, 0.32);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+.streamly-surface {
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.streamly-shimmer {
+  background: linear-gradient(90deg, #151a26 0%, #232a3b 45%, #151a26 100%);
+  background-size: 220% 100%;
+  animation: streamly-shimmer 1400ms var(--ease-streamly) infinite;
+}
+
+@keyframes streamly-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}

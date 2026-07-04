@@ -44,6 +44,10 @@ env:
   REQUEST_ID_HEADER: x-request-id
   CORRELATION_ID_HEADER: x-correlation-id
 
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
   quality:
     name: Quality
@@ -57,6 +61,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -98,6 +103,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -117,6 +123,38 @@ jobs:
       - name: Coverage
         run: npm run test:coverage
 
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
   docs:
     name: OpenAPI
     runs-on: ubuntu-latest
@@ -129,6 +167,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -148,6 +187,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
