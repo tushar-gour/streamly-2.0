@@ -1,5 +1,4 @@
 import { apiRequest } from "@/lib/api/api-client";
-import type { ApiResponse } from "@/lib/api/api.types";
 
 export type VideoListItem = Readonly<{
   _id: string;
@@ -15,10 +14,10 @@ export type VideoListItem = Readonly<{
 
 export const videosApi = {
   list() {
-    return apiRequest<ApiResponse<VideoListItem[]>>("/api/v1/videos");
+    return apiRequest<VideoListItem[]>("/api/v1/videos");
   },
   detail(videoId: string) {
-    return apiRequest<ApiResponse<VideoListItem>>(`/api/v1/videos/${videoId}`);
+    return apiRequest<VideoListItem>(`/api/v1/videos/${videoId}`);
   },
   streamUrl(videoId: string) {
     return `/api/v1/videos/${videoId}/stream`;

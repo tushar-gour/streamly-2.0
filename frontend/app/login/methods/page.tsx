@@ -7,7 +7,7 @@ import { authMethodOptions } from "@/lib/auth/auth-methods";
 
 export default function LoginMethodsPage() {
   return (
-    <AuthShell>
+    <AuthShell guestOnly>
       <AuthCard
         title="Choose another way"
         description="Pick a secure method to continue."

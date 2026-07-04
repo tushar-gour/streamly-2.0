@@ -8,6 +8,13 @@
 - Central API client.
 - Auth state store.
 - Route guard helper.
+- Real email/password login.
+- Current-user bootstrap.
+- Session refresh through backend cookies.
+- Logout and logout-all API actions.
+- Protected route guards.
+- Guest route guards.
+- Frontend unit tests.
 - App navigation.
 - Auth layout.
 - Reusable UI primitives.
@@ -15,16 +22,13 @@
 
 ## Build Order
 
-1. Wire real auth login and session refresh.
-2. Add protected route redirects.
-3. Replace sample video data with TanStack Query calls.
-4. Implement home feed and video watch data states.
-5. Build upload flow with progress state machine.
-6. Build settings and security screens.
-7. Build admin moderation views.
-8. Add visual QA pass against screen images.
-9. Add frontend tests.
-10. Add accessibility audit.
+1. Wire real feed and profile data with TanStack Query.
+2. Connect advanced auth platform routes.
+3. Build upload flow with progress state machine.
+4. Build settings and security screens.
+5. Build admin moderation views.
+6. Add visual QA pass against screen images.
+7. Add accessibility audit.
 
 ## Current Shell Routes
 
@@ -40,6 +44,15 @@
 - `/signup`
 - `/home`
 - `/explore`
+- `/search`
+- `/subscriptions`
+- `/playlists`
+- `/history`
+- `/liked`
+- `/watch-later`
+- `/notifications`
+- `/channel/[username]`
+- `/channel/me`
 - `/watch/[videoId]`
 - `/studio`
 - `/studio/upload`
@@ -51,8 +64,7 @@
 
 ## Known Gaps
 
-- Real form submission is not wired.
-- Real protected route redirects are not active.
 - Upload flow awaits final API wiring.
 - Video feed intentionally shows empty state until real API data is connected.
-- Frontend test suite is not added yet.
+- Advanced auth screens are prepared, but only email/password login is wired.
+- Search, feed, playlist, subscription, notification, and channel routes await real API data binding.

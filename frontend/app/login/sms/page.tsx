@@ -6,7 +6,7 @@ import { OtpInput } from "@/components/ui/otp-input";
 
 export default function SmsLoginPage() {
   return (
-    <AuthShell>
+    <AuthShell guestOnly>
       <AuthCard
         title="SMS verification"
         description="Receive a secure code on your phone."

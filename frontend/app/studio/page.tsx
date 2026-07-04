@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function StudioPage() {
   return (
-    <AppShell>
+    <AppShell permission={{ authenticated: true }}>
       <section className="grid gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

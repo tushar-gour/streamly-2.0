@@ -12,16 +12,17 @@ export function canAccessRoute(
     return false;
   }
 
-  if (
-    permission.anyPermission?.length &&
-    !context.hasAnyPermission(permission.anyPermission)
-  ) {
-    return false;
+  const hasPermissionRequirement = Boolean(permission.anyPermission?.length);
+  const hasRoleRequirement = Boolean(permission.anyRole?.length);
+  const matchesPermission =
+    !hasPermissionRequirement ||
+    context.hasAnyPermission(permission.anyPermission ?? []);
+  const matchesRole =
+    !hasRoleRequirement || context.hasAnyRole(permission.anyRole ?? []);
+
+  if (hasPermissionRequirement && hasRoleRequirement) {
+    return matchesPermission || matchesRole;
   }
 
-  if (permission.anyRole?.length && !context.hasAnyRole(permission.anyRole)) {
-    return false;
-  }
-
-  return true;
+  return matchesPermission && matchesRole;
 }

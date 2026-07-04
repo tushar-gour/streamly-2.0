@@ -6,7 +6,7 @@ import { OtpInput } from "@/components/ui/otp-input";
 
 export default function EmailOtpPage() {
   return (
-    <AuthShell>
+    <AuthShell guestOnly>
       <AuthCard
         title="Email code"
         description="We will send a short code to your email."

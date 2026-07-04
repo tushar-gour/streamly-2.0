@@ -5,7 +5,13 @@ import { Card } from "@/components/ui/card";
 
 export default function AdminPage() {
   return (
-    <AppShell>
+    <AppShell
+      permission={{
+        authenticated: true,
+        anyPermission: ["user:admin"],
+        anyRole: ["admin"],
+      }}
+    >
       <section>
         <p className="text-sm uppercase tracking-[0.22em] text-periwinkle">
           Admin

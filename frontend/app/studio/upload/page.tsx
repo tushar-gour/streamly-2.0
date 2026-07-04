@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export default function UploadPage() {
   return (
-    <AppShell>
+    <AppShell permission={{ authenticated: true }}>
       <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="grid min-h-[420px] place-items-center rounded-hero border border-dashed border-[rgba(141,132,255,0.35)] bg-[rgba(17,21,33,0.66)] p-8 text-center">
           <div>

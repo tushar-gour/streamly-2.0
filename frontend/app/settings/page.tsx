@@ -23,7 +23,7 @@ const sections = [
 
 export default function SettingsPage() {
   return (
-    <AppShell>
+    <AppShell permission={{ authenticated: true }}>
       <section>
         <p className="text-sm uppercase tracking-[0.22em] text-periwinkle">
           Settings

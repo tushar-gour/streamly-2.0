@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <AppShell>
+    <AppShell permission={{ authenticated: true }}>
       <div className="grid min-h-[calc(100vh-140px)] place-items-center">
         <EmptyState
           eyebrow="Home"

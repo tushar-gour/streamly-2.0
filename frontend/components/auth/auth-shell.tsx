@@ -2,15 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Play, ShieldCheck, Sparkles } from "lucide-react";
 
+import { AuthRouteGuard } from "@/components/auth/auth-route-guard";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/brand/theme-toggle";
 
 type AuthShellProps = Readonly<{
   children: ReactNode;
+  guestOnly?: boolean;
 }>;
 
-export function AuthShell({ children }: AuthShellProps) {
-  return (
+export function AuthShell({ children, guestOnly = false }: AuthShellProps) {
+  const shell = (
     <main className="min-h-screen overflow-hidden px-5 py-6 md:px-10">
       <nav className="flex items-center justify-between">
         <Logo />
@@ -71,4 +73,10 @@ export function AuthShell({ children }: AuthShellProps) {
       </section>
     </main>
   );
+
+  if (!guestOnly) {
+    return shell;
+  }
+
+  return <AuthRouteGuard guestOnly>{shell}</AuthRouteGuard>;
 }

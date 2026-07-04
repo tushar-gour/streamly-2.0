@@ -6,6 +6,7 @@ import { RouteEmptyState } from "@/components/layout/route-empty-state";
 export default function SubscriptionsPage() {
   return (
     <RouteEmptyState
+      permission={{ authenticated: true }}
       eyebrow="Subscriptions"
       title="No subscriptions yet."
       description="Channels you follow will appear here after real subscription data is connected."

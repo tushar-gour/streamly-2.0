@@ -8,7 +8,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 
 export default function SignupPage() {
   return (
-    <AuthShell>
+    <AuthShell guestOnly>
       <AuthCard
         title="Create your space"
         description="Create your space for stories in motion."

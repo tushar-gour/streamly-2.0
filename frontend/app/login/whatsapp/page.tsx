@@ -6,7 +6,7 @@ import { OtpInput } from "@/components/ui/otp-input";
 
 export default function WhatsAppLoginPage() {
   return (
-    <AuthShell>
+    <AuthShell guestOnly>
       <AuthCard
         title="WhatsApp code"
         description="Code arrives on WhatsApp when available."

@@ -11,16 +11,18 @@ hardcode production URLs.
 
 ## Client Strategy
 
-`lib/api/api-client.ts` owns:
+`lib/api/client.ts` owns:
 
 - JSON headers.
 - Credential inclusion.
 - Bearer token attachment.
 - Backend error normalization.
+- Network failure mapping.
+- Streamly response parsing.
 
 Endpoint modules own route paths:
 
-- `auth.api.ts`
+- `auth.ts`
 - `videos.api.ts`
 - `comments.api.ts`
 - `likes.api.ts`
@@ -28,6 +30,31 @@ Endpoint modules own route paths:
 - `subscriptions.api.ts`
 - `dashboard.api.ts`
 - `media.api.ts`
+
+Compatibility re-export files remain in place for older imports:
+
+- `api-client.ts`
+- `api.types.ts`
+- `auth.api.ts`
+
+## Auth Routes Used
+
+Actual backend routes are mounted under `/api/v1/users`.
+
+```txt
+POST /api/v1/users/login
+POST /api/v1/users/refresh-token
+POST /api/v1/users/logout
+POST /api/v1/users/logout-all
+GET  /api/v1/users/current-user
+```
+
+The backend supports access and refresh cookies. The frontend also stores the
+short-lived access token in memory when returned by login or refresh. Refresh
+tokens are not stored in frontend state.
+
+Advanced auth platform routes exist at `/api/v1/users/auth/*`, but only
+email/password login is wired in this phase.
 
 ## Video Streaming
 
@@ -46,6 +73,9 @@ User-facing errors should use calm copy:
 
 ```txt
 Something paused unexpectedly. Please try again.
+Invalid email or password.
+Couldn’t reach Streamly. Check your connection and try again.
+Too many attempts. Please wait before trying again.
 ```
 
 Do not expose backend stack traces or raw internal errors.

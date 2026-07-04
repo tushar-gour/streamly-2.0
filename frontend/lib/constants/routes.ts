@@ -15,6 +15,7 @@ export const viewerRoutes = [
   { label: "Home", href: "/home", icon: Home },
   { label: "Explore", href: "/explore", icon: Compass },
   { label: "Subscriptions", href: "/subscriptions", icon: Bell },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Playlists", href: "/playlists", icon: ListVideo },
   { label: "History", href: "/history", icon: History },
   { label: "Watch Later", href: "/watch-later", icon: ListVideo },
