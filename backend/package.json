@@ -1,5 +1,5 @@
 {
-  "name": "youtube-backend",
+  "name": "streamly-api",
   "version": "1.0.0",
   "private": true,
   "description": "A production-grade video platform backend API built with Node.js, TypeScript, Express, PostgreSQL, and Prisma",

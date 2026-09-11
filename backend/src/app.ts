@@ -150,12 +150,12 @@ class Application {
             res.status(200).json(
                 ApiResponse.success(
                     {
-                        name: "YouTube Clone API",
+                        name: "Streamly API",
                         version: appConfig.packageVersion,
                         environment: appConfig.nodeEnv,
                         documentation: appConfig.docs.route,
                     },
-                    "Welcome to YouTube Clone API"
+                    "Welcome to Streamly API"
                 )
             );
         });
