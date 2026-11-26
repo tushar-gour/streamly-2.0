@@ -249,13 +249,16 @@ class UserService {
             throw new BadRequestError("Current password is incorrect");
         }
 
-        const changed = await this.userRepository.changePasswordAndRevokeSessions(
-            userId,
-            user.password,
-            newPassword
-        );
+        const changed =
+            await this.userRepository.changePasswordAndRevokeSessions(
+                userId,
+                user.password,
+                newPassword
+            );
         if (!changed) {
-            throw new ConflictError("Credentials changed; sign in and try again");
+            throw new ConflictError(
+                "Credentials changed; sign in and try again"
+            );
         }
         audit.info("auth.password_changed", { userId });
 
@@ -270,7 +273,11 @@ class UserService {
                 "Email replacement requires a separate verification workflow"
             );
         }
-        if (typeof fullName !== "string" || !fullName.trim() || fullName.trim().length > 100) {
+        if (
+            typeof fullName !== "string" ||
+            !fullName.trim() ||
+            fullName.trim().length > 100
+        ) {
             throw new BadRequestError("A valid full name is required");
         }
 

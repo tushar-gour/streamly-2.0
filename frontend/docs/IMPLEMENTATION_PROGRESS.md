@@ -284,3 +284,10 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 - IMPLEMENTED: direct email replacement rejected server-side; full-name updates remain supported. This is containment, not completion of verified email change or password recovery.
 - IMPLEMENTED: password replacement atomically checks the old credential hash and revokes existing sessions, trusted devices and outstanding OTP/MFA challenges; added password length/type validation, rate limiting and sign-out handling. Existing login issuance races still require a dedicated audit.
 - IMPLEMENTED: delayed account-change responses no longer clear a newer frontend account. Regression CI pending.
+
+### Iteration 26 — credential regression verified; format reconciliation
+
+- VERIFIED: both credential vulnerabilities reproduced on `5dc5289` ([run 45878435583](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878435583)); both expected denials resolved instead of rejecting.
+- VERIFIED: database integration and security passed after correction on `9543a6c` ([run 45878517489](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878517489)). Tests include unchanged verified email, revoked old access/refresh token, and successful new password comparison.
+- IMPLEMENTED: reconcile CI formatter output. Exact commit full CI pending.
+- Visual smoke artifacts on `ea674a0` inspected: desktop dark login, home, playlist and watch; settings at desktop/tablet/mobile in both themes; desktop light studio and upload. Contact sheets are not pixel-level acceptance, and the watch capture shows a loading spinner. Playback, seeking, every-screen responsive and WCAG acceptance remain open.

@@ -120,7 +120,8 @@ export function AccountSettings() {
       <Card className="grid gap-4 p-5">
         <h2 className="text-xl font-semibold">Security</h2>
         <p className="text-sm text-[color:var(--color-text-secondary)]">
-          Changing your password signs you out of every session and revokes trusted devices.
+          Changing your password signs you out of every session and revokes
+          trusted devices.
         </p>
         <form className="grid gap-4" onSubmit={changePassword}>
           <PasswordInput

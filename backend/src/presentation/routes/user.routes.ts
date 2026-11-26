@@ -43,7 +43,9 @@ router.route("/logout-all").post(verifyJWT, logoutAllSessions);
 router.route("/sessions").get(verifyJWT, listSessions);
 router.route("/sessions/:sessionId").delete(verifyJWT, revokeSession);
 
-router.route("/change-password").post(verifyJWT, authRateLimiter, changeCurrentPassword);
+router
+    .route("/change-password")
+    .post(verifyJWT, authRateLimiter, changeCurrentPassword);
 
 router
     .route("/current-user")

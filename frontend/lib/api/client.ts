@@ -77,11 +77,7 @@ export async function apiRequest<T>(
 
   let response = await send();
   const marker = response.headers.get("X-Streamly-Session");
-  if (
-    account &&
-    marker === "changed" &&
-    expectedSessionAccount() === account
-  ) {
+  if (account && marker === "changed" && expectedSessionAccount() === account) {
     sessionRecovery?.changed();
   }
   const replayable =

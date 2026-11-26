@@ -161,7 +161,9 @@ databaseDescribe("database authentication security", () => {
             auth.refreshSession(session.refreshToken)
         ).rejects.toThrow();
         const stored = await users.findByIdWithPassword(user._id);
-        expect(await stored.isPasswordCorrect("UpdatedPassword123!")).toBe(true);
+        expect(await stored.isPasswordCorrect("UpdatedPassword123!")).toBe(
+            true
+        );
     });
 
     it("never treats an onboarding credential as an access token", async () => {
