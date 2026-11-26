@@ -112,3 +112,32 @@ endpoint fabricated. The existing admin API module is unused and must be removed
 or replaced after a full import audit.
 
 Verification pending. No production deployment or merge.
+
+## Verification checkpoint
+
+- Draft pull request: https://github.com/tushar-gour/streamly-2.0/pull/1
+- CI workflow: https://github.com/tushar-gour/streamly-2.0/actions/runs/45861346663
+- CI source commit: eaec58ef91f6ab8a5467912227b5e51d1e9c997a.
+- Added npm run test to the existing frontend CI job without suppressing failures.
+
+Observed frontend CI state at this checkpoint:
+
+- Install dependencies: success.
+- Format check: failure.
+- Lint: skipped.
+- Typecheck: skipped.
+- Test: skipped.
+- Build: skipped.
+
+The CI run above pertains to the source changes before this documentation-only
+checkpoint. Local clone failed due to DNS; browser and Web Vitals measurements
+remain unavailable. The connector returned no image bytes for the attempted
+Creator Studio reference fetch. No visual comparison is claimed.
+
+Further audit confirmed playlist create/update/delete/membership and comment
+create/update/delete routes are present; current UI mostly reads these resources.
+These are independent remaining implementation tasks, not completed work.
+The next iteration should complete and test these workflows after resolving
+the development runtime and CI access constraints.
+
+Final checkpoint status: PARTIAL. Do not merge or deploy.
