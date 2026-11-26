@@ -367,3 +367,8 @@ PROD-02 IMPLEMENTED: migration-backed inbox, owner-scoped listing/read/read-all,
 - SEC-05: integration job passed on [79db628 / #65](https://github.com/tushar-gour/streamly-2.0/actions/runs/45885170269), including hold/release, forbidden accounts, owner republish denial and durable audit. Comment moderation pending.
 - PROD-02: added subscription-event and cross-account notification read regression, OpenAPI routes and formatting. Verification pending.
 - PROD-03: QR rendered locally with pinned qrcode.react 4.2.0, integrity agreed by two independent public lockfiles and npm ci must verify. No authenticator secret transmitted to a QR service. Recovery codes and secure phone changes remain.
+
+
+### Iteration 39 — MFA management and single-use recovery codes
+
+PROD-03 IN_PROGRESS: generated high-entropy hashed recovery codes at enrollment, one-time display, atomic redemption after primary authentication, no trusted device from recovery, authenticated password/TOTP-protected regeneration and legacy active account enrollment. Login accepts either authenticator or recovery code. External provider and browser verification pending; remaining phone enrollment and credential issuance races.

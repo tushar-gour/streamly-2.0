@@ -22,6 +22,7 @@ import {
 
 import healthcheckRouter from "./presentation/routes/healthcheck.routes.js";
 import userRouter from "./presentation/routes/user.routes.js";
+import mfaManagementRouter from "./presentation/routes/mfa-management.routes.js";
 import notificationRouter from "./presentation/routes/notification.routes.js";
 import moderationRouter from "./presentation/routes/moderation.routes.js";
 import credentialRouter from "./presentation/routes/credential.routes.js";
@@ -151,6 +152,7 @@ class Application {
 
         this.app.use(`${API_PREFIX}/users`, userRouter);
         this.app.use(`${API_PREFIX}/users/auth`, credentialRouter);
+        this.app.use(`${API_PREFIX}/users/auth/mfa`, mfaManagementRouter);
         this.app.use(`${API_PREFIX}/users/auth`, authPlatformRouter);
         this.app.use(`${API_PREFIX}/videos`, videoRouter);
         this.app.use(`${API_PREFIX}/admin`, moderationRouter);

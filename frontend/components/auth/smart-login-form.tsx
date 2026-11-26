@@ -35,6 +35,7 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [useRecovery, setUseRecovery] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -44,6 +45,7 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
 
   function restart() {
     setStage({ kind: "credentials" });
+    setUseRecovery(false);
     setPassword("");
     setCode("");
     setCaptchaToken(null);
@@ -197,21 +199,22 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
             <Input
               label={
                 stage.kind === "mfa"
-                  ? "Authenticator code"
+                  ? useRecovery ? "Recovery code" : "Authenticator code"
                   : "Verification code"
               }
               autoComplete="one-time-code"
-              inputMode="numeric"
-              pattern={stage.kind === "mfa" ? "[0-9]{6}" : "[0-9]+"}
-              maxLength={stage.kind === "mfa" ? 6 : 12}
+              inputMode={stage.kind === "mfa" && useRecovery ? "text" : "numeric"}
+              pattern={stage.kind === "mfa" ? useRecovery ? "[a-fA-F0-9]{32}" : "[0-9]{6}" : "[0-9]+"}
+              maxLength={stage.kind === "mfa" ? useRecovery ? 32 : 6 : 12}
               required
               value={code}
               disabled={pending}
               onChange={(event) =>
-                setCode(event.target.value.replace(/\D/gu, ""))
+                setCode(stage.kind === "mfa" && useRecovery ? event.target.value.replace(/[^a-fA-F0-9]/gu, "") : event.target.value.replace(/\D/gu, ""))
               }
             />
           ) : null}
+          {stage.kind === "mfa" ? <Button type="button" variant="secondary" disabled={pending} onClick={() => { setCode(""); setUseRecovery((value) => !value); }}>{useRecovery ? "Use authenticator code" : "Use a recovery code"}</Button> : null}
           <Button
             type="submit"
             size="lg"

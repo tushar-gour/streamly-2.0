@@ -6,6 +6,12 @@ import { prisma } from "../../infrastructure/database/prisma/client.js";
 import { ApiError } from "../../shared/errors/api-error.js";
 import { createId } from "../../shared/helpers/id-generator.js";
 import { hashValue } from "./otp.service.js";
+import { recordNotification } from "../../infrastructure/database/notification-record.js";
+import bcrypt from "bcrypt";
+
+const makeRecoveryCodes = () => Array.from({ length: 10 }, () => crypto.randomBytes(16).toString("hex"));
+const normalizeRecoveryCode = (code: string) => code.replace(/[-\s]/g, "").toLowerCase();
+const storedRecoveryHashes = (value: unknown): string[] => Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 
 const getEncryptionKey = (): Buffer => {
     const rawKey = appConfig.mfa.secretEncryptionKey;
@@ -84,7 +90,7 @@ class MfaService {
         return { otpauthUrl };
     }
 
-    async verifyTotpSetup(userId: string, code: string) {
+    async verifyTotpSetup(userId: string, code: string, activeEnrollment = false) {
         const method = await prisma.userMfa.findUnique({
             where: { userId_type: { userId, type: "totp" } },
         });
@@ -98,6 +104,7 @@ class MfaService {
         }
 
         const now = new Date();
+        const recoveryCodes = makeRecoveryCodes();
         await prisma.$transaction(async (tx) => {
             const enabled = await tx.userMfa.updateMany({
                 where: {
@@ -105,7 +112,7 @@ class MfaService {
                     enabledAt: null,
                     secretEncrypted: method.secretEncrypted,
                 },
-                data: { enabledAt: now, lastVerifiedAt: now },
+                data: { enabledAt: now, lastVerifiedAt: now, recoveryCodesHash: recoveryCodes.map(hashValue) },
             });
             if (enabled.count !== 1) {
                 throw new ApiError(409, "Authenticator setup changed");
@@ -113,7 +120,8 @@ class MfaService {
             const activated = await tx.user.updateMany({
                 where: {
                     id: userId,
-                    onboardingStatus: "mfa_pending",
+                    onboardingStatus: activeEnrollment ? "active" : "mfa_pending",
+                    mfaEnabledAt: null,
                     emailVerifiedAt: { not: null },
                 },
                 data: { mfaEnabledAt: now, onboardingStatus: "active" },
@@ -123,7 +131,32 @@ class MfaService {
             }
         });
 
-        return { mfaEnabled: true };
+        return { mfaEnabled: true, recoveryCodes };
+    }
+
+    async authorizeManagement(userId: string, password: unknown) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.emailVerifiedAt || user.onboardingStatus !== "active" ||
+            typeof password !== "string" || !(await bcrypt.compare(password, user.password))) {
+            throw new ApiError(403, "Verified account and current password required");
+        }
+        return user;
+    }
+
+    async regenerateRecoveryCodes(userId: string, password: unknown, code: unknown) {
+        await this.authorizeManagement(userId, password);
+        if (typeof code !== "string") throw new ApiError(400, "Authenticator code required");
+        await this.verifyCurrentTotp(userId, code);
+        const recoveryCodes = makeRecoveryCodes();
+        await prisma.$transaction(async (tx) => {
+            const result = await tx.userMfa.updateMany({
+                where: { userId, type: "totp", enabledAt: { not: null } },
+                data: { recoveryCodesHash: recoveryCodes.map(hashValue) },
+            });
+            if (result.count !== 1) throw new ApiError(409, "Authenticator unavailable");
+            await recordNotification(tx, userId, "security", "New authenticator recovery codes were generated.");
+        });
+        return { recoveryCodes };
     }
 
     async verifyCurrentTotp(userId: string, code: string): Promise<void> {
@@ -215,24 +248,45 @@ class MfaService {
             deviceFingerprintHash: hashValue(context.deviceId),
             userAgentHash: hashContext(context.userAgent),
         };
-        const secret = decryptSecret(method.secretEncrypted);
-        if (!verifySync({ secret, token: code }).valid) {
+        if (typeof code !== "string") throw new ApiError(400, "Invalid authenticator code");
+        const normalized = normalizeRecoveryCode(code);
+        const recovery = /^[a-f0-9]{32}$/.test(normalized);
+        const recoveryHash = recovery ? hashValue(normalized) : null;
+        const valid = recoveryHash
+            ? storedRecoveryHashes(method.recoveryCodesHash).includes(recoveryHash)
+            : /^\d{6}$/.test(code) && verifySync({ secret: decryptSecret(method.secretEncrypted), token: code }).valid;
+        if (!valid) {
             await prisma.mfaChallenge.updateMany({
                 where: available,
                 data: { failedAttempts: { increment: 1 } },
             });
-            throw new ApiError(400, "Invalid authenticator code");
+            throw new ApiError(400, "Invalid authenticator or recovery code");
         }
 
-        const consumed = await prisma.mfaChallenge.updateMany({
-            where: available,
-            data: { consumedAt: new Date() },
+        await prisma.$transaction(async (tx) => {
+            await tx.$queryRaw`SELECT id FROM users WHERE id = ${challenge.userId} FOR UPDATE`;
+            const now = new Date();
+            const consumed = await tx.mfaChallenge.updateMany({
+                where: { ...available, expiresAt: { gt: now } },
+                data: { consumedAt: now },
+            });
+            if (consumed.count !== 1) throw new ApiError(400, "MFA challenge is no longer available");
+            const current = await tx.userMfa.findUniqueOrThrow({ where: { id: method.id } });
+            if (!current.enabledAt || current.secretEncrypted !== method.secretEncrypted) throw new ApiError(400, "Authenticator changed");
+            if (recoveryHash) {
+                const hashes = storedRecoveryHashes(current.recoveryCodesHash);
+                if (!hashes.includes(recoveryHash)) throw new ApiError(400, "Recovery code already used");
+                await tx.userMfa.update({ where: { id: method.id }, data: { recoveryCodesHash: hashes.filter((hash) => hash !== recoveryHash) } });
+                await recordNotification(tx, challenge.userId, "security", "An authenticator recovery code was used to sign in.");
+            } else {
+                const stepStart = new Date(Math.floor(now.getTime() / 30_000) * 30_000);
+                if (current.lastVerifiedAt && current.lastVerifiedAt >= stepStart) throw new ApiError(400, "Wait for a fresh authenticator code");
+                await tx.userMfa.update({ where: { id: method.id }, data: { lastVerifiedAt: now } });
+            }
         });
-        if (consumed.count !== 1) {
-            throw new ApiError(400, "MFA challenge is no longer available");
-        }
 
-        return this.createTrustToken(challenge.userId, context);
+        // Recovery codes do not establish persistent trusted devices.
+        return recovery ? undefined : this.createTrustToken(challenge.userId, context);
     }
 
     async createTrustToken(userId: string, context: DeviceContext) {

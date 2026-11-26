@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { SessionSettings } from "@/components/settings/session-settings";
+import { MfaManagement } from "@/components/settings/mfa-management";
 import { EmailChange } from "@/components/settings/email-change";
 import { ProfileImages } from "@/components/settings/profile-images";
 import { Card } from "@/components/ui/card";
@@ -189,9 +190,7 @@ export function AccountSettings() {
         </div>
         <EmailChange />
         <SessionSettings />
-        <p className="text-sm text-[color:var(--color-text-secondary)]">
-          Changing or recovering an authenticator is not available yet.
-        </p>
+        <MfaManagement />
       </Card>
       <Card className="grid gap-4 p-5">
         <h2 className="text-xl font-semibold">Appearance</h2>

@@ -18,7 +18,7 @@ type Stage =
   | { kind: "email"; challengeId: string; expiresAt: string }
   | { kind: "setup"; token: string }
   | { kind: "mfa"; token: string; secret: string; uri: string }
-  | { kind: "complete" };
+  | { kind: "complete"; recoveryCodes: string[] };
 
 export function SignupForm() {
   const [stage, setStage] = useState<Stage>({ kind: "details" });
@@ -81,7 +81,7 @@ export function SignupForm() {
         const result = await signupApi.verifyMfa(stage.token, code);
         if (!result.mfaEnabled) throw new Error("MFA not enabled");
         setCode("");
-        setStage({ kind: "complete" });
+        setStage({ kind: "complete", recoveryCodes: result.recoveryCodes });
       }
     } catch (cause) {
       setCode("");
@@ -119,9 +119,7 @@ export function SignupForm() {
     <AuthShell guestOnly>
       <AuthCard title={title} description={description}>
         {stage.kind === "complete" ? (
-          <Button asChild size="lg">
-            <Link href="/login">Sign in</Link>
-          </Button>
+          <div className="grid gap-4"><p className="text-sm">Save these single-use recovery codes somewhere private. They will not be shown again.</p><div className="grid gap-2 rounded-card border border-[color:var(--color-border)] p-3">{stage.recoveryCodes.map((code) => <code key={code} className="break-all text-xs select-all">{code}</code>)}</div><Button asChild size="lg"><Link href="/login">I saved my codes — sign in</Link></Button></div>
         ) : (
           <form className="grid gap-5" onSubmit={submit}>
             {error ? (
