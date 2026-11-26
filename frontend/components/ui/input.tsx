@@ -43,7 +43,10 @@ export function Input({
         />
       </span>
       {error ? (
-        <span id={`${inputId}-error`} className="text-sm text-[color:var(--color-error)]">
+        <span
+          id={`${inputId}-error`}
+          className="text-sm text-[color:var(--color-error)]"
+        >
           {error}
         </span>
       ) : null}

@@ -223,3 +223,7 @@ Corrected light-mode background, skeleton, surface and error colors; shared form
 ## Iteration 16 — Navigation and route accessibility
 
 Desktop navigation no longer overlaps its footer at short viewport heights. Added creator studio and profile navigation, permission-aware administration and upload visibility, working keyboard search shortcut, mobile search/settings links, active route semantics and a skip link. This does not implement the missing notifications or moderation backend. Browser verification remains pending.
+
+## Iteration 17 — Reference inspection and browser runner compatibility
+
+CI run 45867408921 for `61d5430` passed all seven non-browser jobs, including complete frontend lint/typecheck/test/build, database migrations and integration, backend quality, Docker, OpenAPI and Prisma. Both applications started in the browser job; Chromium installation failed because the default runner selected Ubuntu 26.04, unsupported by the pinned Playwright version. Pinned Ubuntu 24.04 for the browser job. Successfully inspected contact sheets containing all 24 reference images; they use compact spacing, cinematic navy, subdued indigo, clear content hierarchy and restrained panels. No rendered application screenshots were available in that run. Applied reported formatting corrections to shared UI. Reverification pending.

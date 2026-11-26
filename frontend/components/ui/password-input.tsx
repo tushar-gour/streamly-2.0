@@ -52,7 +52,10 @@ export function PasswordInput({
         </button>
       </span>
       {error ? (
-        <span id={`${id}-error`} className="text-sm text-[color:var(--color-error)]">
+        <span
+          id={`${id}-error`}
+          className="text-sm text-[color:var(--color-error)]"
+        >
           {error}
         </span>
       ) : null}

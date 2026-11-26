@@ -23,7 +23,11 @@ export function AppShell({ children, permission }: AppShellProps) {
       <Sidebar />
       <div className="min-w-0 flex-1 pb-20 lg:pb-0">
         <Topbar />
-        <main id="main-content" tabIndex={-1} className="mx-auto max-w-[1500px] px-4 py-6 md:px-6">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="mx-auto max-w-[1500px] px-4 py-6 md:px-6"
+        >
           {children}
         </main>
       </div>
