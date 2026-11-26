@@ -162,13 +162,20 @@ class VideoService {
                 resource_type: "video",
                 contentType: videoFile.mimetype,
             }),
-            this.mediaStorageService.upload(thumbnailFile.path, { contentType: thumbnailFile.mimetype }),
+            this.mediaStorageService.upload(thumbnailFile.path, {
+                contentType: thumbnailFile.mimetype,
+            }),
         ]);
 
         if (!videoUpload || !thumbnailUpload) {
             await Promise.allSettled([
-                videoUpload && this.mediaStorageService.delete(videoUpload.publicId, "video"),
-                thumbnailUpload && this.mediaStorageService.delete(thumbnailUpload.publicId),
+                videoUpload &&
+                    this.mediaStorageService.delete(
+                        videoUpload.publicId,
+                        "video"
+                    ),
+                thumbnailUpload &&
+                    this.mediaStorageService.delete(thumbnailUpload.publicId),
             ]);
             throw new ApiError(500, "Failed to upload media");
         }
@@ -176,13 +183,13 @@ class VideoService {
         let video;
         try {
             video = await this.videoRepository.create({
-            title: title.trim(),
-            description: description.trim(),
-            videoFile: videoUpload.secureUrl || videoUpload.url,
-            thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
-            duration: videoUpload.duration || duration,
-            owner: ownerId,
-            isPublished: true,
+                title: title.trim(),
+                description: description.trim(),
+                videoFile: videoUpload.secureUrl || videoUpload.url,
+                thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
+                duration: videoUpload.duration || duration,
+                owner: ownerId,
+                isPublished: true,
             });
         } catch (error) {
             await Promise.allSettled([
@@ -238,7 +245,8 @@ class VideoService {
                 video.thumbnail
             );
             const thumbnailUpload = await this.mediaStorageService.upload(
-                file.path, { contentType: file.mimetype }
+                file.path,
+                { contentType: file.mimetype }
             );
 
             if (!thumbnailUpload) {
@@ -247,8 +255,6 @@ class VideoService {
 
             updateData.thumbnail =
                 thumbnailUpload.secureUrl || thumbnailUpload.url;
-
-
         }
 
         if (Object.keys(updateData).length === 0) {

@@ -161,16 +161,21 @@ class UserController {
 
     static profileMedia = asyncHandler(async (req, res) => {
         const { userId, kind } = req.params;
-        if (!/^[a-f0-9]{24}$/.test(userId) || !["avatar", "cover"].includes(kind)) {
+        if (
+            !/^[a-f0-9]{24}$/.test(userId) ||
+            !["avatar", "cover"].includes(kind)
+        ) {
             return res.sendStatus(404);
         }
-        const user = await container.repositories.userRepository.findById(userId);
+        const user =
+            await container.repositories.userRepository.findById(userId);
         // Channel avatars and covers are public for active accounts only.
         if (!user || user.onboardingStatus !== "active") {
             return res.sendStatus(404);
         }
         const source = kind === "avatar" ? user.avatar : user.coverImage;
-        const result = await container.services.mediaStreamService.streamImage(source);
+        const result =
+            await container.services.mediaStreamService.streamImage(source);
         res.status(result.statusCode).set(result.headers);
         return result.body ? result.body.pipe(res) : res.end();
     });

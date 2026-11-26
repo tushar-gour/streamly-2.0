@@ -781,7 +781,10 @@ const openApiDocument = {
                 summary: "Deliver thumbnail using current video visibility",
                 parameters: [idParameter("videoId", "Video id.")],
                 responses: {
-                    200: { description: "Authorized image bytes; never shared-cacheable." },
+                    200: {
+                        description:
+                            "Authorized image bytes; never shared-cacheable.",
+                    },
                     ...standardErrors,
                 },
             },
@@ -792,7 +795,12 @@ const openApiDocument = {
                 summary: "Deliver an active channel's public profile image",
                 parameters: [
                     idParameter("userId", "User id."),
-                    { name: "kind", in: "path", required: true, schema: { type: "string", enum: ["avatar", "cover"] } },
+                    {
+                        name: "kind",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string", enum: ["avatar", "cover"] },
+                    },
                 ],
                 responses: {
                     200: { description: "Image bytes." },

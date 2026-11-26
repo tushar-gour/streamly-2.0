@@ -6,7 +6,10 @@ import {
     requireOwnershipOrPermission,
     requirePermission,
 } from "../middlewares/authorization.middleware.js";
-import { uploadImage, uploadVideoAndThumbnail } from "../middlewares/multer.middleware.js";
+import {
+    uploadImage,
+    uploadVideoAndThumbnail,
+} from "../middlewares/multer.middleware.js";
 import { validateStagedMedia } from "../middlewares/validate-media.middleware.js";
 import {
     getAllVideos,

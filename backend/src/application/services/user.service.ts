@@ -340,8 +340,10 @@ class UserService {
         const oldCoverPublicId = this.mediaStorageService.extractPublicId(
             currentUser.coverImage
         );
-        const coverImage =
-            await this.mediaStorageService.upload(coverImageLocalPath, { contentType: file.mimetype });
+        const coverImage = await this.mediaStorageService.upload(
+            coverImageLocalPath,
+            { contentType: file.mimetype }
+        );
 
         if (!coverImage) {
             throw new ApiError(500, "Failed to upload cover image");

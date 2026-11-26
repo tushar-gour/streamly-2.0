@@ -15,9 +15,16 @@ class MediaStreamService {
     async streamImage(url: string): Promise<MediaStreamResult> {
         const result = await this.streamVideo(url);
         const type = result.headers["Content-Type"]?.split(";")[0]?.trim();
-        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(type || "")) {
+        if (
+            !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+                type || ""
+            )
+        ) {
             result.body?.destroy();
-            throw new ApiError(HttpStatus.UNPROCESSABLE_ENTITY, "Unsupported stored image");
+            throw new ApiError(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "Unsupported stored image"
+            );
         }
         return {
             ...result,

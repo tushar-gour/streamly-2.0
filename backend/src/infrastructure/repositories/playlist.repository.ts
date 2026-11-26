@@ -148,7 +148,9 @@ class PrismaPlaylistRepository extends PlaylistRepository {
             include: {
                 videos: {
                     where: { video: { isPublished: true } },
-                    include: { video: { select: { id: true, thumbnail: true } } },
+                    include: {
+                        video: { select: { id: true, thumbnail: true } },
+                    },
                     orderBy: { createdAt: "asc" },
                 },
             },

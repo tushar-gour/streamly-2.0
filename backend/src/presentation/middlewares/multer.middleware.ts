@@ -108,8 +108,10 @@ class FileUploadMiddleware {
 
     static uploadVideoAndThumbnail = this.createUploader({
         fileFilter: (req, file, cb) => {
-            if (file.fieldname === "videoFile") return this.#videoFilter(req, file, cb);
-            if (file.fieldname === "thumbnail") return this.#imageFilter(req, file, cb);
+            if (file.fieldname === "videoFile")
+                return this.#videoFilter(req, file, cb);
+            if (file.fieldname === "thumbnail")
+                return this.#imageFilter(req, file, cb);
             cb(new ApiError(400, "Unexpected media field"), false);
         },
         limits: { files: 2 },
@@ -161,4 +163,5 @@ export const uploadMedia = FileUploadMiddleware.uploadMedia;
 export const handleUploadError = FileUploadMiddleware.handleError;
 export { FileUploadMiddleware };
 
-export const uploadVideoAndThumbnail = FileUploadMiddleware.uploadVideoAndThumbnail;
+export const uploadVideoAndThumbnail =
+    FileUploadMiddleware.uploadVideoAndThumbnail;

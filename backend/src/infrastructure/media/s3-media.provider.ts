@@ -120,12 +120,17 @@ const getObjectKeyFromTrustedUrl = (urlOrKey: string): string => {
     }
 
     if (/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_.-]+)+$/.test(urlOrKey)) {
-        if (!urlOrKey.split("/").some((part) => part === "." || part === "..")) {
+        if (
+            !urlOrKey.split("/").some((part) => part === "." || part === "..")
+        ) {
             return urlOrKey;
         }
     }
 
-    throw new ApiError(HttpStatus.BAD_REQUEST, "Unsupported S3 media reference");
+    throw new ApiError(
+        HttpStatus.BAD_REQUEST,
+        "Unsupported S3 media reference"
+    );
 };
 
 class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
@@ -138,7 +143,9 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
     async assertPrivateOrigin(): Promise<void> {
         const Bucket = appConfig.aws.s3Bucket;
         const { PublicAccessBlockConfiguration: block } =
-            await this.#client.send(new GetPublicAccessBlockCommand({ Bucket }));
+            await this.#client.send(
+                new GetPublicAccessBlockCommand({ Bucket })
+            );
         if (
             !block?.BlockPublicAcls ||
             !block.IgnorePublicAcls ||
@@ -150,9 +157,11 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
         const { OwnershipControls } = await this.#client.send(
             new GetBucketOwnershipControlsCommand({ Bucket })
         );
-        if (!OwnershipControls?.Rules?.some(
-            (rule) => rule.ObjectOwnership === "BucketOwnerEnforced"
-        )) {
+        if (
+            !OwnershipControls?.Rules?.some(
+                (rule) => rule.ObjectOwnership === "BucketOwnerEnforced"
+            )
+        ) {
             throw new Error("S3 bucket must disable ACLs");
         }
         // A dedicated bucket uses identity-based IAM only; no CDN or cross-account grants.
@@ -290,7 +299,10 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
         }
 
         if (!(response.Body instanceof Readable)) {
-            throw new ApiError(HttpStatus.BAD_GATEWAY, "Storage returned no media stream");
+            throw new ApiError(
+                HttpStatus.BAD_GATEWAY,
+                "Storage returned no media stream"
+            );
         }
 
         return {
