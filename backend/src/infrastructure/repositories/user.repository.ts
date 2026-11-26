@@ -1,6 +1,6 @@
 // @ts-nocheck
 import bcrypt from "bcrypt";
-import { revokeCredentialSessions } from "../../application/services/credential-challenge.service.js";
+import { revokeCredentialSessions } from "../database/credential-revocation.js";
 
 import { isProduction } from "../../config/env.js";
 import { UserRepository } from "../../domain/repositories/user.repository.js";

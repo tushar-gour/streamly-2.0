@@ -7,7 +7,9 @@ const emailDeliveryProvider = createEmailProvider();
 
 const processEmailJob = async (job) => {
     if (job.name === JobNames.SEND_CREDENTIAL_CHALLENGE) {
-        await deliverCredentialChallenge(job.data.challengeId, (payload) => emailDeliveryProvider.sendOtp(payload));
+        await deliverCredentialChallenge(job.data.challengeId, (payload) =>
+            emailDeliveryProvider.sendOtp(payload)
+        );
         return { processed: true };
     }
     if (job.name !== JobNames.SEND_EMAIL_VERIFICATION) {

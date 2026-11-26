@@ -130,21 +130,32 @@ class MfaService {
         const method = await prisma.userMfa.findUnique({
             where: { userId_type: { userId, type: "totp" } },
         });
-        if (!method?.enabledAt || !/^\d{6}$/.test(code) ||
-            !verifySync({ secret: decryptSecret(method.secretEncrypted), token: code }).valid) {
+        if (
+            !method?.enabledAt ||
+            !/^\d{6}$/.test(code) ||
+            !verifySync({
+                secret: decryptSecret(method.secretEncrypted),
+                token: code,
+            }).valid
+        ) {
             throw new ApiError(403, "Invalid authenticator code");
         }
         const now = new Date();
         const stepStart = new Date(Math.floor(now.getTime() / 30_000) * 30_000);
         const used = await prisma.userMfa.updateMany({
             where: {
-                id: method.id, secretEncrypted: method.secretEncrypted,
+                id: method.id,
+                secretEncrypted: method.secretEncrypted,
                 enabledAt: { not: null },
-                OR: [{ lastVerifiedAt: null }, { lastVerifiedAt: { lt: stepStart } }],
+                OR: [
+                    { lastVerifiedAt: null },
+                    { lastVerifiedAt: { lt: stepStart } },
+                ],
             },
             data: { lastVerifiedAt: now },
         });
-        if (used.count !== 1) throw new ApiError(403, "Wait for a fresh authenticator code");
+        if (used.count !== 1)
+            throw new ApiError(403, "Wait for a fresh authenticator code");
     }
 
     async createChallenge(

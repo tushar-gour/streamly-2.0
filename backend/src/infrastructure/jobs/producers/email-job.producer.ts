@@ -11,7 +11,9 @@ class EmailJobProducer extends BaseJobProducer {
     }
 
     enqueueCredentialChallenge(challengeId: string) {
-        return this.enqueue(JobNames.SEND_CREDENTIAL_CHALLENGE, { challengeId });
+        return this.enqueue(JobNames.SEND_CREDENTIAL_CHALLENGE, {
+            challengeId,
+        });
     }
 
     enqueueEmailVerification(payload) {

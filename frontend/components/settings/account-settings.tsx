@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { SessionSettings } from "@/components/settings/session-settings";
+import { EmailChange } from "@/components/settings/email-change";
 import { ProfileImages } from "@/components/settings/profile-images";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -106,7 +107,7 @@ export function AccountSettings() {
           <Input label="Username" value={user?.username ?? ""} readOnly />
           <Input label="Email" value={user?.email ?? ""} readOnly />
           <p className="text-sm text-[color:var(--color-text-secondary)]">
-            Username and verified email cannot be changed here.
+            Your username is fixed. Change your email securely below.
           </p>
           <Button
             type="submit"
@@ -186,6 +187,7 @@ export function AccountSettings() {
             Sign out everywhere
           </Button>
         </div>
+        <EmailChange />
         <SessionSettings />
         <p className="text-sm text-[color:var(--color-text-secondary)]">
           Changing or recovering an authenticator is not available yet.

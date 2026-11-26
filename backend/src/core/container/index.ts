@@ -124,7 +124,11 @@ const container = Object.freeze({
         authPlatformService,
         credentialChallengeService: new CredentialChallengeService(
             async (id) => {
-                if (!appConfig.email.enabled || !appConfig.jobs.emailQueueEnabled || !appConfig.jobs.enabled) {
+                if (
+                    !appConfig.email.enabled ||
+                    !appConfig.jobs.emailQueueEnabled ||
+                    !appConfig.jobs.enabled
+                ) {
                     throw new Error("Credential email delivery unavailable");
                 }
                 if (!(await emailJobProducer.enqueueCredentialChallenge(id))) {
