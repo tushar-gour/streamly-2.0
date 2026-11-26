@@ -9,6 +9,7 @@ const QueueNames = Object.freeze({
 
 const JobNames = Object.freeze({
     SEND_EMAIL_VERIFICATION: "email.verification.send",
+    SEND_CREDENTIAL_CHALLENGE: "email.credential.send",
     SEND_SECURITY_NOTIFICATION: "notification.security.send",
     GENERATE_THUMBNAIL: "thumbnail.generate",
     CLEANUP_EXPIRED_AUTH: "cleanup.auth.expired",

@@ -340,3 +340,7 @@ Run [45882968546](https://github.com/tushar-gour/streamly-2.0/actions/runs/45882
 ## Iteration 33 — Storage infrastructure alternative and legacy gate
 
 Quay MinIO pull also denied (401) in [run 45883311955](https://github.com/tushar-gour/streamly-2.0/actions/runs/45883311955). Changed diagnostic approach: pinned official SeaweedFS 4.55 Linux release, SHA-256 verified against GitHub release metadata, authenticating S3 server on loopback. No mock substitution. Added production read-only legacy reference gate, removed generated public avatar URLs from signup, disabled stale published-list caching, prevented FFmpeg signed URL logs, and ensured actual MIME drives avatar storage. Exact final CI pending. AWS public block/ownership/access-point policy and legacy copies must still be verified against deployment infrastructure.
+
+## Iteration 34 — Credential challenge backend
+
+SEC-03/04 IN_PROGRESS: added new email change and password recovery API with expiring high-entropy codes, queue job carrying ID only, hashed codes in DB, bounded attempts, same recovery shape for existing and missing accounts, password/MFA proof for email replacement, session-bound completion, atomic single-use transaction and revocation of sessions, trust and outstanding challenges. Recovery preserves MFA enrollment. No database migration required. Frontend, API contracts and integration tests still pending; live SendGrid and Redis verification are deployment gates.

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import bcrypt from "bcrypt";
+import { revokeCredentialSessions } from "../../application/services/credential-challenge.service.js";
 
 import { isProduction } from "../../config/env.js";
 import { UserRepository } from "../../domain/repositories/user.repository.js";
@@ -130,22 +131,7 @@ class PrismaUserRepository extends UserRepository {
                 data: { password: passwordHash, passwordChangedAt: now },
             });
             if (changed.count !== 1) return false;
-            await tx.session.updateMany({
-                where: { userId, revokedAt: null },
-                data: { revokedAt: now, revokedReason: "password-changed" },
-            });
-            await tx.mfaTrustToken.updateMany({
-                where: { userId, revokedAt: null },
-                data: { revokedAt: now },
-            });
-            await tx.authChallenge.updateMany({
-                where: { userId, consumedAt: null },
-                data: { consumedAt: now },
-            });
-            await tx.mfaChallenge.updateMany({
-                where: { userId, consumedAt: null },
-                data: { consumedAt: now },
-            });
+            await revokeCredentialSessions(tx, userId, now, "password-changed");
             return true;
         });
     }

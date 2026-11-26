@@ -26,6 +26,7 @@ import { CleanupJobProducer } from "../../infrastructure/jobs/producers/cleanup-
 import { EmailJobProducer } from "../../infrastructure/jobs/producers/email-job.producer.js";
 import { NotificationJobProducer } from "../../infrastructure/jobs/producers/notification-job.producer.js";
 import { ThumbnailJobProducer } from "../../infrastructure/jobs/producers/thumbnail-job.producer.js";
+import { CredentialChallengeService } from "../../application/services/credential-challenge.service.js";
 import { AuthService } from "../../application/services/auth.service.js";
 import { AuthPlatformService } from "../../application/services/auth-platform.service.js";
 import { AuthorizationService } from "../../application/services/authorization.service.js";
@@ -121,6 +122,17 @@ const container = Object.freeze({
         mfaService,
         authService,
         authPlatformService,
+        credentialChallengeService: new CredentialChallengeService(
+            async (id) => {
+                if (!appConfig.email.enabled || !appConfig.jobs.emailQueueEnabled || !appConfig.jobs.enabled) {
+                    throw new Error("Credential email delivery unavailable");
+                }
+                if (!(await emailJobProducer.enqueueCredentialChallenge(id))) {
+                    throw new Error("Credential email queue unavailable");
+                }
+            },
+            (userId, code) => mfaService.verifyCurrentTotp(userId, code)
+        ),
         authorizationService,
         policyService,
         emailVerificationService,
