@@ -39,10 +39,25 @@ model User {
   mfaMethods              UserMfa[]
   mfaChallenges           MfaChallenge[]
   mfaTrustTokens          MfaTrustToken[]
+  notifications           Notification[]
 
   @@index([email, username])
   @@index([createdAt])
   @@map("users")
+}
+
+model Notification {
+  id String @id @db.Char(24)
+  userId String @db.Char(24)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind String @db.VarChar(40)
+  message String @db.VarChar(500)
+  readAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
 }
 
 model AuthChallenge {

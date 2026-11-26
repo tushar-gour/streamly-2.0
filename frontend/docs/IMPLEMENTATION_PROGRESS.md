@@ -355,3 +355,8 @@ SEC-03/04 IN_PROGRESS: added new email change and password recovery API with exp
 ### Iteration 36 — moderation hold
 
 SEC-05 IMPLEMENTED (video scope): moderator permission video:publish:any guards all new admin routes, publication hold is transactional with durable reason/action record, DB CHECK plus conditional owner publication prevents races and republishing. Release leaves video unpublished. Admin UI calls actual endpoints. Broader comment moderation and reporting pending. CI and integration tests pending.
+
+
+### Iteration 37 — notification persistence
+
+PROD-02 IMPLEMENTED: migration-backed inbox, owner-scoped listing/read/read-all, transactionally persisted credential, moderation and subscription events. No provider dependency or mock data. UI uses authenticated query scope, real mutation controls and retry states. Integration and browser verification pending.

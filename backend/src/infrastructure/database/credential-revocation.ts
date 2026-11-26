@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { recordNotification } from "./notification-record.js";
 
 export async function revokeCredentialSessions(
     tx: Prisma.TransactionClient,
@@ -6,6 +7,14 @@ export async function revokeCredentialSessions(
     now: Date,
     reason: string
 ) {
+    await recordNotification(
+        tx,
+        userId,
+        "security",
+        reason === "email_change"
+            ? "Your account email address was changed. Other sessions were signed out."
+            : "Your password was changed. Other sessions were signed out."
+    );
     await tx.session.updateMany({
         where: { userId, revokedAt: null },
         data: { revokedAt: now, revokedReason: reason },

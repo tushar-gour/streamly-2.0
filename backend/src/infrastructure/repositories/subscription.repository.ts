@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { SubscriptionRepository } from "../../domain/repositories/subscription.repository.js";
 import { createId } from "../../shared/helpers/id-generator.js";
+import { recordNotification } from "../database/notification-record.js";
 import { prisma } from "../database/prisma/client.js";
 
 const ownerSelect = {
@@ -29,12 +30,16 @@ class PrismaSubscriptionRepository extends SubscriptionRepository {
     }
 
     create(subscriptionData) {
-        return prisma.subscription.create({
-            data: {
-                id: createId(),
-                channelId: subscriptionData.channel,
-                subscriberId: subscriptionData.subscriber,
-            },
+        return prisma.$transaction(async (tx) => {
+            const subscription = await tx.subscription.create({
+                data: {
+                    id: createId(),
+                    channelId: subscriptionData.channel,
+                    subscriberId: subscriptionData.subscriber,
+                },
+            });
+            await recordNotification(tx, subscription.channelId, "subscription", "A viewer subscribed to your channel.");
+            return subscription;
         });
     }
 

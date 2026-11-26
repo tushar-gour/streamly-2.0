@@ -22,6 +22,7 @@ import {
 
 import healthcheckRouter from "./presentation/routes/healthcheck.routes.js";
 import userRouter from "./presentation/routes/user.routes.js";
+import notificationRouter from "./presentation/routes/notification.routes.js";
 import moderationRouter from "./presentation/routes/moderation.routes.js";
 import credentialRouter from "./presentation/routes/credential.routes.js";
 import authPlatformRouter from "./presentation/routes/auth-platform.routes.js";
@@ -153,6 +154,7 @@ class Application {
         this.app.use(`${API_PREFIX}/users/auth`, authPlatformRouter);
         this.app.use(`${API_PREFIX}/videos`, videoRouter);
         this.app.use(`${API_PREFIX}/admin`, moderationRouter);
+        this.app.use(`${API_PREFIX}/notifications`, notificationRouter);
         this.app.use(`${API_PREFIX}/comments`, commentRouter);
         this.app.use(`${API_PREFIX}/likes`, likeRouter);
         this.app.use(`${API_PREFIX}/playlists`, playlistRouter);
