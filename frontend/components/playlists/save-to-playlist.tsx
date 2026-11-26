@@ -62,6 +62,7 @@ export function SaveToPlaylist({ videoId }: { videoId: string }) {
               <label className="grid gap-2 text-sm">
                 Playlist
                 <select
+                  aria-label="Playlist"
                   className="min-h-11 rounded-input border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-2"
                   value={selected}
                   disabled={mutation.isPending}

@@ -92,9 +92,7 @@ try {
   await capture("playlist-desktop-dark");
 
   await page.goto(`${origin}/home`);
-  await page
-    .getByRole("link", { name: "Watch Browser fixture video" })
-    .click();
+  await page.getByRole("link", { name: "Watch Browser fixture video" }).click();
   await heading("Browser fixture video");
   await page.waitForFunction(() => {
     const video = document.querySelector("video");
@@ -124,14 +122,18 @@ try {
 
   await page.goto(`${origin}/watch-later`);
   await heading("Watch Later");
-  await page.getByRole("link", { name: "Watch Browser fixture video" }).waitFor();
+  await page
+    .getByRole("link", { name: "Watch Browser fixture video" })
+    .waitFor();
   await page.getByRole("button", { name: "Remove from Watch Later" }).click();
   await heading("Nothing saved here yet.");
 
   await page.goto(`${origin}/playlists`);
   await page.getByRole("link", { name: /Updated playlist/ }).click();
   await heading("Updated playlist");
-  await page.getByRole("link", { name: "Watch Browser fixture video" }).waitFor();
+  await page
+    .getByRole("link", { name: "Watch Browser fixture video" })
+    .waitFor();
   await page
     .getByRole("button", { name: "Delete playlist", exact: true })
     .click();
@@ -186,6 +188,9 @@ try {
     "Observed lab values (not production Core Web Vitals):",
     JSON.stringify(labVitals)
   );
+} catch (error) {
+  await capture("failure");
+  throw error;
 } finally {
   await browser.close();
 }
