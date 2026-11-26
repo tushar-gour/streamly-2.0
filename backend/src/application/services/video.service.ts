@@ -345,7 +345,9 @@ class VideoService {
     async #ensureViewAccess(video, currentUserId) {
         if (video.isPublished) return;
         if (!currentUserId) {
-            throw new UnauthorizedError("Authentication required to view this video");
+            throw new UnauthorizedError(
+                "Authentication required to view this video"
+            );
         }
         const ownerId = video.owner?._id ?? video.owner;
         if (ownerId === currentUserId) return;
@@ -356,7 +358,9 @@ class VideoService {
                 "video:publish:any",
             ]))
         ) {
-            throw new ForbiddenError("You are not authorized to view this video");
+            throw new ForbiddenError(
+                "You are not authorized to view this video"
+            );
         }
     }
 

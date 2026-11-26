@@ -141,7 +141,10 @@ class PrismaPlaylistRepository extends PlaylistRepository {
 
     async getUserPlaylists(userId, includePrivate = false) {
         const playlists = await prisma.playlist.findMany({
-            where: { ownerId: userId, ...(includePrivate ? {} : { isPublic: true }) },
+            where: {
+                ownerId: userId,
+                ...(includePrivate ? {} : { isPublic: true }),
+            },
             include: {
                 videos: {
                     where: { video: { isPublished: true } },

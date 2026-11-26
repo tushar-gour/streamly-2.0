@@ -18,15 +18,18 @@ databaseDescribe("media and object privacy", () => {
 
     async function account() {
         assertSafeTestDatabase();
-        const user = await container.repositories.userRepository.createUser(
-            createTestUserData()
-        );
+        const user =
+            await container.repositories.userRepository.createUser(
+                createTestUserData()
+            );
         userIds.push(user._id);
-        const session = await container.services.authService.createLoginSession({
-            user,
-            userAgent: undefined,
-            ipAddress: undefined,
-        });
+        const session = await container.services.authService.createLoginSession(
+            {
+                user,
+                userAgent: undefined,
+                ipAddress: undefined,
+            }
+        );
         return { user, token: session.accessToken };
     }
 
@@ -79,10 +82,18 @@ databaseDescribe("media and object privacy", () => {
         const path = "/api/v1/videos/" + video.id;
         expect((await request(app).get(path)).status).toBe(401);
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + viewer.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + viewer.token)
+            ).status
         ).toBe(403);
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + owner.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + owner.token)
+            ).status
         ).toBe(200);
     });
 
@@ -91,10 +102,18 @@ databaseDescribe("media and object privacy", () => {
         const path = "/api/v1/comments/" + video.id;
         expect((await request(app).get(path)).status).toBe(404);
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + viewer.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + viewer.token)
+            ).status
         ).toBe(404);
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + owner.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + owner.token)
+            ).status
         ).toBe(200);
     });
 
@@ -102,10 +121,18 @@ databaseDescribe("media and object privacy", () => {
         const { owner, viewer, playlist } = await fixture();
         const path = "/api/v1/playlists/" + playlist.id;
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + viewer.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + viewer.token)
+            ).status
         ).toBe(404);
         expect(
-            (await request(app).get(path).set("Authorization", "Bearer " + owner.token)).status
+            (
+                await request(app)
+                    .get(path)
+                    .set("Authorization", "Bearer " + owner.token)
+            ).status
         ).toBe(200);
         const response = await request(app)
             .get("/api/v1/playlists/user/" + owner.user._id)

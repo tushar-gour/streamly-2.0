@@ -53,7 +53,8 @@ class PlaylistService {
 
         if (
             !playlists?.length ||
-            (!playlists[0].isPublic && playlists[0].owner?._id !== currentUserId)
+            (!playlists[0].isPublic &&
+                playlists[0].owner?._id !== currentUserId)
         ) {
             throw new NotFoundError("Playlist", playlistId);
         }

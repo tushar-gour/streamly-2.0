@@ -41,7 +41,8 @@ class LikeService {
             userId,
             fieldName: "comment ID",
             notFoundResource: "Comment",
-            exists: () => this.commentRepository.findOnPublishedVideo(commentId),
+            exists: () =>
+                this.commentRepository.findOnPublishedVideo(commentId),
             likedMessage: "Comment liked successfully",
             unlikedMessage: "Comment unliked successfully",
         });
