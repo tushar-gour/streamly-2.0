@@ -121,7 +121,9 @@ function ImageEditor({
         <p
           role={feedback.error ? "alert" : "status"}
           className={
-            feedback.error ? "text-sm text-[color:var(--color-error)]" : "text-sm"
+            feedback.error
+              ? "text-sm text-[color:var(--color-error)]"
+              : "text-sm"
           }
         >
           {feedback.text}
