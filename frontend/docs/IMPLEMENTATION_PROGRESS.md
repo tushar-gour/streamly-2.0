@@ -261,3 +261,7 @@ IMPLEMENTED, verification pending: one in-flight refresh per tab; browser Web Lo
 ### Session repair
 
 CI run 45877522141 exposed syntax defects in the first session integration commit: a source replacement targeted the AuthStore declaration rather than its implementation, and a middleware catch brace was omitted. Corrected both, retained regression assertions. No verification claim for this commit until rerun.
+
+### Verified checkpoint and session regression expansion
+
+[Run 45877424668](https://github.com/tushar-gour/streamly-2.0/actions/runs/45877424668), exact source `ea674a0cc85b62d90ee59112cbd7430bab3dfe29`, passed all eight jobs. Extended real-API browser smoke passed: login, playlist CRUD/membership, video metadata, likes, comments, Watch Later, sessions, themes and creator routes. Studio lab LCP 96 ms, CLS 0.0741275849 (not production or INP evidence). Added session regression tests for expected-account mismatch (no mutation), expired marker, at-most-once replay and refusal to replay across identities. Exact latest verification pending.

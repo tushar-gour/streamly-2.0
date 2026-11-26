@@ -158,4 +158,26 @@ databaseDescribe("media and object privacy", () => {
         expect(response.status).toBe(200);
         expect(response.body.data).not.toHaveProperty("email");
     });
+
+    it("rejects a stale account before executing an authenticated mutation", async () => {
+        const { owner, viewer } = await fixture();
+        const response = await request(app)
+            .post("/api/v1/users/logout-all")
+            .set("Cookie", "accessToken=" + viewer.token)
+            .set("X-Streamly-Account", owner.user._id);
+        expect(response.status).toBe(409);
+        expect(response.headers["x-streamly-session"]).toBe("changed");
+        await expect(
+            container.services.authService.verifyAccessToken(viewer.token)
+        ).resolves.toMatchObject({ user: { _id: viewer.user._id } });
+    });
+
+    it("marks an invalid session before entering a protected handler", async () => {
+        const response = await request(app)
+            .post("/api/v1/users/logout-all")
+            .set("Authorization", "Bearer invalid-session");
+        expect(response.status).toBe(401);
+        expect(response.headers["x-streamly-session"]).toBe("expired");
+    });
+
 });
