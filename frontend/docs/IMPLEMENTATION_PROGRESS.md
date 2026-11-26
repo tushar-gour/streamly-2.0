@@ -312,23 +312,27 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 
 Recovered `704a56b`: [all 8 jobs passed](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878976755). Implementation batch requires production AWS S3 with no custom/public endpoint, all four public access blocks, ACLs disabled and no bucket policy (dedicated bucket using identity IAM). S3 stores keys, not origin URLs. API presentation replaces media references with resource-scoped delivery endpoints; video/thumbnail visibility is checked per request; active profiles intentionally public. API responses no-store. Existing public Cloudinary and S3 URL records must be migrated before enabling this production policy; no live data altered. Verification pending.
 
-| ID | Priority/dependencies | Status | Acceptance / evidence |
-|---|---|---|---|
-| SEC-01 | P0 dedicated private bucket | IMPLEMENTED | startup rejects public/legacy config, private storage test and migration pending |
-| SEC-02 | P0 SEC-01 | IMPLEMENTED | scoped thumbnail/video/profile routes, visibility and origin regression pending |
-| SEC-03 | P0 | PENDING | verified new email, reauth, replay and revocation |
-| SEC-04 | P0 | PENDING | recovery with enumeration resistance, expiry, single use, revocation |
-| SEC-05 | P0 | PENDING | permission-scoped admin moderation/audit and denial tests |
-| SEC-06 | P0 | PENDING | real simultaneous browser refresh, one rotation |
-| PROD-01 | P1 SEC-01/02 | PENDING | isolated upload, processing, seek, replacement and cleanup |
-| PROD-02 | P1 | PENDING | persistent notifications |
-| PROD-03 | P1 SEC-03/04 | PENDING | QR, recovery codes, secure phone enrollment |
-| PROD-04 | P1 | PENDING | creator, playlist privacy, subscription and library completion |
-| QUAL-01 | P2 | PENDING | strict type audit and root-cause fixes |
-| QUAL-02 | P2 | PENDING | every screen in both themes at 3 widths, reference acceptance |
-| QUAL-03 | P2 | PENDING | WCAG and realistic web vitals |
-| REL-01 | all above | PENDING | exact-head CI, independent diff review, deployment/rollback |
+| ID      | Priority/dependencies       | Status      | Acceptance / evidence                                                            |
+| ------- | --------------------------- | ----------- | -------------------------------------------------------------------------------- |
+| SEC-01  | P0 dedicated private bucket | IMPLEMENTED | startup rejects public/legacy config, private storage test and migration pending |
+| SEC-02  | P0 SEC-01                   | IMPLEMENTED | scoped thumbnail/video/profile routes, visibility and origin regression pending  |
+| SEC-03  | P0                          | PENDING     | verified new email, reauth, replay and revocation                                |
+| SEC-04  | P0                          | PENDING     | recovery with enumeration resistance, expiry, single use, revocation             |
+| SEC-05  | P0                          | PENDING     | permission-scoped admin moderation/audit and denial tests                        |
+| SEC-06  | P0                          | PENDING     | real simultaneous browser refresh, one rotation                                  |
+| PROD-01 | P1 SEC-01/02                | PENDING     | isolated upload, processing, seek, replacement and cleanup                       |
+| PROD-02 | P1                          | PENDING     | persistent notifications                                                         |
+| PROD-03 | P1 SEC-03/04                | PENDING     | QR, recovery codes, secure phone enrollment                                      |
+| PROD-04 | P1                          | PENDING     | creator, playlist privacy, subscription and library completion                   |
+| QUAL-01 | P2                          | PENDING     | strict type audit and root-cause fixes                                           |
+| QUAL-02 | P2                          | PENDING     | every screen in both themes at 3 widths, reference acceptance                    |
+| QUAL-03 | P2                          | PENDING     | WCAG and realistic web vitals                                                    |
+| REL-01  | all above                   | PENDING     | exact-head CI, independent diff review, deployment/rollback                      |
 
 ## Iteration 31 — Actual storage integration gate
 
 SEC-01/02 and PROD-01 remain IMPLEMENTED, not verified. Added isolated MinIO object server and DB-backed multipart upload/range/image/visibility/owner-denial/replacement/deletion tests to CI. Added media signature and per-field validation, bounded FFmpeg duration probing, staging cleanup and partial upload rollback. Profile and thumbnail image reads use resource-scoped routes in S3 mode. Production example removes public base URL. No production access. Next: observe CI, repair failures, document AWS IAM and migration preflight, and run concurrent browser refresh.
+
+## Iteration 32 — Storage runner repair and browser concurrency gate
+
+Run [45882968546](https://github.com/tushar-gour/streamly-2.0/actions/runs/45882968546): existing unit/API suites and OpenAPI passed; storage infrastructure failed before tests (Docker Hub MinIO pull denied). Switched to pinned Quay image; no fallback to mocks. Applied actual CI formatter hunks. SEC-06 IMPLEMENTED: browser test removes only access cookie and reloads two actual documents sharing the same session, asserts exactly one refresh and both authenticated. Added play/seek assertions to existing generated WebM browser test. Documented AWS IAM, origin configuration, legacy migration, CDN restrictions and rollback gates. Verification pending.

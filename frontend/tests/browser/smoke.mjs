@@ -98,6 +98,21 @@ try {
     const video = document.querySelector("video");
     return video && video.readyState >= 1 && video.duration > 0;
   });
+  await page.locator("video").evaluate(async (video) => {
+    video.muted = true;
+    await video.play();
+  });
+  await page.waitForFunction(
+    () => document.querySelector("video")?.currentTime > 0.1
+  );
+  await page.locator("video").evaluate((video) => {
+    video.pause();
+    video.currentTime = 1.2;
+  });
+  await page.waitForFunction(() => {
+    const video = document.querySelector("video");
+    return video && !video.seeking && Math.abs(video.currentTime - 1.2) < 0.15;
+  });
   await page.getByRole("button", { name: "Watch later", exact: true }).click();
   await page
     .getByRole("button", { name: "Saved for later", exact: true })
@@ -144,6 +159,39 @@ try {
   await heading("Settings");
   await page.getByText("Current session", { exact: true }).waitFor();
   await capture("settings-desktop-dark");
+
+  // Same browser context shares cookies; two documents share Web Locks.
+  const secondTab = await context.newPage();
+  await secondTab.goto(`${origin}/settings`);
+  await secondTab.getByText("Current session", { exact: true }).waitFor();
+  let refreshRequests = 0;
+  const observeRefresh = (request) => {
+    if (
+      request.url().endsWith("/api/v1/users/refresh-token") &&
+      request.method() === "POST"
+    ) {
+      refreshRequests += 1;
+    }
+  };
+  context.on("request", observeRefresh);
+  try {
+    await context.clearCookies({ name: "accessToken" });
+    await Promise.all([page.reload(), secondTab.reload()]);
+    await Promise.all([
+      page.getByText("Current session", { exact: true }).waitFor(),
+      secondTab.getByText("Current session", { exact: true }).waitFor(),
+    ]);
+    assert.equal(refreshRequests, 1, "Concurrent tabs must rotate once");
+    assert.ok(
+      (await context.cookies()).some((cookie) => cookie.name === "accessToken")
+    );
+    console.log(
+      "Concurrent two-tab refresh: exactly one rotation, both tabs authenticated."
+    );
+  } finally {
+    context.off("request", observeRefresh);
+    await secondTab.close();
+  }
   await page.getByRole("radio", { name: "Light" }).check();
   await page.waitForFunction(
     () => document.documentElement.dataset.theme === "light"
@@ -182,7 +230,7 @@ try {
   await assertNoOverflow();
   assert.deepEqual(pageErrors, [], "Browser page errors");
   console.log(
-    "Browser smoke: sign-in, playlists, video metadata, likes, comments, Watch Later, sessions, theme and creator routes passed."
+    "Browser smoke: sign-in, playlists, video playback/seek, concurrent refresh, likes, comments, Watch Later, sessions, theme and creator routes passed."
   );
   console.log(
     "Observed lab values (not production Core Web Vitals):",
