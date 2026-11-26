@@ -73,7 +73,12 @@ class PrismaVideoRepository extends VideoRepository {
 
     async toggleOwnedPublication(videoId, ownerId, published) {
         const result = await prisma.video.updateMany({
-            where: { id: videoId, ownerId, moderationHeld: false, isPublished: !published },
+            where: {
+                id: videoId,
+                ownerId,
+                moderationHeld: false,
+                isPublished: !published,
+            },
             data: { isPublished: published },
         });
         return result.count === 1 ? this.findByIdWithOwner(videoId) : null;

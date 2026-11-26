@@ -133,6 +133,9 @@ jobs:
       - name: API contract tests
         run: npm run test:api
 
+      - name: Seed isolated RBAC fixtures
+        run: npm run seed:rbac
+
       - name: Integration tests
         run: npm run test:integration
 
@@ -180,9 +183,6 @@ jobs:
 
       - name: Database-backed API contracts
         run: npm run test:api
-
-      - name: Seed isolated storage-test permissions
-        run: npm run seed:rbac
 
       - name: Start disposable S3-compatible storage
         run: |

@@ -321,7 +321,10 @@ class VideoService {
             !video.isPublished
         );
         if (!updatedVideo) {
-            throw new ApiError(409, "Publication changed or is held by moderation");
+            throw new ApiError(
+                409,
+                "Publication changed or is held by moderation"
+            );
         }
 
         const message = updatedVideo.isPublished

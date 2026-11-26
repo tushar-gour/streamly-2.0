@@ -8,7 +8,9 @@ export class ModerationService {
         const [published, held, unpublished] = await Promise.all([
             prisma.video.count({ where: { isPublished: true } }),
             prisma.video.count({ where: { moderationHeld: true } }),
-            prisma.video.count({ where: { isPublished: false, moderationHeld: false } }),
+            prisma.video.count({
+                where: { isPublished: false, moderationHeld: false },
+            }),
         ]);
         return { published, held, unpublished };
     }
@@ -16,8 +18,12 @@ export class ModerationService {
     async list(page: number) {
         return prisma.video.findMany({
             select: {
-                id: true, title: true, isPublished: true, moderationHeld: true,
-                createdAt: true, owner: { select: { username: true } },
+                id: true,
+                title: true,
+                isPublished: true,
+                moderationHeld: true,
+                createdAt: true,
+                owner: { select: { username: true } },
             },
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             skip: (page - 1) * 25,
@@ -25,20 +31,42 @@ export class ModerationService {
         });
     }
 
-    async setHold(actorId: string, videoId: string, held: unknown, reason: unknown) {
-        if (!/^[a-f0-9]{24}$/i.test(videoId) ||
+    async setHold(
+        actorId: string,
+        videoId: string,
+        held: unknown,
+        reason: unknown
+    ) {
+        if (
+            !/^[a-f0-9]{24}$/i.test(videoId) ||
             typeof held !== "boolean" ||
-            typeof reason !== "string" || !reason.trim() || reason.trim().length > 500) {
-            throw new ApiError(400, "A video, hold state and reason are required");
+            typeof reason !== "string" ||
+            !reason.trim() ||
+            reason.trim().length > 500
+        ) {
+            throw new ApiError(
+                400,
+                "A video, hold state and reason are required"
+            );
         }
         const result = await prisma.$transaction(async (tx) => {
             const changed = await tx.video.updateMany({
                 where: { id: videoId, moderationHeld: !held },
                 data: { moderationHeld: held, isPublished: false },
             });
-            if (changed.count !== 1) throw new ApiError(409, "Video unavailable or moderation state unchanged");
+            if (changed.count !== 1)
+                throw new ApiError(
+                    409,
+                    "Video unavailable or moderation state unchanged"
+                );
             await tx.moderationAction.create({
-                data: { id: createId(), actorId, resourceId: videoId, action: held ? "video_hold" : "video_release", reason: reason.trim() },
+                data: {
+                    id: createId(),
+                    actorId,
+                    resourceId: videoId,
+                    action: held ? "video_hold" : "video_release",
+                    reason: reason.trim(),
+                },
             });
             return { id: videoId, moderationHeld: held, isPublished: false };
         });

@@ -71,9 +71,14 @@ const openApiDocument = {
                 description: protectedDescription("video:publish:any"),
                 security: authSecurity,
                 responses: {
-                    200: successResponse("Publication counts", { type: "object", properties: {
-                        published: { type: "integer" }, held: { type: "integer" }, unpublished: { type: "integer" },
-                    } }),
+                    200: successResponse("Publication counts", {
+                        type: "object",
+                        properties: {
+                            published: { type: "integer" },
+                            held: { type: "integer" },
+                            unpublished: { type: "integer" },
+                        },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -84,9 +89,23 @@ const openApiDocument = {
                 summary: "Moderation video listing",
                 description: protectedDescription("video:publish:any"),
                 security: authSecurity,
-                parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }],
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: {
+                            type: "integer",
+                            minimum: 1,
+                            maximum: 10000,
+                            default: 1,
+                        },
+                    },
+                ],
                 responses: {
-                    200: successResponse("25 videos per page", { type: "array", items: { type: "object" } }),
+                    200: successResponse("25 videos per page", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -95,7 +114,9 @@ const openApiDocument = {
             patch: {
                 tags: ["Dashboard"],
                 summary: "Place or release an audited moderation hold",
-                description: protectedDescription("video:publish:any") + " Release leaves the video unpublished.",
+                description:
+                    protectedDescription("video:publish:any") +
+                    " Release leaves the video unpublished.",
                 security: authSecurity,
                 parameters: [idParameter("videoId", "Video ID")],
                 requestBody: {
@@ -103,11 +124,20 @@ const openApiDocument = {
                     content: jsonContent({
                         type: "object",
                         required: ["held", "reason"],
-                        properties: { held: { type: "boolean" }, reason: { type: "string", minLength: 1, maxLength: 500 } },
+                        properties: {
+                            held: { type: "boolean" },
+                            reason: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 500,
+                            },
+                        },
                     }),
                 },
                 responses: {
-                    200: successResponse("Moderation updated", { type: "object" }),
+                    200: successResponse("Moderation updated", {
+                        type: "object",
+                    }),
                     ...standardErrors,
                 },
             },
