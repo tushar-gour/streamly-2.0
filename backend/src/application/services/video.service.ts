@@ -221,7 +221,7 @@ class VideoService {
             updateData.description = body.description.trim();
 
         if (file) {
-            const oldThumbnailPublicId = this.cloudinaryService.extractPublicId(
+            const oldThumbnailPublicId = this.mediaStorageService.extractPublicId(
                 video.thumbnail
             );
             const thumbnailUpload = await this.mediaStorageService.upload(
@@ -269,10 +269,10 @@ class VideoService {
         const video = await this.#findVideoOrFail(videoId);
         this.#verifyOwnership(video, userId);
 
-        const videoPublicId = this.cloudinaryService.extractPublicId(
+        const videoPublicId = this.mediaStorageService.extractPublicId(
             video.videoFile
         );
-        const thumbnailPublicId = this.cloudinaryService.extractPublicId(
+        const thumbnailPublicId = this.mediaStorageService.extractPublicId(
             video.thumbnail
         );
 
@@ -340,6 +340,13 @@ class VideoService {
                 "Cache-Control": "private, no-store",
             },
         };
+    }
+
+    async streamThumbnail({ videoId, currentUserId }) {
+        ObjectIdValidator.ensureValid(videoId, "video ID");
+        const video = await this.#findVideoOrFail(videoId);
+        await this.#ensureViewAccess(video, currentUserId);
+        return this.mediaStreamService.streamImage(video.thumbnail);
     }
 
     async #ensureViewAccess(video, currentUserId) {

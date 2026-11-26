@@ -14,7 +14,9 @@ export function safeMediaUrl(value?: string | null) {
       !value.startsWith("//") &&
       !value.startsWith("/\\")
     ) {
-      return value;
+      return value.startsWith("/api/v1/")
+        ? `${frontendConfig.apiBaseUrl}${value}`
+        : value;
     }
   }
 

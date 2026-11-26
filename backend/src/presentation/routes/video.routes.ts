@@ -15,6 +15,7 @@ import {
     deleteVideo,
     togglePublishStatus,
     streamVideo,
+    streamThumbnail,
 } from "../controllers/video.controller.js";
 
 const router = Router();
@@ -23,6 +24,7 @@ router.route("/").get(getAllVideos);
 
 router.route("/:videoId").get(optionalAuth, getVideoById);
 router.route("/:videoId/stream").get(optionalAuth, streamVideo);
+router.route("/:videoId/thumbnail").get(optionalAuth, streamThumbnail);
 
 router.route("/").post(
     verifyJWT,

@@ -300,7 +300,7 @@ class UserService {
         }
 
         const currentUser = await this.userRepository.findById(userId);
-        const oldAvatarPublicId = this.cloudinaryService.extractPublicId(
+        const oldAvatarPublicId = this.mediaStorageService.extractPublicId(
             currentUser.avatar
         );
         const avatar = await this.mediaStorageService.upload(avatarLocalPath);
@@ -337,7 +337,7 @@ class UserService {
         }
 
         const currentUser = await this.userRepository.findById(userId);
-        const oldCoverPublicId = this.cloudinaryService.extractPublicId(
+        const oldCoverPublicId = this.mediaStorageService.extractPublicId(
             currentUser.coverImage
         );
         const coverImage =

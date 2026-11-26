@@ -148,7 +148,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
             include: {
                 videos: {
                     where: { video: { isPublished: true } },
-                    include: { video: { select: { thumbnail: true } } },
+                    include: { video: { select: { id: true, thumbnail: true } } },
                     orderBy: { createdAt: "asc" },
                 },
             },
@@ -163,6 +163,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                 description: playlist.description,
                 videosCount: playlist.videos.length,
                 thumbnail: firstVideo?.thumbnail,
+                thumbnailVideoId: firstVideo?.id,
                 createdAt: playlist.createdAt,
                 updatedAt: playlist.updatedAt,
             };

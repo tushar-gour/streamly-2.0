@@ -1,12 +1,13 @@
 // @ts-nocheck
 import { HttpStatus } from "../constants/index.js";
+import { presentMedia } from "./media-presentation.js";
 
 class ApiResponse {
     constructor(statusCode, data, message = "Success", meta = null) {
         this.success = statusCode < 400;
         this.statusCode = statusCode;
         this.message = message;
-        this.data = data;
+        this.data = presentMedia(data);
         this.timestamp = new Date().toISOString();
         if (meta) this.meta = meta;
     }

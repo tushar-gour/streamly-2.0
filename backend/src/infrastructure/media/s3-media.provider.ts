@@ -6,6 +6,9 @@ import { Readable } from "node:stream";
 import {
     DeleteObjectCommand,
     GetObjectCommand,
+    GetPublicAccessBlockCommand,
+    GetBucketOwnershipControlsCommand,
+    GetBucketPolicyCommand,
     HeadObjectCommand,
     PutObjectCommand,
     S3Client,
@@ -42,6 +45,7 @@ const contentTypesByExtension: Record<string, string> = {
 const createS3Client = (): S3Client =>
     new S3Client({
         region: appConfig.aws.region,
+        endpoint: appConfig.aws.s3Endpoint || undefined,
         forcePathStyle: appConfig.aws.s3ForcePathStyle,
         credentials:
             appConfig.aws.accessKeyId && appConfig.aws.secretAccessKey
@@ -62,12 +66,6 @@ const createObjectKey = (folder: string, filePath: string): string => {
     const safeFolder = folder.replace(/^\/+|\/+$/g, "") || "media";
     const uniqueName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
     return `${safeFolder}/${uniqueName}`;
-};
-
-const getPublicUrl = (objectKey: string): string => {
-    const baseUrl = appConfig.aws.s3PublicBaseUrl;
-    if (baseUrl) return `${baseUrl.replace(/\/$/u, "")}/${objectKey}`;
-    return `https://${appConfig.aws.s3Bucket}.s3.${appConfig.aws.region}.amazonaws.com/${objectKey}`;
 };
 
 const parseRange = (
@@ -121,23 +119,13 @@ const getObjectKeyFromTrustedUrl = (urlOrKey: string): string => {
         throw new ApiError(HttpStatus.NOT_FOUND, "Media object not found");
     }
 
-    if (!urlOrKey.startsWith("http://") && !urlOrKey.startsWith("https://")) {
-        return urlOrKey.replace(/^\/+/u, "");
+    if (/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_.-]+)+$/.test(urlOrKey)) {
+        if (!urlOrKey.split("/").some((part) => part === "." || part === "..")) {
+            return urlOrKey;
+        }
     }
 
-    const parsedUrl = new URL(urlOrKey);
-    const publicBaseUrl = appConfig.aws.s3PublicBaseUrl;
-
-    if (publicBaseUrl && urlOrKey.startsWith(publicBaseUrl)) {
-        return parsedUrl.pathname.replace(/^\/+/u, "");
-    }
-
-    const bucketPrefix = `${appConfig.aws.s3Bucket}.s3.`;
-    if (parsedUrl.hostname.startsWith(bucketPrefix)) {
-        return parsedUrl.pathname.replace(/^\/+/u, "");
-    }
-
-    throw new ApiError(HttpStatus.BAD_REQUEST, "Unsupported S3 media URL");
+    throw new ApiError(HttpStatus.BAD_REQUEST, "Unsupported S3 media reference");
 };
 
 class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
@@ -145,6 +133,38 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
 
     constructor(client = createS3Client()) {
         this.#client = client;
+    }
+
+    async assertPrivateOrigin(): Promise<void> {
+        const Bucket = appConfig.aws.s3Bucket;
+        const { PublicAccessBlockConfiguration: block } =
+            await this.#client.send(new GetPublicAccessBlockCommand({ Bucket }));
+        if (
+            !block?.BlockPublicAcls ||
+            !block.IgnorePublicAcls ||
+            !block.BlockPublicPolicy ||
+            !block.RestrictPublicBuckets
+        ) {
+            throw new Error("S3 bucket must block all public access");
+        }
+        const { OwnershipControls } = await this.#client.send(
+            new GetBucketOwnershipControlsCommand({ Bucket })
+        );
+        if (!OwnershipControls?.Rules?.some(
+            (rule) => rule.ObjectOwnership === "BucketOwnerEnforced"
+        )) {
+            throw new Error("S3 bucket must disable ACLs");
+        }
+        // A dedicated bucket uses identity-based IAM only; no CDN or cross-account grants.
+        try {
+            await this.#client.send(new GetBucketPolicyCommand({ Bucket }));
+        } catch (error) {
+            if (error instanceof Error && error.name === "NoSuchBucketPolicy") {
+                return;
+            }
+            throw error;
+        }
+        throw new Error("Private media bucket must not have a bucket policy");
     }
 
     async upload({
@@ -174,7 +194,6 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
 
             fs.unlinkSync(localFilePath);
 
-            const publicUrl = getPublicUrl(objectKey);
             s3Logger.info(
                 { resourceType, bytes: stats.size },
                 "s3 upload completed"
@@ -183,8 +202,8 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
             return {
                 publicId: objectKey,
                 objectKey,
-                url: publicUrl,
-                secureUrl: publicUrl,
+                url: objectKey,
+                secureUrl: objectKey,
                 resourceType,
                 bytes: stats.size,
             };
@@ -262,7 +281,7 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
             "Accept-Ranges": "bytes",
             "Content-Length": String(contentLength),
             "Content-Type": response.ContentType || "video/mp4",
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "private, no-store",
         };
 
         if (parsedRange) {
@@ -270,10 +289,14 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
                 `bytes ${parsedRange.start}-${parsedRange.end}/${size}`;
         }
 
+        if (!(response.Body instanceof Readable)) {
+            throw new ApiError(HttpStatus.BAD_GATEWAY, "Storage returned no media stream");
+        }
+
         return {
             statusCode: parsedRange ? 206 : HttpStatus.OK,
             headers,
-            body: response.Body as Readable,
+            body: response.Body,
         };
     }
 }

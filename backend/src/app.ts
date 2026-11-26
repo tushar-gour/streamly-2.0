@@ -138,6 +138,10 @@ class Application {
     #configureRoutes() {
         const API_PREFIX = "/api/v1";
 
+        this.app.use(API_PREFIX, (_req, res, next) => {
+            res.set("Cache-Control", "private, no-store");
+            next();
+        });
         this.app.use(API_PREFIX, globalApiRateLimiter);
 
         this.app.use(`${API_PREFIX}/healthcheck`, healthcheckRouter);

@@ -339,6 +339,7 @@ const appConfig = Object.freeze({
     aws: Object.freeze({
         region: readEnv("AWS_REGION", "ap-south-1"),
         s3Bucket: readEnv("AWS_S3_BUCKET"),
+        s3Endpoint: readEnv("AWS_S3_ENDPOINT"),
         accessKeyId: readEnv("AWS_ACCESS_KEY_ID"),
         secretAccessKey: readEnv("AWS_SECRET_ACCESS_KEY"),
         s3PublicBaseUrl: readEnv("AWS_S3_PUBLIC_BASE_URL"),
@@ -403,6 +404,17 @@ const assertStartupConfig = () => {
             missingKeys.push("CLOUDINARY_API_KEY");
         if (!appConfig.cloudinary.apiSecret)
             missingKeys.push("CLOUDINARY_API_SECRET");
+    }
+
+    if (
+        isProduction() &&
+        (appConfig.media.storageProvider !== "s3" ||
+            appConfig.aws.s3PublicBaseUrl ||
+            appConfig.aws.s3Endpoint)
+    ) {
+        throw new StartupConfigError([
+            "Production requires private AWS S3 without a public base URL or custom endpoint",
+        ]);
     }
 
     if (appConfig.mfa.enabled && !appConfig.mfa.secretEncryptionKey) {

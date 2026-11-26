@@ -6,6 +6,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requirePermission } from "../middlewares/authorization.middleware.js";
 import { authRateLimiter } from "../middlewares/security.middleware.js";
 import {
+    UserController,
     registerUser,
     loginUser,
     logoutUser,
@@ -80,5 +81,6 @@ router
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 
 router.route("/watch-history").get(verifyJWT, getWatchHistory);
+router.route("/:userId/media/:kind").get(UserController.profileMedia);
 
 export default router;

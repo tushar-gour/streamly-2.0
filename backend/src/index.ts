@@ -155,6 +155,12 @@ class Server {
 const bootstrap = async () => {
     try {
         assertStartupConfig();
+        if (appConfig.nodeEnv === "production") {
+            const { S3MediaProvider } = await import(
+                "./infrastructure/media/s3-media.provider.js"
+            );
+            await new S3MediaProvider().assertPrivateOrigin();
+        }
         const { app } = await import("./app.js");
         const server = new Server(app);
         await server.start();
