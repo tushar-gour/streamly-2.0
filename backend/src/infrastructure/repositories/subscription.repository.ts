@@ -38,7 +38,12 @@ class PrismaSubscriptionRepository extends SubscriptionRepository {
                     subscriberId: subscriptionData.subscriber,
                 },
             });
-            await recordNotification(tx, subscription.channelId, "subscription", "A viewer subscribed to your channel.");
+            await recordNotification(
+                tx,
+                subscription.channelId,
+                "subscription",
+                "A viewer subscribed to your channel."
+            );
             return subscription;
         });
     }

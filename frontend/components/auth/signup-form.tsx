@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 
@@ -178,7 +179,10 @@ export function SignupForm() {
               ) : null}
               {stage.kind === "mfa" ? (
                 <div className="grid gap-3 rounded-card border border-[color:var(--color-border)] p-4">
-                  <p className="text-sm">Manual setup key (time-based)</p>
+                  <div className="mx-auto w-fit rounded-md bg-white p-3">
+                    <QRCodeSVG value={stage.uri} size={176} marginSize={2} title="Scan with your authenticator app" />
+                  </div>
+                  <p className="text-sm">Or enter the manual setup key (time-based)</p>
                   <code className="break-all text-sm select-all">
                     {stage.secret}
                   </code>

@@ -196,6 +196,30 @@ databaseDescribe("media and object privacy", () => {
         );
     });
 
+    it("persists subscription notifications and scopes read state to the recipient", async () => {
+        const owner = await account();
+        const viewer = await account();
+        const base = "/api/v1/notifications";
+        const auth = "Bearer " + owner.token;
+        expect((await request(app).get(base)).status).toBe(401);
+        const subscribed = await request(app).post("/api/v1/subscriptions/c/" + owner.user._id).set("Authorization", "Bearer " + viewer.token);
+        expect(subscribed.status).toBe(201);
+        const response = await request(app).get(base).set("Authorization", auth);
+        expect(response.status).toBe(200);
+        expect(response.body.data.unread).toBe(1);
+        expect(response.body.data.items[0].kind).toBe("subscription");
+        const id = response.body.data.items[0].id;
+        expect((await request(app).patch(base + "/" + id + "/read").set("Authorization", "Bearer " + viewer.token)).status).toBe(404);
+        expect((await request(app).get(base).set("Authorization", "Bearer " + viewer.token)).body.data.items).toEqual([]);
+        expect((await request(app).patch(base + "/" + id + "/read").set("Authorization", auth)).status).toBe(200);
+        expect((await request(app).get(base).set("Authorization", auth)).body.data.unread).toBe(0);
+        await prisma.notification.create({ data: { id: createId(), userId: owner.user._id, kind: "security", message: "Test security activity" } });
+        await prisma.notification.create({ data: { id: createId(), userId: viewer.user._id, kind: "security", message: "Separate account activity" } });
+        expect((await request(app).patch(base + "/read-all").set("Authorization", auth)).status).toBe(200);
+        expect((await request(app).get(base).set("Authorization", auth)).body.data.unread).toBe(0);
+        expect((await request(app).get(base).set("Authorization", "Bearer " + viewer.token)).body.data.unread).toBe(1);
+    });
+
     it("denies unpublished details to guests and other accounts", async () => {
         const { owner, viewer, video } = await fixture();
         const path = "/api/v1/videos/" + video.id;

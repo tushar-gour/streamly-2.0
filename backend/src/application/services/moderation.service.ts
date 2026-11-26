@@ -69,8 +69,18 @@ export class ModerationService {
                     reason: reason.trim(),
                 },
             });
-            const video = await tx.video.findUniqueOrThrow({ where: { id: videoId }, select: { ownerId: true } });
-            await recordNotification(tx, video.ownerId, "moderation", held ? "A moderation hold was placed on one of your videos." : "A moderation hold on one of your videos was released. It remains unpublished.");
+            const video = await tx.video.findUniqueOrThrow({
+                where: { id: videoId },
+                select: { ownerId: true },
+            });
+            await recordNotification(
+                tx,
+                video.ownerId,
+                "moderation",
+                held
+                    ? "A moderation hold was placed on one of your videos."
+                    : "A moderation hold on one of your videos was released. It remains unpublished."
+            );
             return { id: videoId, moderationHeld: held, isPublished: false };
         });
         audit.info("moderation.video_visibility", { actorId, videoId, held });

@@ -64,6 +64,35 @@ const openApiDocument = {
     ],
     components,
     paths: {
+        "/api/v1/notifications": {
+            get: {
+                tags: ["Users"],
+                summary: "List own notifications and unread count",
+                security: authSecurity,
+                parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } }],
+                responses: {
+                    200: successResponse("Notification inbox", { type: "object", properties: { items: { type: "array", items: { type: "object" } }, unread: { type: "integer" } } }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/notifications/read-all": {
+            patch: {
+                tags: ["Users"],
+                summary: "Mark own notifications read",
+                security: authSecurity,
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
+        "/api/v1/notifications/{notificationId}/read": {
+            patch: {
+                tags: ["Users"],
+                summary: "Mark own notification read",
+                security: authSecurity,
+                parameters: [idParameter("notificationId", "Notification ID")],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
         "/api/v1/admin/overview": {
             get: {
                 tags: ["Dashboard"],
