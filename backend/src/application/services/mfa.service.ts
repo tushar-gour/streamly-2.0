@@ -63,19 +63,23 @@ class MfaService {
             secret,
         });
 
-        await prisma.userMfa.upsert({
-            where: { userId_type: { userId, type: "totp" } },
-            create: {
+        const encrypted = encryptSecret(secret);
+        await prisma.userMfa.createMany({
+            data: {
                 id: createId(),
                 userId,
                 type: "totp",
-                secretEncrypted: encryptSecret(secret),
+                secretEncrypted: encrypted,
             },
-            update: {
-                secretEncrypted: encryptSecret(secret),
-                enabledAt: null,
-            },
+            skipDuplicates: true,
         });
+        const updated = await prisma.userMfa.updateMany({
+            where: { userId, type: "totp", enabledAt: null },
+            data: { secretEncrypted: encrypted },
+        });
+        if (updated.count !== 1) {
+            throw new ApiError(409, "Authenticator is already enabled");
+        }
 
         return { otpauthUrl };
     }
@@ -84,7 +88,9 @@ class MfaService {
         const method = await prisma.userMfa.findUnique({
             where: { userId_type: { userId, type: "totp" } },
         });
-        if (!method) throw new ApiError(404, "MFA setup not found");
+        if (!method || method.enabledAt) {
+            throw new ApiError(404, "Pending MFA setup not found");
+        }
 
         const secret = decryptSecret(method.secretEncrypted);
         if (!verifySync({ secret, token: code }).valid) {
@@ -92,16 +98,30 @@ class MfaService {
         }
 
         const now = new Date();
-        await prisma.$transaction([
-            prisma.userMfa.update({
-                where: { id: method.id },
+        await prisma.$transaction(async (tx) => {
+            const enabled = await tx.userMfa.updateMany({
+                where: {
+                    id: method.id,
+                    enabledAt: null,
+                    secretEncrypted: method.secretEncrypted,
+                },
                 data: { enabledAt: now, lastVerifiedAt: now },
-            }),
-            prisma.user.update({
-                where: { id: userId },
+            });
+            if (enabled.count !== 1) {
+                throw new ApiError(409, "Authenticator setup changed");
+            }
+            const activated = await tx.user.updateMany({
+                where: {
+                    id: userId,
+                    onboardingStatus: "mfa_pending",
+                    emailVerifiedAt: { not: null },
+                },
                 data: { mfaEnabledAt: now, onboardingStatus: "active" },
-            }),
-        ]);
+            });
+            if (activated.count !== 1) {
+                throw new ApiError(409, "Account setup is no longer available");
+            }
+        });
 
         return { mfaEnabled: true };
     }

@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { AuthPlatformController } from "../controllers/auth-platform.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyOnboarding } from "../middlewares/onboarding.middleware.js";
 import { authRateLimiter } from "../middlewares/security.middleware.js";
 
 const router = Router();
@@ -25,18 +26,19 @@ router.post(
 );
 router.post(
     "/signup/phone/verify",
+    verifyJWT,
     authRateLimiter,
     AuthPlatformController.signupPhoneVerify
 );
 router.post(
     "/signup/mfa/setup",
-    verifyJWT,
+    verifyOnboarding,
     authRateLimiter,
     AuthPlatformController.signupMfaSetup
 );
 router.post(
     "/signup/mfa/verify",
-    verifyJWT,
+    verifyOnboarding,
     authRateLimiter,
     AuthPlatformController.signupMfaVerify
 );

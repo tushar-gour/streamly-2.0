@@ -66,8 +66,8 @@ class AuthPlatformController {
 
     static signupPhoneStart = asyncHandler(async (req, res) => {
         const result = await authPlatformService.signupPhoneStart({
-            userId: req.user._id,
             ...req.body,
+            userId: req.user._id,
         });
         return res
             .status(200)
@@ -75,7 +75,10 @@ class AuthPlatformController {
     });
 
     static signupPhoneVerify = asyncHandler(async (req, res) => {
-        const result = await authPlatformService.signupPhoneVerify(req.body);
+        const result = await authPlatformService.signupPhoneVerify({
+            ...req.body,
+            userId: req.user._id,
+        });
         return res
             .status(200)
             .json(ApiResponse.success(result.data, result.message));

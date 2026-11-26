@@ -45,6 +45,27 @@ class TokenService {
         );
     }
 
+    generateOnboardingToken(user) {
+        return jwt.sign(
+            {
+                _id: user.id,
+                email: user.email,
+                sessionId: createId(),
+                type: "onboarding",
+            },
+            appConfig.jwt.accessTokenSecret,
+            { expiresIn: "10m" }
+        );
+    }
+
+    verifyOnboardingToken(token) {
+        return this.#verifyToken(
+            token,
+            appConfig.jwt.accessTokenSecret,
+            "onboarding"
+        );
+    }
+
     verifyAccessToken(token) {
         const payload = this.#verifyToken(
             token,

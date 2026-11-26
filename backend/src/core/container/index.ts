@@ -91,6 +91,7 @@ const authPlatformService = new AuthPlatformService({
     otpService,
     mfaService,
     authService,
+    tokenService,
     roleRepository,
     userRoleRepository,
 });
