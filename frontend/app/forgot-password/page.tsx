@@ -67,22 +67,76 @@ export default function ForgotPasswordPage() {
         description="Reset your password securely using your verified email."
       >
         {done ? (
-          <p role="status">Password reset. Sign in again with your new password and existing authenticator, if enabled.</p>
+          <p role="status">
+            Password reset. Sign in again with your new password and existing
+            authenticator, if enabled.
+          </p>
         ) : (
           <form className="grid gap-4" onSubmit={submit}>
             {!challenge ? (
-              <Input label="Email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} disabled={pending} />
+              <Input
+                label="Email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                disabled={pending}
+              />
             ) : (
               <>
-                <p role="status">If your account is eligible, a verification code will be sent to your email. The code expires in 10 minutes.</p>
-                <Input label="Verification code" autoComplete="one-time-code" required value={code} onChange={(event) => setCode(event.target.value)} disabled={pending} />
-                <PasswordInput id="recovery-password" label="New password" autoComplete="new-password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} disabled={pending} />
-                <PasswordInput id="recovery-confirmation" label="Confirm new password" autoComplete="new-password" required minLength={8} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={pending} />
+                <p role="status">
+                  If your account is eligible, a verification code will be sent
+                  to your email. The code expires in 10 minutes.
+                </p>
+                <Input
+                  label="Verification code"
+                  autoComplete="one-time-code"
+                  required
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  disabled={pending}
+                />
+                <PasswordInput
+                  id="recovery-password"
+                  label="New password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={pending}
+                />
+                <PasswordInput
+                  id="recovery-confirmation"
+                  label="Confirm new password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  disabled={pending}
+                />
               </>
             )}
             {error ? <p role="alert">{error}</p> : null}
-            <Button type="submit" disabled={pending}>{challenge ? "Reset password" : "Send verification code"}</Button>
-            {challenge ? <Button type="button" variant="secondary" disabled={pending} onClick={() => { setChallenge(""); setCode(""); setError(""); }}>Start again</Button> : null}
+            <Button type="submit" disabled={pending}>
+              {challenge ? "Reset password" : "Send verification code"}
+            </Button>
+            {challenge ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={pending}
+                onClick={() => {
+                  setChallenge("");
+                  setCode("");
+                  setError("");
+                }}
+              >
+                Start again
+              </Button>
+            ) : null}
           </form>
         )}
         <Button asChild variant="secondary" size="lg">

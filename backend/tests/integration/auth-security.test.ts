@@ -36,8 +36,12 @@ databaseDescribe("database authentication security", () => {
     const createdIds: string[] = [];
     const queued: string[] = [];
     const credentials = new CredentialChallengeService(
-        async (id) => { queued.push(id); },
-        async () => { throw new Error("MFA verification required"); }
+        async (id) => {
+            queued.push(id);
+        },
+        async () => {
+            throw new Error("MFA verification required");
+        }
     );
     async function deliveredCode(id: string) {
         let code = "";
@@ -61,7 +65,9 @@ databaseDescribe("database authentication security", () => {
             where: { id: { in: createdIds } },
         });
         createdIds.length = 0;
-        await prisma.authChallenge.deleteMany({ where: { id: { in: queued } } });
+        await prisma.authChallenge.deleteMany({
+            where: { id: { in: queued } },
+        });
         queued.length = 0;
     });
 
@@ -193,7 +199,9 @@ databaseDescribe("database authentication security", () => {
             userAgent: undefined,
             ipAddress: undefined,
         });
-        const unknown = await credentials.startRecovery(`${createId()}@example.com`);
+        const unknown = await credentials.startRecovery(
+            `${createId()}@example.com`
+        );
         expect(Object.keys(unknown)).toEqual(["challengeId"]);
         expect(await deliveredCode(unknown.challengeId)).toBe("");
         const challenge = await credentials.startRecovery(user.email);
@@ -202,14 +210,31 @@ databaseDescribe("database authentication security", () => {
         const code = await deliveredCode(challenge.challengeId);
         expect(code).toMatch(/^[a-f0-9]{32}$/);
         const wrong = code === "0".repeat(32) ? "1".repeat(32) : "0".repeat(32);
-        await expect(credentials.completeRecovery({ ...challenge, code: wrong, password: "NewPassword123!" })).rejects.toThrow("Invalid or expired");
-        const attempts = await prisma.authChallenge.findUniqueOrThrow({ where: { id: challenge.challengeId } });
+        await expect(
+            credentials.completeRecovery({
+                ...challenge,
+                code: wrong,
+                password: "NewPassword123!",
+            })
+        ).rejects.toThrow("Invalid or expired");
+        const attempts = await prisma.authChallenge.findUniqueOrThrow({
+            where: { id: challenge.challengeId },
+        });
         expect(attempts.failedAttempts).toBe(1);
         const input = { ...challenge, code, password: "NewPassword123!" };
-        const results = await Promise.allSettled([credentials.completeRecovery(input), credentials.completeRecovery(input)]);
-        expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-        await expect(auth.verifyAccessToken(session.accessToken)).rejects.toThrow();
-        await expect(auth.refreshSession(session.refreshToken)).rejects.toThrow();
+        const results = await Promise.allSettled([
+            credentials.completeRecovery(input),
+            credentials.completeRecovery(input),
+        ]);
+        expect(
+            results.filter((result) => result.status === "fulfilled")
+        ).toHaveLength(1);
+        await expect(
+            auth.verifyAccessToken(session.accessToken)
+        ).rejects.toThrow();
+        await expect(
+            auth.refreshSession(session.refreshToken)
+        ).rejects.toThrow();
         const stored = await users.findByIdWithPassword(user._id);
         expect(await stored.isPasswordCorrect(input.password)).toBe(true);
         expect(await stored.isPasswordCorrect("ValidPassword123!")).toBe(false);
@@ -218,21 +243,60 @@ databaseDescribe("database authentication security", () => {
     it("binds email change to the reauthenticated account and session", async () => {
         const user = await createUser();
         const other = await createUser();
-        const session = await auth.createLoginSession({ user, userAgent: undefined, ipAddress: undefined });
-        const otherSession = await auth.createLoginSession({ user: other, userAgent: undefined, ipAddress: undefined });
+        const session = await auth.createLoginSession({
+            user,
+            userAgent: undefined,
+            ipAddress: undefined,
+        });
+        const otherSession = await auth.createLoginSession({
+            user: other,
+            userAgent: undefined,
+            ipAddress: undefined,
+        });
         const target = `${createId()}@example.com`;
-        await expect(credentials.startEmailChange(user._id, session.sessionId, { email: target, password: "wrong-password" })).rejects.toThrow("Current credentials");
-        const challenge = await credentials.startEmailChange(user._id, session.sessionId, { email: target, password: "ValidPassword123!" });
+        await expect(
+            credentials.startEmailChange(user._id, session.sessionId, {
+                email: target,
+                password: "wrong-password",
+            })
+        ).rejects.toThrow("Current credentials");
+        const challenge = await credentials.startEmailChange(
+            user._id,
+            session.sessionId,
+            { email: target, password: "ValidPassword123!" }
+        );
         const code = await deliveredCode(challenge.challengeId);
         expect((await users.findById(user._id)).email).toBe(user.email);
-        await expect(credentials.completeEmailChange(other._id, otherSession.sessionId, { ...challenge, code })).rejects.toThrow("Invalid or expired");
-        await expect(credentials.completeEmailChange(user._id, otherSession.sessionId, { ...challenge, code })).rejects.toThrow("Invalid or expired");
-        await credentials.completeEmailChange(user._id, session.sessionId, { ...challenge, code });
+        await expect(
+            credentials.completeEmailChange(other._id, otherSession.sessionId, {
+                ...challenge,
+                code,
+            })
+        ).rejects.toThrow("Invalid or expired");
+        await expect(
+            credentials.completeEmailChange(user._id, otherSession.sessionId, {
+                ...challenge,
+                code,
+            })
+        ).rejects.toThrow("Invalid or expired");
+        await credentials.completeEmailChange(user._id, session.sessionId, {
+            ...challenge,
+            code,
+        });
         expect((await users.findById(user._id)).email).toBe(target);
         expect((await users.findById(user._id)).emailVerifiedAt).not.toBeNull();
-        await expect(auth.verifyAccessToken(session.accessToken)).rejects.toThrow();
-        await expect(credentials.completeEmailChange(user._id, session.sessionId, { ...challenge, code })).rejects.toThrow("Invalid or expired");
-        await expect(auth.verifyAccessToken(otherSession.accessToken)).resolves.toBeDefined();
+        await expect(
+            auth.verifyAccessToken(session.accessToken)
+        ).rejects.toThrow();
+        await expect(
+            credentials.completeEmailChange(user._id, session.sessionId, {
+                ...challenge,
+                code,
+            })
+        ).rejects.toThrow("Invalid or expired");
+        await expect(
+            auth.verifyAccessToken(otherSession.accessToken)
+        ).resolves.toBeDefined();
     });
 
     it("rejects expired recovery codes", async () => {
@@ -240,8 +304,17 @@ databaseDescribe("database authentication security", () => {
         await users.markEmailVerified(user._id);
         const challenge = await credentials.startRecovery(user.email);
         const code = await deliveredCode(challenge.challengeId);
-        await prisma.authChallenge.update({ where: { id: challenge.challengeId }, data: { expiresAt: new Date(0) } });
-        await expect(credentials.completeRecovery({ ...challenge, code, password: "NewPassword123!" })).rejects.toThrow("Invalid or expired");
+        await prisma.authChallenge.update({
+            where: { id: challenge.challengeId },
+            data: { expiresAt: new Date(0) },
+        });
+        await expect(
+            credentials.completeRecovery({
+                ...challenge,
+                code,
+                password: "NewPassword123!",
+            })
+        ).rejects.toThrow("Invalid or expired");
     });
 
     it("never treats an onboarding credential as an access token", async () => {

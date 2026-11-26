@@ -79,7 +79,10 @@ const openApiDocument = {
                     }),
                 },
                 responses: {
-                    200: successResponse("Challenge accepted", { type: "object", properties: { challengeId: { type: "string" } } }),
+                    200: successResponse("Challenge accepted", {
+                        type: "object",
+                        properties: { challengeId: { type: "string" } },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -92,16 +95,22 @@ const openApiDocument = {
                     required: true,
                     content: jsonContent({
                         type: "object",
-                        required: ["challengeId","code","password"],
+                        required: ["challengeId", "code", "password"],
                         properties: {
                             challengeId: { type: "string" },
-                            code: { type: "string", minLength: 32, maxLength: 32 },
+                            code: {
+                                type: "string",
+                                minLength: 32,
+                                maxLength: 32,
+                            },
                             password: { type: "string", minLength: 8 },
                         },
                     }),
                 },
                 responses: {
-                    200: emptySuccessResponse("Credential updated; sessions revoked"),
+                    200: emptySuccessResponse(
+                        "Credential updated; sessions revoked"
+                    ),
                     ...standardErrors,
                 },
             },
@@ -115,7 +124,7 @@ const openApiDocument = {
                     required: true,
                     content: jsonContent({
                         type: "object",
-                        required: ["email","password"],
+                        required: ["email", "password"],
                         properties: {
                             email: { type: "string", format: "email" },
                             password: { type: "string", minLength: 8 },
@@ -124,7 +133,10 @@ const openApiDocument = {
                     }),
                 },
                 responses: {
-                    200: successResponse("Challenge accepted", { type: "object", properties: { challengeId: { type: "string" } } }),
+                    200: successResponse("Challenge accepted", {
+                        type: "object",
+                        properties: { challengeId: { type: "string" } },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -138,15 +150,21 @@ const openApiDocument = {
                     required: true,
                     content: jsonContent({
                         type: "object",
-                        required: ["challengeId","code"],
+                        required: ["challengeId", "code"],
                         properties: {
                             challengeId: { type: "string" },
-                            code: { type: "string", minLength: 32, maxLength: 32 },
+                            code: {
+                                type: "string",
+                                minLength: 32,
+                                maxLength: 32,
+                            },
                         },
                     }),
                 },
                 responses: {
-                    200: emptySuccessResponse("Credential updated; sessions revoked"),
+                    200: emptySuccessResponse(
+                        "Credential updated; sessions revoked"
+                    ),
                     ...standardErrors,
                 },
             },

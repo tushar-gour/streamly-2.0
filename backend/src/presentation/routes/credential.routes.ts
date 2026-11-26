@@ -31,7 +31,12 @@ function clearCookies(res: Response) {
     const options = {
         secure,
         httpOnly,
-        sameSite: sameSite === "strict" ? "strict" as const : sameSite === "none" ? "none" as const : "lax" as const,
+        sameSite:
+            sameSite === "strict"
+                ? ("strict" as const)
+                : sameSite === "none"
+                  ? ("none" as const)
+                  : ("lax" as const),
     };
     res.clearCookie("accessToken", options);
     res.clearCookie("refreshToken", options);
