@@ -13,7 +13,7 @@ export function Sidebar() {
   const user = useAuthStore((state) => state.user);
   const canUpload = user?.permissions?.includes("video:create");
   const canAdmin =
-    user?.permissions?.includes("user:admin") || user?.roles?.includes("admin");
+    user?.permissions?.includes("video:publish:any");
 
   const routes = [
     ...viewerRoutes,

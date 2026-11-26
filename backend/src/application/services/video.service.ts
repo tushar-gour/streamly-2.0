@@ -315,10 +315,14 @@ class VideoService {
         const video = await this.#findVideoOrFail(videoId);
         this.#verifyOwnership(video, userId);
 
-        const updatedVideo = await this.videoRepository.updateByIdWithOwner(
+        const updatedVideo = await this.videoRepository.toggleOwnedPublication(
             videoId,
-            { isPublished: !video.isPublished }
+            userId,
+            !video.isPublished
         );
+        if (!updatedVideo) {
+            throw new ApiError(409, "Publication changed or is held by moderation");
+        }
 
         const message = updatedVideo.isPublished
             ? "Video published successfully"

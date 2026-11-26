@@ -71,6 +71,14 @@ class PrismaVideoRepository extends VideoRepository {
         );
     }
 
+    async toggleOwnedPublication(videoId, ownerId, published) {
+        const result = await prisma.video.updateMany({
+            where: { id: videoId, ownerId, moderationHeld: false, isPublished: !published },
+            data: { isPublished: published },
+        });
+        return result.count === 1 ? this.findByIdWithOwner(videoId) : null;
+    }
+
     async updateThumbnail(videoId, thumbnail) {
         return toVideo(
             await prisma.video.update({

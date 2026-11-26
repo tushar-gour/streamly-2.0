@@ -350,3 +350,8 @@ SEC-03/04 IN_PROGRESS: added new email change and password recovery API with exp
 - SEC-01 IMPLEMENTED with verified isolated origin rejection; real AWS policy, legacy migration and CDN remain deployment-stage gates.
 - PROD-01 partial: actual upload, range delivery, seeking, replacement, deletion and avatar/cover passed; durable processing state/failure handling remains.
 - SEC-03/04 IMPLEMENTED: backend and frontend connected; tests for unknown account response, wrong/expired code, concurrent redemption, email session binding and revocation added. External email delivery and final CI pending.
+
+
+### Iteration 36 — moderation hold
+
+SEC-05 IMPLEMENTED (video scope): moderator permission video:publish:any guards all new admin routes, publication hold is transactional with durable reason/action record, DB CHECK plus conditional owner publication prevents races and republishing. Release leaves video unpublished. Admin UI calls actual endpoints. Broader comment moderation and reporting pending. CI and integration tests pending.

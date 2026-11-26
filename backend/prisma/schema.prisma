@@ -222,6 +222,7 @@ model Video {
   duration     Float
   views        Int             @default(0)
   isPublished  Boolean         @default(true)
+  moderationHeld Boolean       @default(false)
   ownerId      String          @db.Char(24)
   owner        User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   comments     Comment[]
@@ -236,6 +237,19 @@ model Video {
   @@index([isPublished, createdAt])
   @@index([views])
   @@map("videos")
+}
+
+model ModerationAction {
+  id String @id @db.Char(24)
+  actorId String @db.Char(24)
+  resourceId String @db.Char(24)
+  action String @db.VarChar(40)
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@index([resourceId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("moderation_actions")
 }
 
 model Comment {
