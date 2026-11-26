@@ -64,6 +64,93 @@ const openApiDocument = {
     ],
     components,
     paths: {
+        "/api/v1/users/auth/recovery/start": {
+            post: {
+                tags: ["Auth"],
+                summary: "Request password recovery",
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["email"],
+                        properties: {
+                            email: { type: "string", format: "email" },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Challenge accepted", { type: "object", properties: { challengeId: { type: "string" } } }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/recovery/complete": {
+            post: {
+                tags: ["Auth"],
+                summary: "Complete password recovery",
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["challengeId","code","password"],
+                        properties: {
+                            challengeId: { type: "string" },
+                            code: { type: "string", minLength: 32, maxLength: 32 },
+                            password: { type: "string", minLength: 8 },
+                        },
+                    }),
+                },
+                responses: {
+                    200: emptySuccessResponse("Credential updated; sessions revoked"),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/email-change/start": {
+            post: {
+                tags: ["Auth"],
+                summary: "Request verified email replacement",
+                security: authSecurity,
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["email","password"],
+                        properties: {
+                            email: { type: "string", format: "email" },
+                            password: { type: "string", minLength: 8 },
+                            mfaCode: { type: "string" },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Challenge accepted", { type: "object", properties: { challengeId: { type: "string" } } }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/email-change/complete": {
+            post: {
+                tags: ["Auth"],
+                summary: "Complete verified email replacement",
+                security: authSecurity,
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["challengeId","code"],
+                        properties: {
+                            challengeId: { type: "string" },
+                            code: { type: "string", minLength: 32, maxLength: 32 },
+                        },
+                    }),
+                },
+                responses: {
+                    200: emptySuccessResponse("Credential updated; sessions revoked"),
+                    ...standardErrors,
+                },
+            },
+        },
         "/": {
             get: {
                 tags: ["Root"],

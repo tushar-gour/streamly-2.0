@@ -344,3 +344,9 @@ Quay MinIO pull also denied (401) in [run 45883311955](https://github.com/tushar
 ## Iteration 34 — Credential challenge backend
 
 SEC-03/04 IN_PROGRESS: added new email change and password recovery API with expiring high-entropy codes, queue job carrying ID only, hashed codes in DB, bounded attempts, same recovery shape for existing and missing accounts, password/MFA proof for email replacement, session-bound completion, atomic single-use transaction and revocation of sessions, trust and outstanding challenges. Recovery preserves MFA enrollment. No database migration required. Frontend, API contracts and integration tests still pending; live SendGrid and Redis verification are deployment gates.
+
+### Iteration 35 — recovery UI and integration coverage
+- SEC-02 and SEC-06 VERIFIED at 264f117: [CI #57](https://github.com/tushar-gour/streamly-2.0/actions/runs/45883623017), real storage and browser jobs passed; both tabs authenticated with one refresh, native video played and sought.
+- SEC-01 IMPLEMENTED with verified isolated origin rejection; real AWS policy, legacy migration and CDN remain deployment-stage gates.
+- PROD-01 partial: actual upload, range delivery, seeking, replacement, deletion and avatar/cover passed; durable processing state/failure handling remains.
+- SEC-03/04 IMPLEMENTED: backend and frontend connected; tests for unknown account response, wrong/expired code, concurrent redemption, email session binding and revocation added. External email delivery and final CI pending.

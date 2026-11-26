@@ -26,8 +26,13 @@ function identity(req: Request) {
     return { userId: req.user._id, sessionId: req.auth.sessionId };
 }
 function clearCookies(res: Response) {
-    const { secure, httpOnly } = container.services.authService.getCookieOptions();
-    const options = { secure, httpOnly, sameSite: "lax" as const };
+    const { secure, httpOnly, sameSite } =
+        container.services.authService.getCookieOptions();
+    const options = {
+        secure,
+        httpOnly,
+        sameSite: sameSite === "strict" ? "strict" as const : sameSite === "none" ? "none" as const : "lax" as const,
+    };
     res.clearCookie("accessToken", options);
     res.clearCookie("refreshToken", options);
     res.clearCookie(appConfig.mfa.trustCookieName, options);
