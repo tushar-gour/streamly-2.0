@@ -141,3 +141,16 @@ The next iteration should complete and test these workflows after resolving
 the development runtime and CI access constraints.
 
 Final checkpoint status: PARTIAL. Do not merge or deploy.
+
+## Iteration 4 — Watch and discussion
+
+- [ ] Comment creation, ownership-gated editing/deletion, comment likes and
+  backend pagination.
+- [ ] Playback error recovery, poster, share action, accessible comment anchor.
+- [ ] Update video like count from the mutation response rather than refetching
+  video detail (which increments views). Invalidate liked-video cache.
+- [ ] Scope detail/comment query keys to account identity.
+
+Verification pending; initial frontend CI installed dependencies but failed
+formatting on eight changed files. Follow-up CI now emits formatting diffs and
+runs lint, typecheck, test and build independently without hiding failures.
