@@ -199,3 +199,7 @@ Implemented playlist creation, metadata editing, deletion, adding from the watch
 ### Database CI repair
 
 The first PostgreSQL job successfully applied migrations but exposed the existing fixture's over-length username (P2000) and two test call signatures missing optional-valued parameters. Corrected fixture and calls; no schema constraint or assertion was weakened. Re-run pending.
+
+## Iteration 11 — Session management and RBAC metadata
+
+Database job at `b3a52a6` passed after fixture repair; migration, integration and database-backed API contracts succeeded. Added owner-scoped session listing and revocation, current-session detection, and revocation of MFA trust records with all sessions. Login and current-user responses include authoritative role and permission names; upload guard restored. Legacy registration refuses to bypass configured advanced signup. Account settings exposes session management. New endpoints and integration behavior await verification.

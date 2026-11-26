@@ -8,6 +8,7 @@ import { ApiResponse } from "../../shared/responses/api-response.js";
 
 const authPlatformService = container.services.authPlatformService;
 const authService = container.services.authService;
+const authorizationService = container.services.authorizationService;
 
 const getDeviceContext = (req, res) => {
     let deviceId = req.cookies?.[appConfig.mfa.deviceCookieName];
@@ -106,6 +107,9 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(result.data.user);
+        }
         setLoginCookies(res, result);
         return res
             .status(200)
@@ -117,6 +121,9 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(result.data.user);
+        }
         setLoginCookies(res, result);
         return res
             .status(200)
@@ -128,6 +135,9 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(result.data.user);
+        }
         setLoginCookies(res, result);
         return res
             .status(200)

@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { SessionSettings } from "@/components/settings/session-settings";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -54,8 +55,9 @@ export function AccountSettings() {
         { fullName: name.trim() },
         token
       );
-      if (useAuthStore.getState().user?._id === result.data._id) {
-        setAuthUser(result.data, token);
+      const current = useAuthStore.getState().user;
+      if (current?._id === result.data._id) {
+        setAuthUser({ ...current, ...result.data }, token);
       }
     }, "Profile updated.");
   }
@@ -156,8 +158,7 @@ export function AccountSettings() {
         <div className="border-t border-[color:var(--color-border)] pt-4">
           <h3 className="font-medium">Sign out of all sessions</h3>
           <p className="my-2 text-sm text-[color:var(--color-text-secondary)]">
-            Revoke refresh sessions. Already-issued access tokens may remain
-            valid until they expire.
+            Revoke all active sessions and trusted devices. You will need to sign in again.
           </p>
           <Button
             type="button"
@@ -174,9 +175,9 @@ export function AccountSettings() {
             Sign out everywhere
           </Button>
         </div>
+        <SessionSettings />
         <p className="text-sm text-[color:var(--color-text-secondary)]">
-          Device listings, individual session revocation and authenticator
-          management are not available through the current account API.
+          Changing or recovering an authenticator is not available yet.
         </p>
       </Card>
       <Card className="grid gap-4 p-5">

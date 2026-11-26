@@ -431,6 +431,50 @@ const openApiDocument = {
                 },
             },
         },
+        "/api/v1/users/sessions": {
+            get: {
+                tags: ["Auth"],
+                summary: "List the current user's active sessions",
+                description: "Returns up to 100 most recently refreshed active sessions without token hashes.",
+                security: authSecurity,
+                responses: {
+                    200: successResponse("Active sessions.", {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                id: { type: "string" },
+                                userAgent: { type: ["string", "null"] },
+                                createdAt: { type: "string", format: "date-time" },
+                                lastUsedAt: { type: "string", format: "date-time" },
+                                expiresAt: { type: "string", format: "date-time" },
+                                isCurrent: { type: "boolean" },
+                            },
+                        },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/sessions/{sessionId}": {
+            delete: {
+                tags: ["Auth"],
+                summary: "Revoke another session owned by the current user",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "sessionId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
+                responses: {
+                    200: emptySuccessResponse,
+                    ...standardErrors,
+                },
+            },
+        },
         "/api/v1/users/change-password": {
             post: {
                 tags: ["Users"],

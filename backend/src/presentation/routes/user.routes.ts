@@ -10,6 +10,8 @@ import {
     loginUser,
     logoutUser,
     logoutAllSessions,
+    listSessions,
+    revokeSession,
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
@@ -38,6 +40,8 @@ router.route("/refresh-token").post(authRateLimiter, refreshAccessToken);
 router.route("/logout").post(verifyJWT, logoutUser);
 
 router.route("/logout-all").post(verifyJWT, logoutAllSessions);
+router.route("/sessions").get(verifyJWT, listSessions);
+router.route("/sessions/:sessionId").delete(verifyJWT, revokeSession);
 
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 

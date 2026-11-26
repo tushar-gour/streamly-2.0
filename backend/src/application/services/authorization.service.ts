@@ -17,6 +17,19 @@ class AuthorizationService {
         return this.userRoleRepository.getUserPermissions(userId);
     }
 
+    async describeUser(user) {
+        this.ensureAuthenticated(user);
+        const [roles, permissions] = await Promise.all([
+            this.getUserRoles(user._id),
+            this.getUserPermissions(user._id),
+        ]);
+        return {
+            ...user,
+            roles: roles.map((entry) => entry.name),
+            permissions: permissions.map((entry) => entry.name),
+        };
+    }
+
     async hasPermission(userId, permission) {
         const permissions = await this.getUserPermissions(userId);
         return permissions.some((entry) => entry.name === permission);

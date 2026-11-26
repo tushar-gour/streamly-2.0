@@ -74,6 +74,28 @@ class PrismaSessionRepository extends SessionRepository {
         });
     }
 
+    listActiveSessions(userId) {
+        return prisma.session.findMany({
+            where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+            select: {
+                id: true,
+                userAgent: true,
+                createdAt: true,
+                lastUsedAt: true,
+                expiresAt: true,
+            },
+            orderBy: { lastUsedAt: "desc" },
+            take: 100,
+        });
+    }
+
+    revokeOwnedSession(userId, sessionId) {
+        return prisma.session.updateMany({
+            where: { id: sessionId, userId, revokedAt: null },
+            data: { revokedAt: new Date(), revokedReason: "user-revoked" },
+        });
+    }
+
     revokeSession(sessionId, revokedReason = "logout") {
         return prisma.session.updateMany({
             where: { id: sessionId, revokedAt: null },
@@ -85,12 +107,17 @@ class PrismaSessionRepository extends SessionRepository {
     }
 
     revokeAllUserSessions(userId, revokedReason = "logout-all") {
-        return prisma.session.updateMany({
-            where: { userId, revokedAt: null },
-            data: {
-                revokedAt: new Date(),
-                revokedReason,
-            },
+        const now = new Date();
+        return prisma.$transaction(async (tx) => {
+            const result = await tx.session.updateMany({
+                where: { userId, revokedAt: null },
+                data: { revokedAt: now, revokedReason },
+            });
+            await tx.mfaTrustToken.updateMany({
+                where: { userId, revokedAt: null },
+                data: { revokedAt: now },
+            });
+            return result;
         });
     }
 }

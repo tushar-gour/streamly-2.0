@@ -146,6 +146,28 @@ class AuthService {
         };
     }
 
+    async listSessions(userId, currentSessionId) {
+        const sessions = await this.sessionRepository.listActiveSessions(userId);
+        return sessions.map((session) => ({
+            ...session,
+            isCurrent: session.id === currentSessionId,
+        }));
+    }
+
+    async revokeOwnedSession(userId, sessionId, currentSessionId) {
+        if (sessionId === currentSessionId) {
+            throw new ApiError(400, "Use logout for the current session");
+        }
+        const result = await this.sessionRepository.revokeOwnedSession(
+            userId,
+            sessionId
+        );
+        if (result.count !== 1) {
+            throw new NotFoundError("Active session");
+        }
+        audit.info("auth.session_revoked", { userId, sessionId });
+    }
+
     async revokeSession(sessionId, reason = "logout") {
         if (!sessionId) return;
         await this.sessionRepository.revokeSession(sessionId, reason);
