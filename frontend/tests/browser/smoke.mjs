@@ -64,6 +64,7 @@ try {
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL("**/home");
   await heading("Latest videos");
+  await page.getByRole("link", { name: "Watch Browser fixture video" }).waitFor();
   await capture("home-desktop-dark");
 
   await page.goto(`${origin}/playlists`);
@@ -87,6 +88,38 @@ try {
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await heading("Updated playlist");
   await capture("playlist-desktop-dark");
+
+  await page.goto(`${origin}/home`);
+  await page.getByRole("link", { name: "Watch Browser fixture video" }).click();
+  await heading("Browser fixture video");
+  await page.waitForFunction(() => {
+    const video = document.querySelector("video");
+    return video && video.readyState >= 1 && video.duration > 0;
+  });
+  await page.getByRole("button", { name: "Watch later", exact: true }).click();
+  await page.getByRole("button", { name: "Saved for later", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Like", exact: true }).click();
+  await page.getByRole("button", { name: "Liked", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByLabel("Playlist", { exact: true }).selectOption({ label: "Updated playlist" });
+  await page.getByRole("button", { name: "Save video", exact: true }).click();
+  await page.getByText("Video saved to playlist.", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByLabel("Add a comment", { exact: true }).fill("Browser verification comment");
+  await page.getByRole("button", { name: "Post comment", exact: true }).click();
+  await page.getByText("Browser verification comment", { exact: true }).waitFor();
+  await capture("watch-desktop-dark");
+
+  await page.goto(`${origin}/watch-later`);
+  await heading("Watch Later");
+  await page.getByRole("link", { name: "Watch Browser fixture video" }).waitFor();
+  await page.getByRole("button", { name: "Remove from Watch Later" }).click();
+  await heading("Nothing saved here yet.");
+
+  await page.goto(`${origin}/playlists`);
+  await page.getByRole("link", { name: /Updated playlist/ }).click();
+  await heading("Updated playlist");
+  await page.getByRole("link", { name: "Watch Browser fixture video" }).waitFor();
   await page
     .getByRole("button", { name: "Delete playlist", exact: true })
     .click();
@@ -135,7 +168,7 @@ try {
   await assertNoOverflow();
   assert.deepEqual(pageErrors, [], "Browser page errors");
   console.log(
-    "Browser smoke: sign-in, playlist CRUD, sessions, theme, creator routes passed."
+    "Browser smoke: sign-in, playlists, video metadata, likes, comments, Watch Later, sessions, theme and creator routes passed."
   );
   console.log(
     "Observed lab values (not production Core Web Vitals):",

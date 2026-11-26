@@ -137,7 +137,11 @@ export function ProfileImages() {
   return (
     <div className="grid gap-3">
       <ImageEditor kind="avatar" image={user.avatar} label="Profile photo" />
-      <ImageEditor kind="coverImage" image={user.coverImage} label="Cover image" />
+      <ImageEditor
+        kind="coverImage"
+        image={user.coverImage}
+        label="Cover image"
+      />
     </div>
   );
 }

@@ -231,3 +231,7 @@ CI run 45867408921 for `61d5430` passed all seven non-browser jobs, including co
 ## Iteration 18 — Profile media workflows
 
 Connected profile photo and cover-image updates to the existing multipart user endpoints. Added local previews with object-URL cleanup, image type/size validation, cancel/retry, and account-scoped state updates. Server profile endpoints now use the existing image-specific upload middleware. Live media-provider upload and visual testing remain pending.
+
+## Iteration 19 — Browser evidence and populated integration fixture
+
+Run 45867991108 at `6953d05` passed all eight jobs. Real Chromium against the isolated API verified sign-in, playlist CRUD, session listing, theme switching and studio/upload routes. Settings passed horizontal-overflow checks at desktop, tablet and mobile sizes in the exercised themes. Inspected 11 captured screenshots and all 24 reference contact-sheet entries; populated feed, actual watch content, authentication artwork and visual density still require refinement. Studio-page lab metrics were LCP 96 ms and CLS 0.0458168724; no INP or production performance assertion. Extended the CI-only fixture with generated local WebM and thumbnail and browser tests for media metadata, video like, comment, playlist membership and Watch Later. These extended tests have not yet passed. No production data or media were modified.
