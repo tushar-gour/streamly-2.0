@@ -55,8 +55,7 @@ export function CommentSection({ videoId }: { videoId: string }) {
     },
   });
   const pagination = query.data?.meta?.pagination as
-    | { hasNextPage?: boolean }
-    | undefined;
+    { hasNextPage?: boolean } | undefined;
 
   function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,10 +82,7 @@ export function CommentSection({ videoId }: { videoId: string }) {
               required
             />
           </label>
-          <Button
-            type="submit"
-            disabled={!text.trim() || mutation.isPending}
-          >
+          <Button type="submit" disabled={!text.trim() || mutation.isPending}>
             Post comment
           </Button>
         </form>

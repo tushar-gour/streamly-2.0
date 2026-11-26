@@ -63,7 +63,9 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
       setShareStatus("Video link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setShareStatus("Could not share the link. Copy the address from your browser.");
+      setShareStatus(
+        "Could not share the link. Copy the address from your browser."
+      );
     }
   }
 
@@ -77,10 +79,7 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
         title="This video is not available right now."
         description="It may be private, removed, or temporarily unavailable."
         action={
-          <Button
-            onClick={() => void videoQuery.refetch()}
-            variant="secondary"
-          >
+          <Button onClick={() => void videoQuery.refetch()} variant="secondary">
             <RefreshCw size={16} />
             Retry
           </Button>
@@ -133,7 +132,8 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
             </Link>
           ) : null}
           <p className="text-sm text-[color:var(--color-text-secondary)]">
-            {formatCount(video.views, "views")} · {formatCount(video.likesCount, "likes")}
+            {formatCount(video.views, "views")} ·{" "}
+            {formatCount(video.likesCount, "likes")}
           </p>
           <div className="flex flex-wrap items-center gap-3">
             {isAuthenticated ? (
@@ -160,9 +160,15 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
               <Share2 size={16} /> Share
             </Button>
           </div>
-          {shareStatus ? <p role="status" className="text-sm">{shareStatus}</p> : null}
+          {shareStatus ? (
+            <p role="status" className="text-sm">
+              {shareStatus}
+            </p>
+          ) : null}
           {likeMutation.isError ? (
-            <p role="alert">Like could not be confirmed. Refresh before retrying.</p>
+            <p role="alert">
+              Like could not be confirmed. Refresh before retrying.
+            </p>
           ) : null}
           {video.description ? (
             <p className="whitespace-pre-line break-words text-[color:var(--color-text-secondary)]">

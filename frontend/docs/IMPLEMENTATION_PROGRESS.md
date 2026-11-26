@@ -161,3 +161,13 @@ runs lint, typecheck, test and build independently without hiding failures.
 - Vitest: 7 test files, 19 tests passed. Next.js reported 102 kB shared first-load JS (build metric, not a Web Vital).
 - Formatting failed; applied the actual Prettier diagnostic diff to the relevant files, preserving the later discussion implementation. Latest branch verification remains pending.
 - No browser interaction, visual comparison or LCP/INP/CLS measurements are available.
+
+## Iteration 5 — CI diagnostics
+
+- CI for discussion implementation (`57b5669`): lint, typecheck, 19 tests
+  (7 files), and production build passed. Formatting failed.
+- Applied actual Prettier diff for the two discussion components; subsequent
+  branch CI must verify the repair. No live browser or backend integration
+  verification has been performed.
+- Shared first-load JavaScript: 102 kB (Next.js build output, not a Web Vital).
+- Status: PARTIAL; do not merge or deploy before remaining gates pass.
