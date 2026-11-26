@@ -37,6 +37,10 @@ export const signupApi = {
     return post<{ otpauthUrl: string }>("mfa/setup", {}, token);
   },
   verifyMfa(token: string, code: string) {
-    return post<{ mfaEnabled: boolean; recoveryCodes: string[] }>("mfa/verify", { code }, token);
+    return post<{ mfaEnabled: boolean; recoveryCodes: string[] }>(
+      "mfa/verify",
+      { code },
+      token
+    );
   },
 };

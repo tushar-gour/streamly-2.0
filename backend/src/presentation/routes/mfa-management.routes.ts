@@ -13,19 +13,50 @@ const service = container.services.mfaService;
 router.use(verifyJWT, authRateLimiter);
 function userId(req: Request) {
     if (!req.user?._id) throw new UnauthorizedError();
-    if (!appConfig.mfa.enabled) throw new ApiError(503, "Authenticator management is unavailable");
+    if (!appConfig.mfa.enabled)
+        throw new ApiError(503, "Authenticator management is unavailable");
     return req.user._id;
 }
-router.post("/setup", asyncHandler(async (req: Request, res: Response) => {
-    const user = await service.authorizeManagement(userId(req), req.body?.password);
-    res.json(ApiResponse.success(await service.setupTotp(user.id, user.email)));
-}));
-router.post("/verify", asyncHandler(async (req: Request, res: Response) => {
-    const user = await service.authorizeManagement(userId(req), req.body?.password);
-    if (typeof req.body?.code !== "string") throw new ApiError(400, "Authenticator code required");
-    res.json(ApiResponse.success(await service.verifyTotpSetup(user.id, req.body.code, true)));
-}));
-router.post("/recovery/regenerate", asyncHandler(async (req: Request, res: Response) => {
-    res.json(ApiResponse.success(await service.regenerateRecoveryCodes(userId(req), req.body?.password, req.body?.code)));
-}));
+router.post(
+    "/setup",
+    asyncHandler(async (req: Request, res: Response) => {
+        const user = await service.authorizeManagement(
+            userId(req),
+            req.body?.password
+        );
+        res.json(
+            ApiResponse.success(await service.setupTotp(user.id, user.email))
+        );
+    })
+);
+router.post(
+    "/verify",
+    asyncHandler(async (req: Request, res: Response) => {
+        const user = await service.authorizeManagement(
+            userId(req),
+            req.body?.password
+        );
+        if (typeof req.body?.code !== "string")
+            throw new ApiError(400, "Authenticator code required");
+        res.json(
+            ApiResponse.success(
+                await service.verifyTotpSetup(user.id, req.body.code, true)
+            )
+        );
+    })
+);
+router.post(
+    "/recovery/regenerate",
+    asyncHandler(async (req: Request, res: Response) => {
+        res.json(
+            ApiResponse.success(
+                await service.regenerateRecoveryCodes(
+                    userId(req),
+                    req.body?.password,
+                    req.body?.code
+                )
+            )
+        );
+    })
+);
 export default router;

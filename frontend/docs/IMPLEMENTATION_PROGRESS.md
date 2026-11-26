@@ -360,14 +360,12 @@ SEC-05 IMPLEMENTED (video scope): moderator permission video:publish:any guards 
 
 PROD-02 IMPLEMENTED: migration-backed inbox, owner-scoped listing/read/read-all, transactionally persisted credential, moderation and subscription events. No provider dependency or mock data. UI uses authenticated query scope, real mutation controls and retry states. Integration and browser verification pending.
 
-
 ### Iteration 38 — notification regressions and local QR
 
 - SEC-03/04: all 10 auth-security database tests passed in [run #63](https://github.com/tushar-gour/streamly-2.0/actions/runs/45884760370), including new recovery/email change cases. External delivery, credential-race and browser coverage remain open.
 - SEC-05: integration job passed on [79db628 / #65](https://github.com/tushar-gour/streamly-2.0/actions/runs/45885170269), including hold/release, forbidden accounts, owner republish denial and durable audit. Comment moderation pending.
 - PROD-02: added subscription-event and cross-account notification read regression, OpenAPI routes and formatting. Verification pending.
 - PROD-03: QR rendered locally with pinned qrcode.react 4.2.0, integrity agreed by two independent public lockfiles and npm ci must verify. No authenticator secret transmitted to a QR service. Recovery codes and secure phone changes remain.
-
 
 ### Iteration 39 — MFA management and single-use recovery codes
 

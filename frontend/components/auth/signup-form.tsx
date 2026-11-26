@@ -119,7 +119,22 @@ export function SignupForm() {
     <AuthShell guestOnly>
       <AuthCard title={title} description={description}>
         {stage.kind === "complete" ? (
-          <div className="grid gap-4"><p className="text-sm">Save these single-use recovery codes somewhere private. They will not be shown again.</p><div className="grid gap-2 rounded-card border border-[color:var(--color-border)] p-3">{stage.recoveryCodes.map((code) => <code key={code} className="break-all text-xs select-all">{code}</code>)}</div><Button asChild size="lg"><Link href="/login">I saved my codes — sign in</Link></Button></div>
+          <div className="grid gap-4">
+            <p className="text-sm">
+              Save these single-use recovery codes somewhere private. They will
+              not be shown again.
+            </p>
+            <div className="grid gap-2 rounded-card border border-[color:var(--color-border)] p-3">
+              {stage.recoveryCodes.map((code) => (
+                <code key={code} className="break-all text-xs select-all">
+                  {code}
+                </code>
+              ))}
+            </div>
+            <Button asChild size="lg">
+              <Link href="/login">I saved my codes — sign in</Link>
+            </Button>
+          </div>
         ) : (
           <form className="grid gap-5" onSubmit={submit}>
             {error ? (
@@ -178,9 +193,16 @@ export function SignupForm() {
               {stage.kind === "mfa" ? (
                 <div className="grid gap-3 rounded-card border border-[color:var(--color-border)] p-4">
                   <div className="mx-auto w-fit rounded-md bg-white p-3">
-                    <QRCodeSVG value={stage.uri} size={176} marginSize={2} title="Scan with your authenticator app" />
+                    <QRCodeSVG
+                      value={stage.uri}
+                      size={176}
+                      marginSize={2}
+                      title="Scan with your authenticator app"
+                    />
                   </div>
-                  <p className="text-sm">Or enter the manual setup key (time-based)</p>
+                  <p className="text-sm">
+                    Or enter the manual setup key (time-based)
+                  </p>
                   <code className="break-all text-sm select-all">
                     {stage.secret}
                   </code>

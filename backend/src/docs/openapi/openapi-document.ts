@@ -69,9 +69,21 @@ const openApiDocument = {
                 tags: ["Users"],
                 summary: "List own notifications and unread count",
                 security: authSecurity,
-                parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } }],
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, default: 1 },
+                    },
+                ],
                 responses: {
-                    200: successResponse("Notification inbox", { type: "object", properties: { items: { type: "array", items: { type: "object" } }, unread: { type: "integer" } } }),
+                    200: successResponse("Notification inbox", {
+                        type: "object",
+                        properties: {
+                            items: { type: "array", items: { type: "object" } },
+                            unread: { type: "integer" },
+                        },
+                    }),
                     ...standardErrors,
                 },
             },
