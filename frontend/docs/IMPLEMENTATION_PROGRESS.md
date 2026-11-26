@@ -296,3 +296,7 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 
 - VERIFIED: all eight CI jobs passed on `398d112` ([run 45878307513](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878307513)), including single-flight unit regressions, backend identity mismatch and browser smoke. True concurrent multi-tab browser coverage remains open.
 - Added four provider regressions for suffix/open-ended/oversized byte ranges. Existing parser uses the suffix length as the end offset and rejects otherwise valid ranges extending past the object size. Pending reproduction. Mocked S3 command tests are not real object-storage verification.
+
+### Iteration 28 — S3 byte-range correction
+
+- IMPLEMENTED: suffix ranges now end at the object boundary; explicit ends beyond object size clamp to the last byte; invalid zero-length suffixes and unsafe integer offsets are rejected. Regression CI pending. No live S3 object was accessed or changed.
