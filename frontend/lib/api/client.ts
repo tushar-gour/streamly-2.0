@@ -77,7 +77,13 @@ export async function apiRequest<T>(
 
   let response = await send();
   const marker = response.headers.get("X-Streamly-Session");
-  if (account && marker === "changed") sessionRecovery?.changed();
+  if (
+    account &&
+    marker === "changed" &&
+    expectedSessionAccount() === account
+  ) {
+    sessionRecovery?.changed();
+  }
   const replayable =
     request.body == null ||
     typeof request.body === "string" ||
@@ -92,7 +98,10 @@ export async function apiRequest<T>(
     expectedSessionAccount() === account
   ) {
     response = await send(true);
-    if (response.headers.get("X-Streamly-Session") === "changed") {
+    if (
+      response.headers.get("X-Streamly-Session") === "changed" &&
+      expectedSessionAccount() === account
+    ) {
       sessionRecovery?.changed();
     }
   }

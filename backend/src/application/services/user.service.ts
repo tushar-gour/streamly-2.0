@@ -226,6 +226,17 @@ class UserService {
             "newPassword",
         ]);
 
+        if (
+            typeof oldPassword !== "string" ||
+            typeof newPassword !== "string" ||
+            newPassword.length < 8 ||
+            Buffer.byteLength(newPassword, "utf8") > 72
+        ) {
+            throw new BadRequestError(
+                "New password must have at least 8 characters and at most 72 UTF-8 bytes"
+            );
+        }
+
         const user = await this.userRepository.findByIdWithPassword(userId);
 
         if (!user) {
@@ -238,7 +249,15 @@ class UserService {
             throw new BadRequestError("Current password is incorrect");
         }
 
-        await this.userRepository.updatePassword(userId, newPassword);
+        const changed = await this.userRepository.changePasswordAndRevokeSessions(
+            userId,
+            user.password,
+            newPassword
+        );
+        if (!changed) {
+            throw new ConflictError("Credentials changed; sign in and try again");
+        }
+        audit.info("auth.password_changed", { userId });
 
         return { data: {}, message: SuccessMessages.PASSWORD_CHANGED };
     }
@@ -246,27 +265,16 @@ class UserService {
     async updateAccountDetails({ userId, body }) {
         const { fullName, email } = body;
 
-        if (!fullName && !email) {
+        if (email !== undefined) {
             throw new BadRequestError(
-                "At least one field is required to update"
+                "Email replacement requires a separate verification workflow"
             );
         }
-
-        const updateData = {};
-        if (fullName) updateData.fullName = fullName;
-        if (email) updateData.email = email.toLowerCase();
-
-        if (email) {
-            const existingUser =
-                await this.userRepository.findByEmailExcludingUser(
-                    email,
-                    userId
-                );
-
-            if (existingUser) {
-                throw new ConflictError("Email is already in use");
-            }
+        if (typeof fullName !== "string" || !fullName.trim() || fullName.trim().length > 100) {
+            throw new BadRequestError("A valid full name is required");
         }
+
+        const updateData = { fullName: fullName.trim() };
 
         const user = await this.userRepository.updateById(
             userId,

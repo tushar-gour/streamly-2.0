@@ -114,6 +114,42 @@ class PrismaUserRepository extends UserRepository {
         });
     }
 
+    async changePasswordAndRevokeSessions(
+        userId: string,
+        expectedPasswordHash: string,
+        password: string
+    ): Promise<boolean> {
+        const passwordHash = await bcrypt.hash(
+            password,
+            isProduction() ? 12 : 10
+        );
+        const now = new Date();
+        return prisma.$transaction(async (tx) => {
+            const changed = await tx.user.updateMany({
+                where: { id: userId, password: expectedPasswordHash },
+                data: { password: passwordHash, passwordChangedAt: now },
+            });
+            if (changed.count !== 1) return false;
+            await tx.session.updateMany({
+                where: { userId, revokedAt: null },
+                data: { revokedAt: now, revokedReason: "password-changed" },
+            });
+            await tx.mfaTrustToken.updateMany({
+                where: { userId, revokedAt: null },
+                data: { revokedAt: now },
+            });
+            await tx.authChallenge.updateMany({
+                where: { userId, consumedAt: null },
+                data: { consumedAt: now },
+            });
+            await tx.mfaChallenge.updateMany({
+                where: { userId, consumedAt: null },
+                data: { consumedAt: now },
+            });
+            return true;
+        });
+    }
+
     clearRefreshToken(userId) {
         return this.findById(userId);
     }

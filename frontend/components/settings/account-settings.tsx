@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { profileApi } from "@/lib/api/profile.api";
 import { useAuthStore } from "@/stores/auth-store";
+import { publishSessionChange } from "@/lib/auth/session-events";
 import { useTheme } from "@/lib/theme/theme-provider";
 
 export function AccountSettings() {
@@ -75,6 +76,9 @@ export function AccountSettings() {
     void perform(async () => {
       try {
         await profileApi.changePassword({ oldPassword, newPassword }, token);
+        useAuthStore.getState().clearSession();
+        publishSessionChange();
+        router.replace("/login");
       } finally {
         setOldPassword("");
         setNewPassword("");
@@ -115,6 +119,9 @@ export function AccountSettings() {
       </Card>
       <Card className="grid gap-4 p-5">
         <h2 className="text-xl font-semibold">Security</h2>
+        <p className="text-sm text-[color:var(--color-text-secondary)]">
+          Changing your password signs you out of every session and revokes trusted devices.
+        </p>
         <form className="grid gap-4" onSubmit={changePassword}>
           <PasswordInput
             id="old-password"

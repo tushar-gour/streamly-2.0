@@ -278,3 +278,9 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 ### Iteration 24 — credential mutation regression cases
 
 - Added database regression cases for direct unverified email replacement and password change leaving existing sessions valid. Both are pending reproduction on the existing implementation. Email replacement must fail closed until a verified email-change workflow exists.
+
+### Iteration 25 — credential mutation containment
+
+- IMPLEMENTED: direct email replacement rejected server-side; full-name updates remain supported. This is containment, not completion of verified email change or password recovery.
+- IMPLEMENTED: password replacement atomically checks the old credential hash and revokes existing sessions, trusted devices and outstanding OTP/MFA challenges; added password length/type validation, rate limiting and sign-out handling. Existing login issuance races still require a dedicated audit.
+- IMPLEMENTED: delayed account-change responses no longer clear a newer frontend account. Regression CI pending.

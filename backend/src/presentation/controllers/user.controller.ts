@@ -120,8 +120,12 @@ class UserController {
             userId: req.user._id,
             body: req.body,
         });
+        const cookieOptions = authService.getCookieOptions();
         return res
             .status(200)
+            .clearCookie("accessToken", cookieOptions)
+            .clearCookie("refreshToken", cookieOptions)
+            .clearCookie(appConfig.mfa.trustCookieName, cookieOptions)
             .json(ApiResponse.success(result.data, result.message));
     });
 
