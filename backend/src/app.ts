@@ -29,6 +29,7 @@ import dashboardRouter from "./presentation/routes/dashboard.routes.js";
 import likeRouter from "./presentation/routes/like.routes.js";
 import playlistRouter from "./presentation/routes/playlist.routes.js";
 import subscriptionRouter from "./presentation/routes/subscription.routes.js";
+import watchLaterRouter from "./presentation/routes/watch-later.routes.js";
 
 class Application {
     constructor() {
@@ -145,6 +146,7 @@ class Application {
         this.app.use(`${API_PREFIX}/playlists`, playlistRouter);
         this.app.use(`${API_PREFIX}/subscriptions`, subscriptionRouter);
         this.app.use(`${API_PREFIX}/dashboard`, dashboardRouter);
+        this.app.use(`${API_PREFIX}/watch-later`, watchLaterRouter);
 
         this.app.get("/", (_, res) => {
             res.status(200).json(

@@ -10,6 +10,7 @@ import { LoadingState } from "@/components/feedback/loading-state";
 import { Button } from "@/components/ui/button";
 import { CommentSection } from "@/components/video/comment-section";
 import { SaveToPlaylist } from "@/components/playlists/save-to-playlist";
+import { WatchLaterButton } from "@/components/library/watch-later-button";
 import { likesApi } from "@/lib/api/likes.api";
 import { queryKeys } from "@/lib/api/query-keys";
 import { videosApi } from "@/lib/api/videos.api";
@@ -157,7 +158,7 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
                 <MessageCircle size={16} /> Comment
               </Link>
             </Button>
-            {isAuthenticated ? <SaveToPlaylist videoId={videoId} /> : null}
+            {isAuthenticated ? <><WatchLaterButton videoId={videoId} /><SaveToPlaylist videoId={videoId} /></> : null}
             <Button variant="secondary" onClick={() => void share()}>
               <Share2 size={16} /> Share
             </Button>

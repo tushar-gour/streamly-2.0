@@ -19,6 +19,8 @@ import { PrismaSubscriptionRepository } from "../../infrastructure/repositories/
 import { PrismaUserRepository } from "../../infrastructure/repositories/user.repository.js";
 import { PrismaUserRoleRepository } from "../../infrastructure/repositories/user-role.repository.js";
 import { PrismaVideoRepository } from "../../infrastructure/repositories/video.repository.js";
+import { PrismaWatchLaterRepository } from "../../infrastructure/repositories/watch-later.repository.js";
+import { WatchLaterService } from "../../application/services/watch-later.service.js";
 import { PrismaEmailVerificationTokenRepository } from "../../infrastructure/repositories/email-verification-token.repository.js";
 import { CleanupJobProducer } from "../../infrastructure/jobs/producers/cleanup-job.producer.js";
 import { EmailJobProducer } from "../../infrastructure/jobs/producers/email-job.producer.js";
@@ -43,6 +45,7 @@ import { VideoService } from "../../application/services/video.service.js";
 
 const userRepository = new PrismaUserRepository();
 const videoRepository = new PrismaVideoRepository();
+const watchLaterRepository = new PrismaWatchLaterRepository();
 const commentRepository = new PrismaCommentRepository();
 const likeRepository = new PrismaLikeRepository();
 const playlistRepository = new PrismaPlaylistRepository();
@@ -100,6 +103,7 @@ const container = Object.freeze({
     repositories: {
         userRepository,
         videoRepository,
+        watchLaterRepository,
         commentRepository,
         likeRepository,
         playlistRepository,
@@ -173,6 +177,7 @@ const container = Object.freeze({
             databaseHealthService,
             redisService,
         }),
+        watchLaterService: new WatchLaterService(watchLaterRepository),
         cacheService,
         mediaStorageService,
         mediaStreamService,

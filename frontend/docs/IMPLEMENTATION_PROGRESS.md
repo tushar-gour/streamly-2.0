@@ -207,3 +207,7 @@ Database job at `b3a52a6` passed after fixture repair; migration, integration an
 ## Iteration 12 — Browser verification infrastructure
 
 Added a dedicated Chromium CI job using a disposable PostgreSQL database, seeded RBAC and test account, real API, production frontend build, screenshot artifacts and compact reference/browser contact sheets. Tests exercise login, playlist CRUD, session listing, theme selection, responsive overflow and studio/upload navigation. No backend responses are mocked. Browser tests do not yet include real video media or live OTP providers. Lab LCP/CLS are captured as diagnostic values only; INP and production performance remain unmeasured. Results pending.
+
+## Iteration 13 — Watch Later and feed pagination
+
+Added an additive Watch Later database model, owner-scoped idempotent save/remove API and status/list reads. Frontend watch page and Watch Later library now use these endpoints. Feed pagination uses server metadata and retains its title through loading/empty/error states. Video card thumbnails use lazy image loading; the inert video menu is removed. Migration, new API integration and browser checks pending. No production database was touched.

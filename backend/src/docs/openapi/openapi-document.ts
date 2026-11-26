@@ -431,6 +431,47 @@ const openApiDocument = {
                 },
             },
         },
+        "/api/v1/watch-later": {
+            get: {
+                tags: ["Playlists"],
+                summary: "List the signed-in user's saved videos",
+                security: authSecurity,
+                parameters: [
+                    { name: "page", in: "query", schema: { type: "integer", minimum: 1 } },
+                    { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
+                ],
+                responses: {
+                    200: successResponse("Saved videos.", { type: "array", items: { type: "object" } }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/watch-later/{videoId}": {
+            get: {
+                tags: ["Playlists"],
+                summary: "Check whether a video is saved",
+                security: authSecurity,
+                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                responses: {
+                    200: successResponse("Saved status.", { type: "object", properties: { saved: { type: "boolean" } } }),
+                    ...standardErrors,
+                },
+            },
+            put: {
+                tags: ["Playlists"],
+                summary: "Save a published video (idempotent)",
+                security: authSecurity,
+                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+            delete: {
+                tags: ["Playlists"],
+                summary: "Remove a saved video (idempotent)",
+                security: authSecurity,
+                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
         "/api/v1/users/sessions": {
             get: {
                 tags: ["Auth"],

@@ -34,6 +34,7 @@ model User {
   subscribers             Subscription[]           @relation("ChannelSubscriptions")
   subscribedTo            Subscription[]           @relation("SubscriberSubscriptions")
   watchHistory            WatchHistory[]
+  watchLater              WatchLater[]
   authChallenges          AuthChallenge[]
   mfaMethods              UserMfa[]
   mfaChallenges           MfaChallenge[]
@@ -227,6 +228,7 @@ model Video {
   likes        Like[]
   playlists    PlaylistVideo[]
   watchHistory WatchHistory[]
+  watchLater   WatchLater[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -326,4 +328,17 @@ model WatchHistory {
 
   @@id([userId, videoId])
   @@map("watch_history")
+}
+
+model WatchLater {
+  userId    String   @db.Char(24)
+  videoId   String   @db.Char(24)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, videoId])
+  @@index([userId, createdAt])
+  @@index([videoId])
+  @@map("watch_later")
 }
