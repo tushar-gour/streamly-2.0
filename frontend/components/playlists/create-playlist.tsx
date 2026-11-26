@@ -13,7 +13,8 @@ export function CreatePlaylist() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const mutation = useMutation({
-    mutationFn: (input: { name: string; description: string }) => playlistsApi.create(input, token),
+    mutationFn: (input: { name: string; description: string }) =>
+      playlistsApi.create(input, token),
     retry: false,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["playlists"] });
@@ -22,13 +23,32 @@ export function CreatePlaylist() {
   });
 
   if (!open) {
-    return <Button onClick={() => { mutation.reset(); setOpen(true); }}>Create playlist</Button>;
+    return (
+      <Button
+        onClick={() => {
+          mutation.reset();
+          setOpen(true);
+        }}
+      >
+        Create playlist
+      </Button>
+    );
   }
   return (
     <section className="grid max-w-xl gap-3 rounded-card border border-[color:var(--color-border)] p-5">
       <h2 className="text-lg font-semibold">New playlist</h2>
-      <PlaylistForm pending={mutation.isPending} submitLabel="Create playlist" onSubmit={(values) => mutation.mutate(values)} onCancel={() => setOpen(false)} />
-      {mutation.isError ? <p role="alert" className="text-sm">Creation could not be confirmed. Refresh your playlists before retrying.</p> : null}
+      <PlaylistForm
+        pending={mutation.isPending}
+        submitLabel="Create playlist"
+        onSubmit={(values) => mutation.mutate(values)}
+        onCancel={() => setOpen(false)}
+      />
+      {mutation.isError ? (
+        <p role="alert" className="text-sm">
+          Creation could not be confirmed. Refresh your playlists before
+          retrying.
+        </p>
+      ) : null}
     </section>
   );
 }

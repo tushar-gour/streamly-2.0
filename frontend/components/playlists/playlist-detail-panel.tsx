@@ -78,7 +78,9 @@ export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
           {playlist.description}
         </p>
       ) : null}
-      {userId && playlist.owner?._id === userId ? <PlaylistManagement playlist={playlist} /> : null}
+      {userId && playlist.owner?._id === userId ? (
+        <PlaylistManagement playlist={playlist} />
+      ) : null}
       {videos.length === 0 ? (
         <div className="mt-16 grid place-items-center">
           <EmptyState

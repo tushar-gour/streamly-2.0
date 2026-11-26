@@ -15,7 +15,9 @@ import { safeMediaUrl } from "@/lib/media/media-formatters";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function PlaylistsPanel() {
-  const userId = useAuthStore((state) => state.user?._id ?? state.user?.id ?? "");
+  const userId = useAuthStore(
+    (state) => state.user?._id ?? state.user?.id ?? ""
+  );
   const token = useAuthStore((state) => state.accessToken);
 
   const playlistsQuery = useQuery({
@@ -59,7 +61,9 @@ export function PlaylistsPanel() {
       <h1 className="mt-2 text-4xl font-semibold tracking-[-0.03em]">
         Your playlists
       </h1>
-      <div className="mt-6"><CreatePlaylist /></div>
+      <div className="mt-6">
+        <CreatePlaylist />
+      </div>
       {playlists.length === 0 ? (
         <div className="mt-16 grid place-items-center">
           <EmptyState
@@ -71,7 +75,9 @@ export function PlaylistsPanel() {
       ) : (
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {playlists.map((playlist) => {
-            const thumbnail = safeMediaUrl(playlist.thumbnail ?? playlist.videos?.[0]?.thumbnail);
+            const thumbnail = safeMediaUrl(
+              playlist.thumbnail ?? playlist.videos?.[0]?.thumbnail
+            );
 
             return (
               <Link
@@ -92,7 +98,9 @@ export function PlaylistsPanel() {
                 <h2 className="mt-4 font-semibold group-hover:text-periwinkle">
                   {playlist.name}
                 </h2>
-                <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">{playlist.videosCount ?? 0} videos</p>
+                <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
+                  {playlist.videosCount ?? 0} videos
+                </p>
                 {playlist.description ? (
                   <p className="mt-2 line-clamp-2 text-sm text-[color:var(--color-text-secondary)]">
                     {playlist.description}

@@ -21,19 +21,36 @@ export function WatchLaterButton({ videoId }: { videoId: string }) {
     mutationFn: (saved: boolean) => watchLaterApi.set(videoId, saved, token),
     onSuccess: async (_, saved) => {
       queryClient.setQueryData(key, { saved });
-      await queryClient.invalidateQueries({ queryKey: ["watch-later", userId, "list"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["watch-later", userId, "list"],
+      });
     },
     retry: false,
   });
-  if (query.isError) return <Button variant="secondary" onClick={() => void query.refetch()}>Retry saved status</Button>;
+  if (query.isError)
+    return (
+      <Button variant="secondary" onClick={() => void query.refetch()}>
+        Retry saved status
+      </Button>
+    );
   const saved = Boolean(query.data?.saved);
   return (
     <div className="grid gap-1">
-      <Button variant="secondary" aria-pressed={saved} disabled={!query.isSuccess} isLoading={mutation.isPending} onClick={() => mutation.mutate(!saved)}>
+      <Button
+        variant="secondary"
+        aria-pressed={saved}
+        disabled={!query.isSuccess}
+        isLoading={mutation.isPending}
+        onClick={() => mutation.mutate(!saved)}
+      >
         {saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
         {saved ? "Saved for later" : "Watch later"}
       </Button>
-      {mutation.isError ? <span role="alert" className="text-xs">Save could not be confirmed.</span> : null}
+      {mutation.isError ? (
+        <span role="alert" className="text-xs">
+          Save could not be confirmed.
+        </span>
+      ) : null}
     </div>
   );
 }

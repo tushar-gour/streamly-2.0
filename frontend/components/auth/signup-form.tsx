@@ -103,8 +103,14 @@ export function SignupForm() {
     details: ["Create your space", "Create or resume your Streamly account."],
     email: ["Verify your email", "Enter the code sent to your email address."],
     setup: ["Protect your account", "Set up an authenticator app to continue."],
-    mfa: ["Connect your authenticator", "Add Streamly to your app, then enter its code."],
-    complete: ["Your account is ready", "Sign in using your new account and authenticator."],
+    mfa: [
+      "Connect your authenticator",
+      "Add Streamly to your app, then enter its code.",
+    ],
+    complete: [
+      "Your account is ready",
+      "Sign in using your new account and authenticator.",
+    ],
   } as const;
   const [title, description] = copy[stage.kind];
 
@@ -117,36 +123,82 @@ export function SignupForm() {
           </Button>
         ) : (
           <form className="grid gap-5" onSubmit={submit}>
-            {error ? <p role="alert" className="text-sm">{error}</p> : null}
+            {error ? (
+              <p role="alert" className="text-sm">
+                {error}
+              </p>
+            ) : null}
             <fieldset className="grid gap-4" disabled={pending}>
               <legend className="sr-only">{title}</legend>
               {stage.kind === "details" ? (
                 <>
-                  <Input label="Full name" autoComplete="name" required maxLength={100} value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                  <Input label="Username" autoComplete="username" required pattern="[A-Za-z0-9_\-]{3,30}" minLength={3} maxLength={30} value={username} onChange={(e) => setUsername(e.target.value)} />
-                  <Input label="Email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <PasswordInput autoComplete="new-password" minLength={8} maxLength={72} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Input
+                    label="Full name"
+                    autoComplete="name"
+                    required
+                    maxLength={100}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                  <Input
+                    label="Username"
+                    autoComplete="username"
+                    required
+                    pattern="[A-Za-z0-9_\-]{3,30}"
+                    minLength={3}
+                    maxLength={30}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                  <Input
+                    label="Email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    maxLength={254}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <PasswordInput
+                    autoComplete="new-password"
+                    minLength={8}
+                    maxLength={72}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </>
               ) : null}
               {stage.kind === "setup" ? (
                 <p className="text-sm text-[color:var(--color-text-secondary)]">
                   Use a trusted authenticator app such as Google Authenticator,
-                  Microsoft Authenticator or 1Password. Do not share your setup key.
+                  Microsoft Authenticator or 1Password. Do not share your setup
+                  key.
                 </p>
               ) : null}
               {stage.kind === "mfa" ? (
                 <div className="grid gap-3 rounded-card border border-[color:var(--color-border)] p-4">
                   <p className="text-sm">Manual setup key (time-based)</p>
-                  <code className="break-all text-sm select-all">{stage.secret}</code>
-                  <a className="text-sm text-periwinkle underline" href={stage.uri}>Open authenticator app</a>
+                  <code className="break-all text-sm select-all">
+                    {stage.secret}
+                  </code>
+                  <a
+                    className="text-sm text-periwinkle underline"
+                    href={stage.uri}
+                  >
+                    Open authenticator app
+                  </a>
                   <p className="text-xs text-[color:var(--color-text-secondary)]">
-                    Keep this key private. It will not be shown again after setup.
+                    Keep this key private. It will not be shown again after
+                    setup.
                   </p>
                 </div>
               ) : null}
               {stage.kind === "email" || stage.kind === "mfa" ? (
                 <Input
-                  label={stage.kind === "email" ? "Email code" : "Authenticator code"}
+                  label={
+                    stage.kind === "email" ? "Email code" : "Authenticator code"
+                  }
                   autoComplete="one-time-code"
                   inputMode="numeric"
                   pattern={stage.kind === "mfa" ? "[0-9]{6}" : "[0-9]+"}
@@ -158,15 +210,27 @@ export function SignupForm() {
               ) : null}
             </fieldset>
             <Button type="submit" size="lg" isLoading={pending}>
-              {stage.kind === "details" ? "Continue" : stage.kind === "setup" ? "Create setup key" : "Verify and continue"}
+              {stage.kind === "details"
+                ? "Continue"
+                : stage.kind === "setup"
+                  ? "Create setup key"
+                  : "Verify and continue"}
             </Button>
             {stage.kind !== "details" ? (
-              <Button type="button" variant="secondary" disabled={pending} onClick={restart}>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={pending}
+                onClick={restart}
+              >
                 Restart registration
               </Button>
             ) : (
               <p className="text-center text-sm">
-                Already registered? <Link className="text-periwinkle" href="/login">Sign in</Link>
+                Already registered?{" "}
+                <Link className="text-periwinkle" href="/login">
+                  Sign in
+                </Link>
               </p>
             )}
           </form>
