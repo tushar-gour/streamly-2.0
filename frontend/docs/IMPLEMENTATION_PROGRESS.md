@@ -219,3 +219,7 @@ At `3d3bc66`, the PostgreSQL integration, migration, backend tests, OpenAPI and 
 ## Iteration 15 — Shared visual and accessibility primitives
 
 Corrected light-mode background, skeleton, surface and error colors; shared form fields, buttons, cards, theme control and mobile navigation now follow theme tokens. Theme persistence no longer overwrites stored light mode during initialization and tolerates storage restrictions. Offline retry is functional. These are source-level improvements; screenshot and interaction verification still required.
+
+## Iteration 16 — Navigation and route accessibility
+
+Desktop navigation no longer overlaps its footer at short viewport heights. Added creator studio and profile navigation, permission-aware administration and upload visibility, working keyboard search shortcut, mobile search/settings links, active route semantics and a skip link. This does not implement the missing notifications or moderation backend. Browser verification remains pending.
