@@ -291,3 +291,8 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 - VERIFIED: database integration and security passed after correction on `9543a6c` ([run 45878517489](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878517489)). Tests include unchanged verified email, revoked old access/refresh token, and successful new password comparison.
 - IMPLEMENTED: reconcile CI formatter output. Exact commit full CI pending.
 - Visual smoke artifacts on `ea674a0` inspected: desktop dark login, home, playlist and watch; settings at desktop/tablet/mobile in both themes; desktop light studio and upload. Contact sheets are not pixel-level acceptance, and the watch capture shows a loading spinner. Playback, seeking, every-screen responsive and WCAG acceptance remain open.
+
+### Iteration 27 — S3 range regression reproduction
+
+- VERIFIED: all eight CI jobs passed on `398d112` ([run 45878307513](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878307513)), including single-flight unit regressions, backend identity mismatch and browser smoke. True concurrent multi-tab browser coverage remains open.
+- Added four provider regressions for suffix/open-ended/oversized byte ranges. Existing parser uses the suffix length as the end offset and rejects otherwise valid ranges extending past the object size. Pending reproduction. Mocked S3 command tests are not real object-storage verification.
