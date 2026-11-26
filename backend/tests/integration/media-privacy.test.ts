@@ -179,5 +179,4 @@ databaseDescribe("media and object privacy", () => {
         expect(response.status).toBe(401);
         expect(response.headers["x-streamly-session"]).toBe("expired");
     });
-
 });

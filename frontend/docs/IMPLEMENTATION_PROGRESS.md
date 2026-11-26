@@ -269,3 +269,8 @@ CI run 45877522141 exposed syntax defects in the first session integration commi
 ### Session type repair
 
 Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lock adapter now awaits the browser lock promise, preserving runtime flattening and the generic return contract without a cast. Applied the actual formatter diff for that run. Latest verification pending.
+
+### Iteration 23 — session regression formatting reconciliation
+
+- VERIFIED: PostgreSQL integration and API contracts passed on `5b662cd` ([run 45877952441](https://github.com/tushar-gour/streamly-2.0/actions/runs/45877952441)), including stale-account logout-all denial and invalid-session marker.
+- IMPLEMENTED: applied CI-emitted Prettier diffs to both newly added regression suites; exact final commit CI remains required. The Web Locks generic return typing was corrected in `411c53d` without an assertion or suppression.

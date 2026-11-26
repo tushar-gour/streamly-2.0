@@ -83,14 +83,19 @@ describe("apiRequest", () => {
       recover,
       changed: vi.fn(),
     });
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce(new Response(null, {
-        status: 401,
-        headers: { "X-Streamly-Session": "expired" },
-      }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ data: {} }), {
-        headers: { "content-type": "application/json" },
-      }));
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 401,
+          headers: { "X-Streamly-Session": "expired" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: {} }), {
+          headers: { "content-type": "application/json" },
+        })
+      );
     vi.stubGlobal("fetch", fetcher);
     await apiRequest("/api/v1/playlists", {
       method: "POST",
@@ -100,7 +105,9 @@ describe("apiRequest", () => {
     expect(recover).toHaveBeenCalledOnce();
     expect(fetcher).toHaveBeenCalledTimes(2);
     expect(fetcher.mock.calls[1][1].headers.get("Authorization")).toBeNull();
-    expect(fetcher.mock.calls[1][1].headers.get("X-Streamly-Account")).toBe("test");
+    expect(fetcher.mock.calls[1][1].headers.get("X-Streamly-Account")).toBe(
+      "test"
+    );
   });
 
   it("never retries a stale request after the account changes", async () => {
@@ -114,10 +121,13 @@ describe("apiRequest", () => {
       recover,
       changed: vi.fn(),
     });
-    const fetcher = vi.fn(async () => new Response(null, {
-      status: 401,
-      headers: { "X-Streamly-Session": "expired" },
-    }));
+    const fetcher = vi.fn(
+      async () =>
+        new Response(null, {
+          status: 401,
+          headers: { "X-Streamly-Session": "expired" },
+        })
+    );
     vi.stubGlobal("fetch", fetcher);
     await expect(apiRequest("/api/v1/playlists")).rejects.toMatchObject({
       statusCode: 401,
