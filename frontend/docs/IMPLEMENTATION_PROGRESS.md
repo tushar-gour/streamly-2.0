@@ -274,3 +274,7 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 
 - VERIFIED: PostgreSQL integration and API contracts passed on `5b662cd` ([run 45877952441](https://github.com/tushar-gour/streamly-2.0/actions/runs/45877952441)), including stale-account logout-all denial and invalid-session marker.
 - IMPLEMENTED: applied CI-emitted Prettier diffs to both newly added regression suites; exact final commit CI remains required. The Web Locks generic return typing was corrected in `411c53d` without an assertion or suppression.
+
+### Iteration 24 — credential mutation regression cases
+
+- Added database regression cases for direct unverified email replacement and password change leaving existing sessions valid. Both are pending reproduction on the existing implementation. Email replacement must fail closed until a verified email-change workflow exists.

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import { container } from "../../src/core/container/index.js";
 import { AuthService } from "../../src/application/services/auth.service.js";
 import {
     OtpService,
@@ -123,6 +124,44 @@ databaseDescribe("database authentication security", () => {
             where: { id: challenge.id },
         });
         expect(stored?.consumedAt).toBeNull();
+    });
+
+    it("rejects unverified email replacement through account details", async () => {
+        const user = await createUser();
+        await users.markEmailVerified(user._id);
+        await expect(
+            container.services.userService.updateAccountDetails({
+                userId: user._id,
+                body: { email: "replacement@example.com" },
+            })
+        ).rejects.toThrow("verification");
+        const stored = await users.findById(user._id);
+        expect(stored.email).toBe(user.email);
+        expect(stored.emailVerifiedAt).not.toBeNull();
+    });
+
+    it("revokes existing sessions after a password change", async () => {
+        const user = await createUser();
+        const session = await auth.createLoginSession({
+            user,
+            userAgent: undefined,
+            ipAddress: undefined,
+        });
+        await container.services.userService.changePassword({
+            userId: user._id,
+            body: {
+                oldPassword: "ValidPassword123!",
+                newPassword: "UpdatedPassword123!",
+            },
+        });
+        await expect(
+            auth.verifyAccessToken(session.accessToken)
+        ).rejects.toThrow("Invalid or expired session");
+        await expect(
+            auth.refreshSession(session.refreshToken)
+        ).rejects.toThrow();
+        const stored = await users.findByIdWithPassword(user._id);
+        expect(await stored.isPasswordCorrect("UpdatedPassword123!")).toBe(true);
     });
 
     it("never treats an onboarding credential as an access token", async () => {
