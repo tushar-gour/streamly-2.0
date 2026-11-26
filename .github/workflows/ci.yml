@@ -64,30 +64,46 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
+        id: backend-install
         run: npm ci
 
       - name: Format check
+        id: backend-format
         run: npm run format:check
 
+      - name: Formatting diagnostics
+        if: ${{ !cancelled() && steps.backend-format.outcome == 'failure' }}
+        run: |
+          npm run format
+          git diff -- .
+          git restore --worktree -- .
+
       - name: Lint
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run lint
 
       - name: Typecheck
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run typecheck
 
       - name: Build
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run build
 
       - name: Syntax check
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run syntax
 
       - name: Smoke check
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run smoke
 
       - name: Verify
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm run verify
 
       - name: Dependency audit report
+        if: ${{ !cancelled() && steps.backend-install.outcome == 'success' }}
         run: npm audit --audit-level=high
         continue-on-error: true
 

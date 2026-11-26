@@ -183,3 +183,7 @@ Pending: database-backed concurrency tests, OTP/MFA regression tests, onboarding
 ## Iteration 7 — Scoped onboarding backend
 
 Implemented pending verification: signup may resume only with the original credentials; new users receive their default role atomically with creation. Verified email yields a 10-minute onboarding-only JWT accepted only by MFA setup/verification, not normal access endpoints. MFA setup cannot overwrite an enabled factor; verification atomically enables the factor and activates the account. Phone verification requires the authenticated owner and the current number. Registration requires enabled OTP and MFA providers. Frontend enrollment and API documentation are next; no deployment.
+
+## Iteration 8 — Signup UI and contract alignment
+
+Signup is connected to the scoped onboarding backend: form, email OTP, manual authenticator key, TOTP verification, and sign-in after activation. Credentials and setup keys are held only in component memory. Restart resumes pending registration with the original credentials. OpenAPI source updated; backend CI now reports independent checks and formatter diffs without suppressing failures. QR rendering, phone enrollment UI, full integration verification and visual QA remain pending.

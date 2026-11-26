@@ -203,7 +203,11 @@ const openApiDocument = {
                     }),
                 },
                 responses: {
-                    200: successResponse("Email verified.", { type: "object" }),
+                    200: successResponse("Email verified.", {
+                        type: "object",
+                        required: ["onboardingToken"],
+                        properties: { onboardingToken: { type: "string" } },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -238,6 +242,8 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Verify optional phone OTP",
+                description: protectedDescription(),
+                security: authSecurity,
                 requestBody: {
                     required: true,
                     content: jsonContent({
@@ -263,8 +269,8 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Create authenticator app setup",
-                description: protectedDescription(),
-                security: authSecurity,
+                description: "Bearer onboarding credential from email verification. Normal access tokens are not accepted.",
+                security: [{ bearerAuth: [] }],
                 responses: {
                     200: successResponse("Authenticator setup.", {
                         type: "object",
@@ -278,8 +284,8 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Verify authenticator setup",
-                description: protectedDescription(),
-                security: authSecurity,
+                description: "Bearer onboarding credential. Activates the account without creating a login session.",
+                security: [{ bearerAuth: [] }],
                 requestBody: {
                     required: true,
                     content: jsonContent({
