@@ -141,21 +141,34 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        id: frontend-install
         run: npm ci
 
       - name: Format check
+        id: frontend-format
         run: npm run format:check
 
+      - name: Formatting diagnostics
+        if: ${{ !cancelled() && steps.frontend-format.outcome == 'failure' }}
+        run: |
+          npm run format
+          git diff -- .
+          git restore --worktree -- .
+
       - name: Lint
+        if: ${{ !cancelled() && steps.frontend-install.outcome == 'success' }}
         run: npm run lint
 
       - name: Typecheck
+        if: ${{ !cancelled() && steps.frontend-install.outcome == 'success' }}
         run: npm run typecheck
 
       - name: Test
+        if: ${{ !cancelled() && steps.frontend-install.outcome == 'success' }}
         run: npm run test
 
       - name: Build
+        if: ${{ !cancelled() && steps.frontend-install.outcome == 'success' }}
         run: npm run build
 
   docs:
