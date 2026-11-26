@@ -300,3 +300,10 @@ Run 45877863564 identified Web Locks' nested-promise TypeScript overload. The lo
 ### Iteration 28 — S3 byte-range correction
 
 - IMPLEMENTED: suffix ranges now end at the object boundary; explicit ends beyond object size clamp to the last byte; invalid zero-length suffixes and unsafe integer offsets are rejected. Regression CI pending. No live S3 object was accessed or changed.
+
+### Iteration 29 — range regression reconciliation and release handoff
+
+- VERIFIED: three of the four new S3 range regressions failed on the original parser ([run 45878794400](https://github.com/tushar-gour/streamly-2.0/actions/runs/45878794400)); the open-ended case already passed.
+- IMPLEMENTED: applied the emitted formatter layout and explicitly reject unsafe raw end offsets before treating them as bounded ranges. Final exact-commit CI must pass.
+- Next executable P0 task: implement authorized thumbnail delivery and private object-origin policy, then isolated real storage upload/stream/delete tests. Existing provider URLs may bypass application authorization. Do not mark release ready.
+- Remaining release gates: verified email change and password recovery (direct replacement is blocked, not implemented), MFA/phone management, admin moderation, notifications, remaining creator/library flows, strict-type debt audit, complete responsive visual/WCAG testing, production-like performance, final PR/rollback review. No production changes.

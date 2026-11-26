@@ -95,14 +95,14 @@ const parseRange = (
     const start = rawStart
         ? Number(rawStart)
         : Math.max(size - Number(rawEnd), 0);
-    const end = rawStart && rawEnd
-        ? Math.min(Number(rawEnd), size - 1)
-        : size - 1;
+    const end =
+        rawStart && rawEnd ? Math.min(Number(rawEnd), size - 1) : size - 1;
 
     if (
         !Number.isSafeInteger(start) ||
         !Number.isSafeInteger(end) ||
-        (!rawStart && (!Number.isSafeInteger(Number(rawEnd)) || Number(rawEnd) <= 0)) ||
+        (rawEnd !== "" && !Number.isSafeInteger(Number(rawEnd))) ||
+        (!rawStart && Number(rawEnd) <= 0) ||
         start < 0 ||
         end >= size ||
         start > end
