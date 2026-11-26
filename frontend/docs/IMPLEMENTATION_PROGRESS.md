@@ -211,3 +211,7 @@ Added a dedicated Chromium CI job using a disposable PostgreSQL database, seeded
 ## Iteration 13 — Watch Later and feed pagination
 
 Added an additive Watch Later database model, owner-scoped idempotent save/remove API and status/list reads. Frontend watch page and Watch Later library now use these endpoints. Feed pagination uses server metadata and retains its title through loading/empty/error states. Video card thumbnails use lazy image loading; the inert video menu is removed. Migration, new API integration and browser checks pending. No production database was touched.
+
+## Iteration 14 — CI repairs and reproducible formatting
+
+At `3d3bc66`, the PostgreSQL integration, migration, backend tests, OpenAPI and Prisma jobs passed. Frontend lint, typecheck, tests and build passed independently of formatting. Backend typecheck and build failed on a Watch Later error constructor argument; corrected without changing the error status. Applied the formatter's reported changes. Browser startup failed on the inherited backend port; set an explicit frontend port and pin the Python interpreter used for contact-sheet generation. The browser journey has not yet run successfully. Reverification pending; no deployment.

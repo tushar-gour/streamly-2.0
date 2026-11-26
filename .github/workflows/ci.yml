@@ -278,7 +278,7 @@ jobs:
         working-directory: frontend
         run: |
           npm run build
-          npm start -- --hostname 127.0.0.1 > "$RUNNER_TEMP/streamly-frontend.log" 2>&1 &
+          npm start -- --hostname 127.0.0.1 --port 3000 > "$RUNNER_TEMP/streamly-frontend.log" 2>&1 &
           for i in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then exit 0; fi
             sleep 1
@@ -301,6 +301,11 @@ jobs:
           name: streamly-browser-results
           path: frontend/browser-results/
           if-no-files-found: warn
+      - name: Setup Python for visual diagnostics
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Contact sheets for visual inspection
         if: always()
         working-directory: frontend

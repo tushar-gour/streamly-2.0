@@ -269,7 +269,8 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Create authenticator app setup",
-                description: "Bearer onboarding credential from email verification. Normal access tokens are not accepted.",
+                description:
+                    "Bearer onboarding credential from email verification. Normal access tokens are not accepted.",
                 security: [{ bearerAuth: [] }],
                 responses: {
                     200: successResponse("Authenticator setup.", {
@@ -284,7 +285,8 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Verify authenticator setup",
-                description: "Bearer onboarding credential. Activates the account without creating a login session.",
+                description:
+                    "Bearer onboarding credential. Activates the account without creating a login session.",
                 security: [{ bearerAuth: [] }],
                 requestBody: {
                     required: true,
