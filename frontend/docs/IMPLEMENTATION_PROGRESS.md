@@ -52,3 +52,43 @@ Branch: frontend/production-completion.
   because github.com DNS could not resolve. Binary visual references have not
   been inspected; browser verification and Web Vitals are unmeasured.
 - No backend modifications, merge or deployment.
+
+## Iteration 2 — Smart login and security audit (implementation unverified)
+
+- [ ] Replace four login entry screens with one challenge-driven form and typed
+  API module. OTP and MFA use backend challenge identifiers. Captcha uses the
+  backend-provided Turnstile site key. No standalone MFA login, no simulated
+  verification, no client-persisted passwords or refresh/trust tokens.
+- [ ] Clear query cache on identity changes to reduce cross-account data leakage.
+- [ ] Correct iteration 1 route gate: current-user does not return roles or
+  permissions in the inspected backend. Upload requires authentication locally;
+  actual video:create permission is enforced by the API. No client-side role
+  inference or backend authorization bypass.
+
+### Release-blocking backend findings
+
+- Legacy POST /users/login issues a session without MFA or captcha checks.
+  New UI uses /users/auth/login/start, but the old backend route remains usable.
+- Signup verification returns a user without issuing an onboarding credential;
+  later MFA setup and phone start require verifyJWT. Advanced login does not
+  enforce onboardingStatus, so a full secure onboarding flow cannot be guaranteed.
+- MFA verification issues device trust automatically; no explicit opt-out
+  supported. MFA challenge verification does not compare its stored device
+  fingerprint with the current device before accepting the code.
+- Access token validation does not check session revocation; logout-all does
+  not immediately invalidate already-issued access tokens.
+- current-user returns no role/permission list; admin route discovery and
+  capability UI cannot be authoritative. Admin APIs are absent.
+- Password recovery and session enumeration/revoke-specific endpoints absent.
+- Backend OTP and MFA consume challenges without an atomic conditional update;
+  concurrency and replay protection need integration/security testing.
+- No backend changes authorized. These issues must not be represented as fixed.
+
+### Verification
+
+Source inspection only; no integration/browser tests or performance measurements.
+The new login form retains the password in component memory only while a
+server-requested captcha is pending; it is cleared on challenge progression or
+failure. Direct captcha/MFA URLs restart sign-in rather than accepting an
+unbound code. The legacy store method remains for compatibility and needs
+migration/testing. Signup UI remains incomplete.

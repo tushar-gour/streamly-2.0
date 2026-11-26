@@ -14,9 +14,4 @@ export const authMethodOptions = [
     description: "Continue with a WhatsApp code.",
     href: "/login/whatsapp",
   },
-  {
-    title: "Authenticator app",
-    description: "Continue with an authenticator code.",
-    href: "/login/mfa",
-  },
 ] as const;
