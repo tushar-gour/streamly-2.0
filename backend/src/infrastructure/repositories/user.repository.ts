@@ -156,7 +156,6 @@ class PrismaUserRepository extends UserRepository {
                 _id: channel.id,
                 username: channel.username,
                 fullName: channel.fullName,
-                email: channel.email,
                 avatar: channel.avatar,
                 coverImage: channel.coverImage,
                 subscribersCount: channel.subscribers.length,
@@ -177,6 +176,7 @@ class PrismaUserRepository extends UserRepository {
             where: { id: userId },
             include: {
                 watchHistory: {
+                    where: { video: { isPublished: true } },
                     include: {
                         video: {
                             include: {

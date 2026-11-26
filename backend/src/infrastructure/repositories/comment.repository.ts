@@ -18,6 +18,14 @@ class PrismaCommentRepository extends CommentRepository {
         );
     }
 
+    async findOnPublishedVideo(commentId) {
+        return toComment(
+            await prisma.comment.findFirst({
+                where: { id: commentId, video: { isPublished: true } },
+            })
+        );
+    }
+
     async create(commentData) {
         return toComment(
             await prisma.comment.create({

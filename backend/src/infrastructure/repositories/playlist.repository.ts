@@ -78,6 +78,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                 include: {
                     owner: { select: ownerSelect },
                     videos: {
+                        where: { video: { isPublished: true } },
                         include: {
                             video: true,
                         },
@@ -108,6 +109,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
             include: {
                 owner: { select: ownerSelect },
                 videos: {
+                    where: { video: { isPublished: true } },
                     include: {
                         video: {
                             include: {
@@ -137,11 +139,12 @@ class PrismaPlaylistRepository extends PlaylistRepository {
         ];
     }
 
-    async getUserPlaylists(userId) {
+    async getUserPlaylists(userId, includePrivate = false) {
         const playlists = await prisma.playlist.findMany({
-            where: { ownerId: userId },
+            where: { ownerId: userId, ...(includePrivate ? {} : { isPublic: true }) },
             include: {
                 videos: {
+                    where: { video: { isPublished: true } },
                     include: { video: { select: { thumbnail: true } } },
                     orderBy: { createdAt: "asc" },
                 },

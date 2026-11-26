@@ -83,6 +83,8 @@ class Application {
 
         this.app.use(compression());
 
+        // Never expose legacy staging files through the public static mount.
+        this.app.use("/temp", (_req, res) => res.sendStatus(404));
         this.app.use(express.static("public"));
 
         this.app.use(httpLoggerMiddleware);

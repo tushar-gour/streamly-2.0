@@ -45,20 +45,23 @@ class PlaylistService {
         };
     }
 
-    async getById(playlistId) {
+    async getById(playlistId, currentUserId) {
         ObjectIdValidator.ensureValid(playlistId, "playlist ID");
 
         const playlists =
             await this.playlistRepository.getByIdWithDetails(playlistId);
 
-        if (!playlists?.length) {
+        if (
+            !playlists?.length ||
+            (!playlists[0].isPublic && playlists[0].owner?._id !== currentUserId)
+        ) {
             throw new NotFoundError("Playlist", playlistId);
         }
 
         return { data: playlists[0], message: "Playlist fetched successfully" };
     }
 
-    async getUserPlaylists(userId) {
+    async getUserPlaylists(userId, currentUserId) {
         ObjectIdValidator.ensureValid(userId, "user ID");
 
         const user = await this.userRepository.findById(userId);
@@ -67,7 +70,10 @@ class PlaylistService {
         }
 
         return {
-            data: await this.playlistRepository.getUserPlaylists(userId),
+            data: await this.playlistRepository.getUserPlaylists(
+                userId,
+                currentUserId === userId
+            ),
             message: "User playlists fetched successfully",
         };
     }

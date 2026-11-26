@@ -4,6 +4,7 @@ import {
     BadRequestError,
     ForbiddenError,
     NotFoundError,
+    UnauthorizedError,
 } from "../../shared/errors/api-error.js";
 import {
     PaginationDefaults,
@@ -105,6 +106,7 @@ class VideoService {
         };
 
         const video = await loadVideoDetails();
+        await this.#ensureViewAccess(video, currentUserId);
 
         await this.videoRepository.incrementViews(videoId);
 
@@ -326,34 +328,36 @@ class VideoService {
 
         const video = await this.#findVideoOrFail(videoId);
 
-        if (!video.isPublished) {
-            if (!currentUserId) {
-                throw new ApiError(
-                    401,
-                    "Authentication required to stream this video"
-                );
-            }
+        await this.#ensureViewAccess(video, currentUserId);
+        const result = await this.mediaStreamService.streamVideo(
+            video.videoFile,
+            range
+        );
+        return {
+            ...result,
+            headers: {
+                ...result.headers,
+                "Cache-Control": "private, no-store",
+            },
+        };
+    }
 
-            const ownsVideo =
-                video.owner?.toString() === currentUserId.toString();
-            const canStreamPrivateVideo =
-                await this.authorizationService.hasAnyPermission(
-                    currentUserId,
-                    [
-                        "video:update:any",
-                        "video:delete:any",
-                        "video:publish:any",
-                    ]
-                );
-
-            if (!ownsVideo && !canStreamPrivateVideo) {
-                throw new ForbiddenError(
-                    "You are not authorized to stream this video"
-                );
-            }
+    async #ensureViewAccess(video, currentUserId) {
+        if (video.isPublished) return;
+        if (!currentUserId) {
+            throw new UnauthorizedError("Authentication required to view this video");
         }
-
-        return this.mediaStreamService.streamVideo(video.videoFile, range);
+        const ownerId = video.owner?._id ?? video.owner;
+        if (ownerId === currentUserId) return;
+        if (
+            !(await this.authorizationService.hasAnyPermission(currentUserId, [
+                "video:update:any",
+                "video:delete:any",
+                "video:publish:any",
+            ]))
+        ) {
+            throw new ForbiddenError("You are not authorized to view this video");
+        }
     }
 
     async #findVideoOrFail(videoId) {

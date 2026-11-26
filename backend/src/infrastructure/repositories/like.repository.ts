@@ -81,6 +81,7 @@ class PrismaLikeRepository extends LikeRepository {
         const where = {
             likedById: userId,
             videoId: { not: null },
+            video: { isPublished: true },
         };
 
         const [likes, totalDocs] = await Promise.all([

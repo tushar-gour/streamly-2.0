@@ -25,6 +25,7 @@ class CommentService {
 
     async getVideoComments({ videoId, currentUserId, query }) {
         ObjectIdValidator.ensureValid(videoId, "video ID");
+        await this.#ensureVideoAccess(videoId, currentUserId);
 
         const { pageNum, limitNum } = this.#getPagination(
             query.page ?? PaginationDefaults.PAGE,
@@ -67,10 +68,7 @@ class CommentService {
             throw new BadRequestError("Comment content is required");
         }
 
-        const video = await this.videoRepository.findById(videoId);
-        if (!video) {
-            throw new NotFoundError("Video", videoId);
-        }
+        await this.#ensureVideoAccess(videoId, userId);
 
         const comment = await this.commentRepository.create({
             content: content.trim(),
@@ -148,6 +146,13 @@ class CommentService {
             this.cacheService.deleteByPattern(CacheKeys.videoDetailPattern()),
             this.cacheService.deleteByPattern(CacheKeys.videoListPattern()),
         ]);
+    }
+
+    async #ensureVideoAccess(videoId, userId) {
+        const video = await this.videoRepository.findById(videoId);
+        if (!video || (!video.isPublished && video.owner !== userId)) {
+            throw new NotFoundError("Video", videoId);
+        }
     }
 
     async #findCommentOrFail(commentId) {

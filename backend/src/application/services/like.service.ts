@@ -25,7 +25,10 @@ class LikeService {
             userId,
             fieldName: "video ID",
             notFoundResource: "Video",
-            exists: () => this.videoRepository.findById(videoId),
+            exists: async () => {
+                const video = await this.videoRepository.findById(videoId);
+                return video?.isPublished ? video : null;
+            },
             likedMessage: "Video liked successfully",
             unlikedMessage: "Video unliked successfully",
         });
@@ -38,7 +41,7 @@ class LikeService {
             userId,
             fieldName: "comment ID",
             notFoundResource: "Comment",
-            exists: () => this.commentRepository.findById(commentId),
+            exists: () => this.commentRepository.findOnPublishedVideo(commentId),
             likedMessage: "Comment liked successfully",
             unlikedMessage: "Comment unliked successfully",
         });
