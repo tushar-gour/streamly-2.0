@@ -203,3 +203,7 @@ The first PostgreSQL job successfully applied migrations but exposed the existin
 ## Iteration 11 — Session management and RBAC metadata
 
 Database job at `b3a52a6` passed after fixture repair; migration, integration and database-backed API contracts succeeded. Added owner-scoped session listing and revocation, current-session detection, and revocation of MFA trust records with all sessions. Login and current-user responses include authoritative role and permission names; upload guard restored. Legacy registration refuses to bypass configured advanced signup. Account settings exposes session management. New endpoints and integration behavior await verification.
+
+## Iteration 12 — Browser verification infrastructure
+
+Added a dedicated Chromium CI job using a disposable PostgreSQL database, seeded RBAC and test account, real API, production frontend build, screenshot artifacts and compact reference/browser contact sheets. Tests exercise login, playlist CRUD, session listing, theme selection, responsive overflow and studio/upload navigation. No backend responses are mocked. Browser tests do not yet include real video media or live OTP providers. Lab LCP/CLS are captured as diagnostic values only; INP and production performance remain unmeasured. Results pending.
