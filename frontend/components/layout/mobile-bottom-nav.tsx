@@ -4,7 +4,7 @@ import { mobileRoutes } from "@/lib/constants/routes";
 
 export function MobileBottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[color:var(--color-border)] bg-[rgba(8,11,19,0.9)] px-2 py-2 backdrop-blur lg:hidden">
+    <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-[color:var(--color-border)] bg-[color:var(--color-background-soft)] px-2 py-2 backdrop-blur lg:hidden">
       {mobileRoutes.map(({ href, icon: Icon, label }) => (
         <Link
           key={href}

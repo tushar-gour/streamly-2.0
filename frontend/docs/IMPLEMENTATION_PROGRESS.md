@@ -215,3 +215,7 @@ Added an additive Watch Later database model, owner-scoped idempotent save/remov
 ## Iteration 14 — CI repairs and reproducible formatting
 
 At `3d3bc66`, the PostgreSQL integration, migration, backend tests, OpenAPI and Prisma jobs passed. Frontend lint, typecheck, tests and build passed independently of formatting. Backend typecheck and build failed on a Watch Later error constructor argument; corrected without changing the error status. Applied the formatter's reported changes. Browser startup failed on the inherited backend port; set an explicit frontend port and pin the Python interpreter used for contact-sheet generation. The browser journey has not yet run successfully. Reverification pending; no deployment.
+
+## Iteration 15 — Shared visual and accessibility primitives
+
+Corrected light-mode background, skeleton, surface and error colors; shared form fields, buttons, cards, theme control and mobile navigation now follow theme tokens. Theme persistence no longer overwrites stored light mode during initialization and tolerates storage restrictions. Offline retry is functional. These are source-level improvements; screenshot and interaction verification still required.

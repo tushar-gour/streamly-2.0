@@ -18,19 +18,30 @@ type ThemeProviderProps = Readonly<{
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("streamly-theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      setTheme(savedTheme);
+    try {
+      const savedTheme = window.localStorage.getItem("streamly-theme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setTheme(savedTheme);
+      }
+    } catch {
+      // Theme remains usable when browser storage is unavailable.
     }
+    setReady(true);
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle("dark", theme === "dark");
-    window.localStorage.setItem("streamly-theme", theme);
-  }, [theme]);
+    try {
+      window.localStorage.setItem("streamly-theme", theme);
+    } catch {
+      // Persistence is optional; the active theme is still applied.
+    }
+  }, [ready, theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

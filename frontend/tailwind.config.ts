@@ -17,7 +17,7 @@ const config: Config = {
         graphite: "#111521",
         elevated: "#181D2B",
         indigo: "#6C5CE7",
-        periwinkle: "#8D84FF",
+        periwinkle: "var(--color-accent-soft)",
         lavender: "#A79CFF",
         cloud: "#F5F7FA",
         muted: "#9AA2B3",
