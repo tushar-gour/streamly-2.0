@@ -187,3 +187,7 @@ Implemented pending verification: signup may resume only with the original crede
 ## Iteration 8 — Signup UI and contract alignment
 
 Signup is connected to the scoped onboarding backend: form, email OTP, manual authenticator key, TOTP verification, and sign-in after activation. Credentials and setup keys are held only in component memory. Restart resumes pending registration with the original credentials. OpenAPI source updated; backend CI now reports independent checks and formatter diffs without suppressing failures. QR rendering, phone enrollment UI, full integration verification and visual QA remain pending.
+
+## Iteration 9 — Real database verification
+
+Added isolated PostgreSQL 16 CI service; applies existing migrations only to the disposable CI database. Integration tests cover immediate access revocation, simultaneous refresh, concurrent OTP consumption, MFA device binding and onboarding/access token separation. Previous suite explicitly skipped database tests; do not count skipped cases as passed. Current results pending.

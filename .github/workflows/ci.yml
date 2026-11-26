@@ -139,6 +139,48 @@ jobs:
       - name: Coverage
         run: npm run test:coverage
 
+  database-security:
+    name: Database integration and security
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: streamly
+          POSTGRES_PASSWORD: streamly
+          POSTGRES_DB: streamly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U streamly -d streamly_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RUN_DATABASE_TESTS: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply migrations to isolated test database
+        run: npx prisma migrate deploy
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Database-backed API contracts
+        run: npm run test:api
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

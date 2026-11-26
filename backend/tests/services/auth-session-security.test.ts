@@ -19,7 +19,7 @@ function fixture() {
         refreshTokenHash: tokenService.hashToken(refresh),
     };
     const sessionRepository = {
-        findValidSession: vi.fn(async () => ({ ...session })),
+        findValidSession: vi.fn(async (): Promise<typeof session | null> => ({ ...session })),
         rotateSessionToken: vi.fn(
             async ({
                 expectedHash,
@@ -60,7 +60,7 @@ describe("authentication session security", () => {
     it("rejects a valid access token when its session is absent", async () => {
         const f = fixture();
         f.sessionRepository.findValidSession.mockImplementationOnce(
-            async () => null as never
+            async () => null
         );
         const token = f.tokenService.generateAccessToken(user, f.sessionId);
         await expect(f.service.verifyAccessToken(token)).rejects.toThrow(
