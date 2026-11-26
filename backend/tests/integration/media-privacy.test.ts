@@ -74,7 +74,36 @@ databaseDescribe("media and object privacy", () => {
     afterEach(async () => {
         assertSafeTestDatabase();
         await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+        await prisma.moderationAction.deleteMany({ where: { actorId: { in: userIds } } });
         userIds.length = 0;
+    });
+
+    it("enforces moderation permissions, durable holds and release audit", async () => {
+        const { owner, viewer, video } = await fixture();
+        const mod = await account();
+        const role = await prisma.role.findUniqueOrThrow({ where: { name: "moderator" } });
+        const userRole = await prisma.role.findUniqueOrThrow({ where: { name: "user" } });
+        await prisma.userRole.create({ data: { id: createId(), userId: mod.user._id, roleId: role.id } });
+        await prisma.userRole.create({ data: { id: createId(), userId: owner.user._id, roleId: userRole.id } });
+        await prisma.video.update({ where: { id: video.id }, data: { isPublished: true } });
+        const path = "/api/v1/admin/videos/" + video.id + "/hold";
+        const hold = { held: true, reason: "Integration test policy violation" };
+        expect((await request(app).get("/api/v1/admin/overview")).status).toBe(401);
+        expect((await request(app).get("/api/v1/admin/videos").set("Authorization", "Bearer " + viewer.token)).status).toBe(403);
+        expect((await request(app).patch(path).set("Authorization", "Bearer " + owner.token).send(hold)).status).toBe(403);
+        expect((await request(app).get("/api/v1/admin/overview").set("Authorization", "Bearer " + mod.token)).status).toBe(200);
+        expect((await request(app).patch(path).set("Authorization", "Bearer " + mod.token).send(hold)).status).toBe(200);
+        expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id } })).toMatchObject({ moderationHeld: true, isPublished: false });
+        expect((await request(app).get("/api/v1/videos/" + video.id).set("Authorization", "Bearer " + viewer.token)).status).toBe(403);
+        const toggle = "/api/v1/videos/toggle/publish/" + video.id;
+        expect((await request(app).patch(toggle).set("Authorization", "Bearer " + owner.token)).status).toBe(409);
+        await expect(prisma.video.update({ where: { id: video.id }, data: { isPublished: true } })).rejects.toThrow();
+        expect((await request(app).patch(path).set("Authorization", "Bearer " + mod.token).send({ held: false, reason: "Resolved" })).status).toBe(200);
+        expect(await prisma.video.findUniqueOrThrow({ where: { id: video.id } })).toMatchObject({ moderationHeld: false, isPublished: false });
+        expect((await request(app).patch(toggle).set("Authorization", "Bearer " + owner.token)).status).toBe(200);
+        const audit = await prisma.moderationAction.findMany({ where: { resourceId: video.id }, orderBy: { createdAt: "asc" } });
+        expect(audit.map((entry) => entry.action)).toEqual(["video_hold", "video_release"]);
+        expect(audit.every((entry) => entry.actorId === mod.user._id)).toBe(true);
     });
 
     it("denies unpublished details to guests and other accounts", async () => {
