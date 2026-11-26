@@ -56,6 +56,7 @@ class Application {
                     "Authorization",
                     "X-Requested-With",
                     "X-Refresh-Token",
+                    "X-Streamly-Account",
                     "Range",
                     "X-Request-Id",
                     "X-Correlation-Id",
@@ -65,6 +66,7 @@ class Application {
                         .split(",")
                         .map((header) => header.trim())
                         .filter(Boolean),
+                    "X-Streamly-Session",
                     "X-Request-Id",
                     "X-Correlation-Id",
                 ],

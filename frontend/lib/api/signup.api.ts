@@ -12,6 +12,7 @@ async function post<T>(path: string, payload: object, token?: string) {
     method: "POST",
     body: JSON.stringify(payload),
     accessToken: token,
+    skipSessionRecovery: true,
   });
   if (!result?.success || !result.data) {
     throw new Error("Invalid registration response");

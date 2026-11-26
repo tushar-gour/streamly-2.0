@@ -1,3 +1,4 @@
+import { expectedSessionAccount } from "@/lib/api/client";
 import { createApiError, createNetworkError } from "@/lib/api/errors";
 import type { ApiResponse } from "@/lib/api/types";
 import type { VideoListItem } from "@/lib/api/videos.api";
@@ -27,6 +28,8 @@ export function uploadVideo(
     request.withCredentials = true;
     request.responseType = "json";
     request.setRequestHeader("Accept", "application/json");
+    const account = expectedSessionAccount();
+    if (account) request.setRequestHeader("X-Streamly-Account", account);
     if (accessToken) {
       request.setRequestHeader("Authorization", `Bearer ${accessToken}`);
     }

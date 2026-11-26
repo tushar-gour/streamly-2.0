@@ -2,8 +2,10 @@
 
 import { create } from "zustand";
 
-import { authApi } from "@/lib/api/auth";
-import { mapAuthError } from "@/lib/api/errors";
+import { authApi, recoverSession } from "@/lib/api/auth";
+import { configureSessionRecovery } from "@/lib/api/client";
+import { publishSessionChange } from "@/lib/auth/session-events";
+import { mapAuthError, StreamlyApiError } from "@/lib/api/errors";
 import type { LoginPayload } from "@/lib/api/types";
 import type { AuthSession } from "@/lib/auth/auth.types";
 import type { CurrentUser } from "@/lib/api/types";
@@ -18,12 +20,40 @@ type AuthStore = AuthSession & {
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   clearAuthError: () => void;
-  setAuthUser: (user: CurrentUser, accessToken?: string | null) => void;
-  setPartialSession: () => void;
-  clearSession: () => void;
+  setAuthUser: (user, accessToken = null) => {
+    if (get().user?._id !== user._id) {
+      sessionGeneration += 1;
+      publishSessionChange();
+    }
+    set({
+      accessToken,
+      error: null,
+      isAuthenticated: true,
+      isBootstrapping: false,
+      status: "authenticated",
+      user,
+    });
+  },
+
+  setPartialSession: () => set({ isAuthenticated: false, status: "partial" }),
+
+  clearSession: () => {
+    sessionGeneration += 1;
+    set({
+      accessToken: null,
+      error: null,
+      isAuthenticated: false,
+      isBootstrapping: false,
+      status: "anonymous",
+      user: null,
+    });
+  },
+
   hasAnyPermission: (permissions: readonly string[]) => boolean;
   hasAnyRole: (roles: readonly string[]) => boolean;
 };
+
+let sessionGeneration = 0;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   status: "anonymous",
@@ -35,34 +65,21 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   error: null,
 
   bootstrapCurrentUser: async () => {
+    const generation = sessionGeneration;
     set({ error: null, isBootstrapping: true });
-
     try {
-      let accessToken = get().accessToken;
-
-      if (!accessToken) {
-        const refreshedSession = await authApi.refreshSession();
-        accessToken = refreshedSession.accessToken;
-      }
-
-      const user = await authApi.currentUser(accessToken);
+      const result = await recoverSession();
+      if (generation !== sessionGeneration) return;
       set({
-        accessToken,
+        ...result,
         error: null,
         isAuthenticated: true,
         isBootstrapping: false,
         status: "authenticated",
-        user,
       });
     } catch {
-      set({
-        accessToken: null,
-        error: null,
-        isAuthenticated: false,
-        isBootstrapping: false,
-        status: "anonymous",
-        user: null,
-      });
+      if (generation !== sessionGeneration) return;
+      get().clearSession();
     }
   },
 
@@ -71,11 +88,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     try {
       const result = await authApi.loginWithPassword(payload);
+      sessionGeneration += 1;
+      publishSessionChange();
       set({
         accessToken: result.accessToken,
         error: null,
         isAuthenticated: true,
         isLoading: false,
+        isBootstrapping: false,
         status: "authenticated",
         user: result.user,
       });
@@ -93,35 +113,23 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   logout: async () => {
     set({ error: null, isLoading: true });
-
     try {
       await authApi.logout(get().accessToken);
+      get().clearSession();
+      publishSessionChange();
     } finally {
-      set({
-        accessToken: null,
-        error: null,
-        isAuthenticated: false,
-        isLoading: false,
-        status: "anonymous",
-        user: null,
-      });
+      set({ isLoading: false });
     }
   },
 
   logoutAll: async () => {
     set({ error: null, isLoading: true });
-
     try {
       await authApi.logoutAll(get().accessToken);
+      get().clearSession();
+      publishSessionChange();
     } finally {
-      set({
-        accessToken: null,
-        error: null,
-        isAuthenticated: false,
-        isLoading: false,
-        status: "anonymous",
-        user: null,
-      });
+      set({ isLoading: false });
     }
   },
 
@@ -158,3 +166,27 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     return roles.some((role) => userRoles.includes(role));
   },
 }));
+
+configureSessionRecovery({
+  identity: () => useAuthStore.getState().user?._id,
+  recover: async (expectedUserId) => {
+    const generation = sessionGeneration;
+    try {
+      const result = await recoverSession();
+      const state = useAuthStore.getState();
+      if (generation !== sessionGeneration) return false;
+      if (result.user._id !== expectedUserId || state.user?._id !== expectedUserId) {
+        state.clearSession();
+        return false;
+      }
+      state.setAuthUser(result.user, result.accessToken);
+      return true;
+    } catch (error) {
+      if (generation === sessionGeneration && error instanceof StreamlyApiError && error.statusCode === 401) {
+        useAuthStore.getState().clearSession();
+      }
+      return false;
+    }
+  },
+  changed: () => useAuthStore.getState().clearSession(),
+});
