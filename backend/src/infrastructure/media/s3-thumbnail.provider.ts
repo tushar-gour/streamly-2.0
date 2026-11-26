@@ -62,11 +62,8 @@ const runFfmpeg = (
             outputPath,
         ]);
 
-        let stderr = "";
-
-        process.stderr.on("data", (chunk) => {
-            stderr += String(chunk);
-        });
+        // Drain stderr without retaining signed origin credentials.
+        process.stderr.resume();
 
         process.on("error", reject);
         process.on("close", (code) => {
@@ -77,8 +74,7 @@ const runFfmpeg = (
 
             reject(
                 new Error(
-                    stderr.trim() ||
-                        `ffmpeg thumbnail extraction failed with code ${code}`
+                    `ffmpeg thumbnail extraction failed with code ${code}`
                 )
             );
         });

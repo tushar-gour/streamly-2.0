@@ -186,12 +186,18 @@ jobs:
 
       - name: Start disposable S3-compatible storage
         run: |
-          docker run --rm -d --name streamly-storage-test -p 127.0.0.1:19000:9000 -e MINIO_ROOT_USER=streamlytest -e MINIO_ROOT_PASSWORD=streamlytest-secret quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
-          for i in $(seq 1 45); do
-            if curl --fail --silent http://127.0.0.1:19000/minio/health/ready; then exit 0; fi
+          mkdir -p "$RUNNER_TEMP/streamly-storage/data"
+          curl --fail --location --retry 2 --output "$RUNNER_TEMP/streamly-storage/weed.tar.gz" https://github.com/seaweedfs/seaweedfs/releases/download/4.55/linux_amd64.tar.gz
+          echo "f156c609eeaf9e5fcfeea33fd70411222005f83760aa95893c9d58eff006b45c  $RUNNER_TEMP/streamly-storage/weed.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/streamly-storage/weed.tar.gz" -C "$RUNNER_TEMP/streamly-storage" weed
+          AWS_ACCESS_KEY_ID=streamlytest AWS_SECRET_ACCESS_KEY=streamlytest-secret "$RUNNER_TEMP/streamly-storage/weed" mini -dir="$RUNNER_TEMP/streamly-storage/data" -ip=127.0.0.1 -ip.bind=127.0.0.1 -s3.port=19000 -master.telemetry=false > "$RUNNER_TEMP/streamly-storage/server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/streamly-storage/pid"
+          for i in $(seq 1 60); do
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:19000/ || true)
+            if [ "$status" = 403 ]; then exit 0; fi
             sleep 1
           done
-          docker logs streamly-storage-test
+          cat "$RUNNER_TEMP/streamly-storage/server.log"
           exit 1
 
       - name: Real isolated object-storage and media API integration
@@ -201,7 +207,10 @@ jobs:
 
       - name: Remove disposable storage
         if: always()
-        run: docker rm -f streamly-storage-test || true
+        run: |
+          if [ -f "$RUNNER_TEMP/streamly-storage/pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/streamly-storage/pid")" || true
+          fi
 
   frontend:
     name: Frontend

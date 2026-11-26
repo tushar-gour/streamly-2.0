@@ -104,6 +104,12 @@ class Server {
         try {
             serverLogger.info("connecting to database");
             await connectDB();
+            if (appConfig.nodeEnv === "production") {
+                const { assertPrivateMediaRecords } = await import(
+                    "./infrastructure/media/media-migration-gate.js"
+                );
+                await assertPrivateMediaRecords();
+            }
 
             serverLogger.info("connecting to redis");
             await redisService.connect();

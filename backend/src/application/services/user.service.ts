@@ -303,7 +303,9 @@ class UserService {
         const oldAvatarPublicId = this.mediaStorageService.extractPublicId(
             currentUser.avatar
         );
-        const avatar = await this.mediaStorageService.upload(avatarLocalPath);
+        const avatar = await this.mediaStorageService.upload(avatarLocalPath, {
+            contentType: file.mimetype,
+        });
 
         if (!avatar) {
             throw new ApiError(500, "Failed to upload avatar");

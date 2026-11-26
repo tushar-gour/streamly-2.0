@@ -336,3 +336,7 @@ SEC-01/02 and PROD-01 remain IMPLEMENTED, not verified. Added isolated MinIO obj
 ## Iteration 32 — Storage runner repair and browser concurrency gate
 
 Run [45882968546](https://github.com/tushar-gour/streamly-2.0/actions/runs/45882968546): existing unit/API suites and OpenAPI passed; storage infrastructure failed before tests (Docker Hub MinIO pull denied). Switched to pinned Quay image; no fallback to mocks. Applied actual CI formatter hunks. SEC-06 IMPLEMENTED: browser test removes only access cookie and reloads two actual documents sharing the same session, asserts exactly one refresh and both authenticated. Added play/seek assertions to existing generated WebM browser test. Documented AWS IAM, origin configuration, legacy migration, CDN restrictions and rollback gates. Verification pending.
+
+## Iteration 33 — Storage infrastructure alternative and legacy gate
+
+Quay MinIO pull also denied (401) in [run 45883311955](https://github.com/tushar-gour/streamly-2.0/actions/runs/45883311955). Changed diagnostic approach: pinned official SeaweedFS 4.55 Linux release, SHA-256 verified against GitHub release metadata, authenticating S3 server on loopback. No mock substitution. Added production read-only legacy reference gate, removed generated public avatar URLs from signup, disabled stale published-list caching, prevented FFmpeg signed URL logs, and ensured actual MIME drives avatar storage. Exact final CI pending. AWS public block/ownership/access-point policy and legacy copies must still be verified against deployment infrastructure.

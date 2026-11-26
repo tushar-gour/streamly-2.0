@@ -57,27 +57,16 @@ class VideoService {
         const { pageNum, limitNum } = this.#getPagination(page, limit);
         if (userId) ObjectIdValidator.ensureValid(userId, "user ID");
 
-        const cacheKey = CacheKeys.videoList({
-            page: pageNum,
-            limit: limitNum,
-            query,
-            sortBy,
-            sortType,
-            userId,
-        });
-        const { videos, totalDocs } = await this.cacheService.remember(
-            cacheKey,
-            appConfig.cache.videoListTtlSeconds,
-            () =>
-                this.videoRepository.getPublishedVideos({
-                    pageNum,
-                    limitNum,
-                    query,
-                    sortBy,
-                    sortType,
-                    userId,
-                })
-        );
+        // Visibility cannot depend on eventually invalidated cache entries.
+        const { videos, totalDocs } =
+            await this.videoRepository.getPublishedVideos({
+                pageNum,
+                limitNum,
+                query,
+                sortBy,
+                sortType,
+                userId,
+            });
 
         return {
             data: videos,

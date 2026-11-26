@@ -108,7 +108,7 @@ class AuthPlatformService {
                         password,
                         isProduction() ? 12 : 10
                     ),
-                    avatar: `${appConfig.publicBaseUrl}/default-avatar.png`,
+                    avatar: "",
                     coverImage: "",
                     onboardingStatus: "email_pending",
                     userRoles: {

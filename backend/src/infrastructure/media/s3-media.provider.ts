@@ -46,6 +46,8 @@ const createS3Client = (): S3Client =>
     new S3Client({
         region: appConfig.aws.region,
         endpoint: appConfig.aws.s3Endpoint || undefined,
+        requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
         forcePathStyle: appConfig.aws.s3ForcePathStyle,
         credentials:
             appConfig.aws.accessKeyId && appConfig.aws.secretAccessKey
