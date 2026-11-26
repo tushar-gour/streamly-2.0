@@ -5,7 +5,7 @@ const createTestUserData = (overrides = {}) => {
     const uniqueId = createId();
 
     return {
-        username: `test_user_${uniqueId}`,
+        username: `test_${uniqueId}`,
         email: `test_${uniqueId}@example.com`,
         fullName: "Test User",
         password: "ValidPassword123!",

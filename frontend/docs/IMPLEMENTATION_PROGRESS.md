@@ -195,3 +195,7 @@ Added isolated PostgreSQL 16 CI service; applies existing migrations only to the
 ## Iteration 10 — Playlist workflows
 
 Implemented playlist creation, metadata editing, deletion, adding from the watch page and removing existing items. List thumbnails now use the actual summary field. Backend membership writes operate on the unique playlist/video row instead of rewriting the entire collection; add/remove are idempotent. Input bounds match the database. Pending verification: ownership, simultaneous membership mutations, playlist privacy audit, keyboard/browser testing and formatter checks.
+
+### Database CI repair
+
+The first PostgreSQL job successfully applied migrations but exposed the existing fixture's over-length username (P2000) and two test call signatures missing optional-valued parameters. Corrected fixture and calls; no schema constraint or assertion was weakened. Re-run pending.

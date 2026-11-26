@@ -41,7 +41,7 @@ databaseDescribe("database authentication security", () => {
 
     it("rejects access immediately after revocation", async () => {
         const user = await createUser();
-        const session = await auth.createLoginSession({ user });
+        const session = await auth.createLoginSession({ user, userAgent: undefined, ipAddress: undefined });
         await expect(auth.verifyAccessToken(session.accessToken)).resolves.toMatchObject({
             sessionId: session.sessionId,
         });
@@ -53,7 +53,7 @@ databaseDescribe("database authentication security", () => {
 
     it("allows only one competing database refresh rotation", async () => {
         const user = await createUser();
-        const session = await auth.createLoginSession({ user });
+        const session = await auth.createLoginSession({ user, userAgent: undefined, ipAddress: undefined });
         const results = await Promise.allSettled([
             auth.refreshSession(session.refreshToken),
             auth.refreshSession(session.refreshToken),
