@@ -20,7 +20,10 @@ export function createSessionCoordinator(dependencies: SessionDependencies) {
           const user = await dependencies.load();
           return { user, accessToken: null };
         } catch (error) {
-          if (!(error instanceof StreamlyApiError) || error.statusCode !== 401) {
+          if (
+            !(error instanceof StreamlyApiError) ||
+            error.statusCode !== 401
+          ) {
             throw error;
           }
         }
@@ -35,9 +38,9 @@ export function createSessionCoordinator(dependencies: SessionDependencies) {
   };
 }
 
-export function withSessionLock<T>(work: () => Promise<T>): Promise<T> {
+export async function withSessionLock<T>(work: () => Promise<T>): Promise<T> {
   if (typeof navigator !== "undefined" && navigator.locks) {
-    return navigator.locks.request("streamly-session-refresh", work);
+    return await navigator.locks.request("streamly-session-refresh", work);
   }
   return work();
 }

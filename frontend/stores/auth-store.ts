@@ -158,14 +158,21 @@ configureSessionRecovery({
       const result = await recoverSession();
       const state = useAuthStore.getState();
       if (generation !== sessionGeneration) return false;
-      if (result.user._id !== expectedUserId || state.user?._id !== expectedUserId) {
+      if (
+        result.user._id !== expectedUserId ||
+        state.user?._id !== expectedUserId
+      ) {
         state.clearSession();
         return false;
       }
       state.setAuthUser(result.user, result.accessToken);
       return true;
     } catch (error) {
-      if (generation === sessionGeneration && error instanceof StreamlyApiError && error.statusCode === 401) {
+      if (
+        generation === sessionGeneration &&
+        error instanceof StreamlyApiError &&
+        error.statusCode === 401
+      ) {
         useAuthStore.getState().clearSession();
       }
       return false;

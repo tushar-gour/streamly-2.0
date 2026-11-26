@@ -62,8 +62,16 @@ describe("session coordinator", () => {
       valid = true;
       return { accessToken: "renewed" };
     });
-    const first = createSessionCoordinator({ load, rotate, exclusive: sharedLock });
-    const second = createSessionCoordinator({ load, rotate, exclusive: sharedLock });
+    const first = createSessionCoordinator({
+      load,
+      rotate,
+      exclusive: sharedLock,
+    });
+    const second = createSessionCoordinator({
+      load,
+      rotate,
+      exclusive: sharedLock,
+    });
     await Promise.all([first(), second()]);
     expect(rotate).toHaveBeenCalledTimes(1);
   });
