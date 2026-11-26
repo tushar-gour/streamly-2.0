@@ -133,9 +133,6 @@ jobs:
       - name: API contract tests
         run: npm run test:api
 
-      - name: Seed isolated RBAC fixtures
-        run: npm run seed:rbac
-
       - name: Integration tests
         run: npm run test:integration
 
@@ -177,6 +174,9 @@ jobs:
 
       - name: Apply migrations to isolated test database
         run: npx prisma migrate deploy
+
+      - name: Seed isolated RBAC fixtures
+        run: npm run seed:rbac
 
       - name: Integration tests
         run: npm run test:integration
