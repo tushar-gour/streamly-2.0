@@ -33,6 +33,7 @@ class AuthMiddleware {
                 res.set("X-Streamly-Session", "expired");
             }
             throw error;
+        }
     });
 
     static optionalAuth = asyncHandler(async (req, res, next) => {

@@ -257,3 +257,7 @@ VERIFIED: [reproduction run 45877123888](https://github.com/tushar-gour/streamly
 ## Iteration 22 — Single-flight session recovery
 
 IMPLEMENTED, verification pending: one in-flight refresh per tab; browser Web Locks serialize across tabs, and a cookie current-user probe within the lock avoids rotating an already renewed session. API replay occurs at most once, only on an explicit pre-handler session-expired marker and replayable request body; no replay after identity change. Expected account header is checked server-side before executing protected actions, preventing a stale tab from silently acting under a replacement cookie identity. Storage events contain a random change marker only; other tabs clear identity/cache and re-bootstrap. Generation guard prevents stale bootstrap results replacing a newer sign-in. Logout failure no longer pretends local clearance confirms server revocation. Browsers without Web Locks or storage access have degraded multi-tab coordination; server rotation remains fail-closed. XHR uploads carry the identity guard but are not auto-retried. Integration and browser coverage pending.
+
+### Session repair
+
+CI run 45877522141 exposed syntax defects in the first session integration commit: a source replacement targeted the AuthStore declaration rather than its implementation, and a middleware catch brace was omitted. Corrected both, retained regression assertions. No verification claim for this commit until rerun.

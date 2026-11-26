@@ -20,35 +20,9 @@ type AuthStore = AuthSession & {
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   clearAuthError: () => void;
-  setAuthUser: (user, accessToken = null) => {
-    if (get().user?._id !== user._id) {
-      sessionGeneration += 1;
-      publishSessionChange();
-    }
-    set({
-      accessToken,
-      error: null,
-      isAuthenticated: true,
-      isBootstrapping: false,
-      status: "authenticated",
-      user,
-    });
-  },
-
-  setPartialSession: () => set({ isAuthenticated: false, status: "partial" }),
-
-  clearSession: () => {
-    sessionGeneration += 1;
-    set({
-      accessToken: null,
-      error: null,
-      isAuthenticated: false,
-      isBootstrapping: false,
-      status: "anonymous",
-      user: null,
-    });
-  },
-
+  setAuthUser: (user: CurrentUser, accessToken?: string | null) => void;
+  setPartialSession: () => void;
+  clearSession: () => void;
   hasAnyPermission: (permissions: readonly string[]) => boolean;
   hasAnyRole: (roles: readonly string[]) => boolean;
 };
@@ -135,25 +109,34 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   clearAuthError: () => set({ error: null }),
 
-  setAuthUser: (user, accessToken = null) =>
+  setAuthUser: (user, accessToken = null) => {
+    if (get().user?._id !== user._id) {
+      sessionGeneration += 1;
+      publishSessionChange();
+    }
     set({
       accessToken,
       error: null,
       isAuthenticated: true,
+      isBootstrapping: false,
       status: "authenticated",
       user,
-    }),
+    });
+  },
 
   setPartialSession: () => set({ isAuthenticated: false, status: "partial" }),
 
-  clearSession: () =>
+  clearSession: () => {
+    sessionGeneration += 1;
     set({
       accessToken: null,
       error: null,
       isAuthenticated: false,
+      isBootstrapping: false,
       status: "anonymous",
       user: null,
-    }),
+    });
+  },
 
   hasAnyPermission: (permissions) => {
     const userPermissions = get().user?.permissions ?? [];

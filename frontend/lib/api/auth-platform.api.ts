@@ -16,7 +16,11 @@ export type LoginStep =
 async function post(path: string, payload: object) {
   const result = await apiRequest<LoginStep>(
     `/api/v1/users/auth/login/${path}`,
-    { method: "POST", body: JSON.stringify(payload), skipSessionRecovery: true }
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+      skipSessionRecovery: true,
+    }
   );
   if (!result?.success || !result.data) {
     throw new Error("Invalid authentication response");

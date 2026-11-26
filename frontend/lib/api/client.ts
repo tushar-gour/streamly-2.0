@@ -54,8 +54,12 @@ export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const account = options.skipSessionRecovery ? undefined : expectedSessionAccount();
-  const { accessToken: _token, skipSessionRecovery: _skip, ...request } = options;
+  const account = options.skipSessionRecovery
+    ? undefined
+    : expectedSessionAccount();
+  const request = { ...options };
+  delete request.accessToken;
+  delete request.skipSessionRecovery;
   async function send(retry = false) {
     try {
       return await fetch(`${frontendConfig.apiBaseUrl}${path}`, {

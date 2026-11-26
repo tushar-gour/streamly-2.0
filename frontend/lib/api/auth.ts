@@ -1,5 +1,8 @@
 import { apiRequest } from "@/lib/api/client";
-import { createSessionCoordinator, withSessionLock } from "@/lib/auth/session-coordinator";
+import {
+  createSessionCoordinator,
+  withSessionLock,
+} from "@/lib/auth/session-coordinator";
 import type {
   AuthenticatedUserPayload,
   AuthResult,
