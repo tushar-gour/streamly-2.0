@@ -31,6 +31,9 @@ class AuthService {
 
     async createLoginSession({ user, userAgent, ipAddress }) {
         try {
+            if (user.onboardingStatus !== "active") {
+                throw new UnauthorizedError("Account setup is incomplete");
+            }
             const sessionId = this.tokenService.createSessionId();
             const accessToken = this.tokenService.generateAccessToken(
                 user,
@@ -102,6 +105,10 @@ class AuthService {
             throw new NotFoundError("User", decodedToken._id);
         }
 
+        if (user.onboardingStatus !== "active") {
+            throw new UnauthorizedError("Account setup is incomplete");
+        }
+
         const accessToken = this.tokenService.generateAccessToken(
             user,
             session.id
@@ -111,11 +118,20 @@ class AuthService {
             session.id
         );
 
-        await this.sessionRepository.updateSessionTokenHash(
-            session.id,
-            this.tokenService.hashToken(newRefreshToken),
-            this.tokenService.getRefreshTokenExpiresAt()
-        );
+        const rotation = await this.sessionRepository.rotateSessionToken({
+            sessionId: session.id,
+            userId: user._id,
+            expectedHash: session.refreshTokenHash,
+            nextHash: this.tokenService.hashToken(newRefreshToken),
+            expiresAt: this.tokenService.getRefreshTokenExpiresAt(),
+        });
+        if (rotation.count !== 1) {
+            await this.sessionRepository.revokeSession(
+                session.id,
+                "refresh-token-rotation-conflict"
+            );
+            throw new UnauthorizedError("Refresh token has been revoked");
+        }
 
         audit.info("auth.refresh_rotated", {
             userId: user._id,
@@ -147,12 +163,17 @@ class AuthService {
         }
 
         const decodedToken = this.tokenService.verifyAccessToken(token);
+        const session = await this.sessionRepository.findValidSession({
+            sessionId: decodedToken.sessionId,
+            userId: decodedToken._id,
+        });
+        if (!session) {
+            throw new UnauthorizedError("Invalid or expired session");
+        }
         const user = await this.userRepository.findPublicById(decodedToken._id);
 
-        if (!user) {
-            throw new UnauthorizedError(
-                "Invalid access token - user not found"
-            );
+        if (!user || user.onboardingStatus !== "active") {
+            throw new UnauthorizedError("Invalid or inactive account");
         }
 
         return { user, sessionId: decodedToken.sessionId };
@@ -180,10 +201,8 @@ class AuthService {
         }
 
         const user = await this.userRepository.findPublicById(decodedToken._id);
-        if (!user) {
-            throw new UnauthorizedError(
-                "Invalid refresh token - user not found"
-            );
+        if (!user || user.onboardingStatus !== "active") {
+            throw new UnauthorizedError("Invalid or inactive account");
         }
 
         return user;

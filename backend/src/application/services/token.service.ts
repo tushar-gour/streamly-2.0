@@ -111,7 +111,14 @@ class TokenService {
         try {
             const payload = jwt.verify(token, secret);
 
-            if (payload.type !== expectedType) {
+            if (
+                typeof payload !== "object" ||
+                payload.type !== expectedType ||
+                typeof payload._id !== "string" ||
+                !payload._id ||
+                typeof payload.sessionId !== "string" ||
+                !payload.sessionId
+            ) {
                 throw new UnauthorizedError("Invalid token type");
             }
 

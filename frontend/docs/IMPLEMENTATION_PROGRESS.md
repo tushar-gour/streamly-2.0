@@ -171,3 +171,11 @@ runs lint, typecheck, test and build independently without hiding failures.
   verification has been performed.
 - Shared first-load JavaScript: 102 kB (Next.js build output, not a Web Vital).
 - Status: PARTIAL; do not merge or deploy before remaining gates pass.
+
+## Iteration 6 — Server security foundation
+
+Recovered branch `9471753`: all six [CI jobs passed](https://github.com/tushar-gour/streamly-2.0/actions/runs/45862292294). Backend authorization is now explicit. No merge or deployment.
+
+Implemented, verification pending: access tokens require a live session and an active account; refresh uses a conditional atomic rotation with fail-closed conflict handling; legacy login cannot bypass configured captcha or enabled MFA; OTP/MFA challenge consumption is conditional and atomic; MFA binds to device and user agent (IP changes alone do not invalidate the challenge); phone login requires verified ownership and OTP verification checks the current identifier. Added session security regression tests.
+
+Pending: database-backed concurrency tests, OTP/MFA regression tests, onboarding credential flow, secure email change, MFA management, permission metadata, client refresh coordination, session APIs, remaining product APIs and frontend flows. Existing pending accounts cannot sign in until secure onboarding is completed. Concurrent duplicate refresh can revoke the affected session by design; client coordination is still required. Browser and visual verification remain unperformed.

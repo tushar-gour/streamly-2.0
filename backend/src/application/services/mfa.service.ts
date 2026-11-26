@@ -137,6 +137,12 @@ class MfaService {
         if (!challenge || challenge.consumedAt) {
             throw new ApiError(400, "Invalid MFA challenge");
         }
+        if (
+            challenge.deviceFingerprintHash !== hashValue(context.deviceId) ||
+            challenge.userAgentHash !== hashContext(context.userAgent)
+        ) {
+            throw new ApiError(400, "Invalid MFA challenge");
+        }
         if (challenge.expiresAt <= new Date()) {
             throw new ApiError(400, "MFA challenge expired");
         }
@@ -149,19 +155,30 @@ class MfaService {
         });
         if (!method?.enabledAt) throw new ApiError(403, "MFA is not enabled");
 
+        const available = {
+            id: challenge.id,
+            consumedAt: null,
+            expiresAt: { gt: new Date() },
+            failedAttempts: { lt: appConfig.mfa.maxVerifyAttempts },
+            deviceFingerprintHash: hashValue(context.deviceId),
+            userAgentHash: hashContext(context.userAgent),
+        };
         const secret = decryptSecret(method.secretEncrypted);
         if (!verifySync({ secret, token: code }).valid) {
-            await prisma.mfaChallenge.update({
-                where: { id: challenge.id },
+            await prisma.mfaChallenge.updateMany({
+                where: available,
                 data: { failedAttempts: { increment: 1 } },
             });
             throw new ApiError(400, "Invalid authenticator code");
         }
 
-        await prisma.mfaChallenge.update({
-            where: { id: challenge.id },
+        const consumed = await prisma.mfaChallenge.updateMany({
+            where: available,
             data: { consumedAt: new Date() },
         });
+        if (consumed.count !== 1) {
+            throw new ApiError(400, "MFA challenge is no longer available");
+        }
 
         return this.createTrustToken(challenge.userId, context);
     }

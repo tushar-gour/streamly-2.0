@@ -141,6 +141,17 @@ class UserService {
             throw new UnauthorizedError("Invalid credentials");
         }
 
+        // Legacy clients must use challenge-aware sign-in when required.
+        if (
+            user.mfaEnabledAt ||
+            user.onboardingStatus !== "active" ||
+            appConfig.captcha.enabled
+        ) {
+            throw new UnauthorizedError(
+                "Use the advanced sign-in flow to continue"
+            );
+        }
+
         const { accessToken, refreshToken } =
             await this.authService.createLoginSession({
                 user,

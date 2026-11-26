@@ -32,6 +32,30 @@ class PrismaSessionRepository extends SessionRepository {
         });
     }
 
+    rotateSessionToken({
+        sessionId,
+        userId,
+        expectedHash,
+        nextHash,
+        expiresAt,
+    }) {
+        const now = new Date();
+        return prisma.session.updateMany({
+            where: {
+                id: sessionId,
+                userId,
+                refreshTokenHash: expectedHash,
+                revokedAt: null,
+                expiresAt: { gt: now },
+            },
+            data: {
+                refreshTokenHash: nextHash,
+                expiresAt,
+                lastUsedAt: now,
+            },
+        });
+    }
+
     updateSessionTokenHash(sessionId, refreshTokenHash, expiresAt) {
         return prisma.session.update({
             where: { id: sessionId },

@@ -13,7 +13,7 @@ import {
 import { ApiError, UnauthorizedError } from "../../shared/errors/api-error.js";
 import { SuccessMessages } from "../../shared/constants/index.js";
 import { createId } from "../../shared/helpers/id-generator.js";
-import { OtpService } from "./otp.service.js";
+import { OtpService, hashValue } from "./otp.service.js";
 import type { MfaService } from "./mfa.service.js";
 
 type RequestContext = {
@@ -196,10 +196,20 @@ class AuthPlatformService {
     }
 
     async loginStart({ method, identifier, password, context, captchaToken }) {
-        if (!method || !identifier) {
+        if (
+            ![
+                "email-password",
+                "email-otp",
+                "phone-sms-otp",
+                "phone-whatsapp-otp",
+            ].includes(method) ||
+            typeof identifier !== "string" ||
+            !identifier.trim()
+        ) {
             throw new ApiError(400, "Login method and identifier are required");
         }
 
+        identifier = normalizeIdentifier(identifier);
         const risk = await this.#captchaRiskService.shouldRequireCaptcha(
             "login",
             identifier
@@ -255,7 +265,13 @@ class AuthPlatformService {
                     ? { email: normalizeIdentifier(identifier) }
                     : { phoneNumber: identifier },
         });
-        if (!user) throw new UnauthorizedError("Invalid credentials");
+        if (
+            !user ||
+            user.onboardingStatus !== "active" ||
+            (otpChannel !== "email" && !user.phoneVerifiedAt)
+        ) {
+            throw new UnauthorizedError("Invalid credentials");
+        }
 
         const otp = await this.#otpService.createChallenge({
             userId: user.id,
@@ -272,6 +288,11 @@ class AuthPlatformService {
     }
 
     async loginVerifyOtp({ challengeId, code, method, context }) {
+        if (
+            !["email-otp", "phone-sms-otp", "phone-whatsapp-otp"].includes(method)
+        ) {
+            throw new ApiError(400, "Invalid login method");
+        }
         const purpose =
             method === "email-otp"
                 ? "login_email_otp"
@@ -289,7 +310,21 @@ class AuthPlatformService {
         const user = await prisma.user.findUnique({
             where: { id: challenge.userId },
         });
-        if (!user) throw new UnauthorizedError("Invalid credentials");
+        if (
+            !user ||
+            user.onboardingStatus !== "active" ||
+            (method !== "email-otp" && !user.phoneVerifiedAt) ||
+            challenge.identifierHash !==
+                hashValue(
+                    normalizeIdentifier(
+                        method === "email-otp"
+                            ? user.email
+                            : user.phoneNumber || ""
+                    )
+                )
+        ) {
+            throw new UnauthorizedError("Invalid credentials");
+        }
 
         return this.#completeOrChallenge(user, method, context);
     }
@@ -329,6 +364,9 @@ class AuthPlatformService {
     }
 
     async #completeOrChallenge(user, method: string, context: RequestContext) {
+        if (user.onboardingStatus !== "active") {
+            throw new UnauthorizedError("Account setup is incomplete");
+        }
         const publicUser = toPublicUser(user);
         const mfaEnabled = Boolean(user.mfaEnabledAt);
         const trusted =
