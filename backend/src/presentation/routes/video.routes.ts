@@ -6,7 +6,8 @@ import {
     requireOwnershipOrPermission,
     requirePermission,
 } from "../middlewares/authorization.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
+import { uploadImage, uploadVideoAndThumbnail } from "../middlewares/multer.middleware.js";
+import { validateStagedMedia } from "../middlewares/validate-media.middleware.js";
 import {
     getAllVideos,
     publishAVideo,
@@ -29,10 +30,11 @@ router.route("/:videoId/thumbnail").get(optionalAuth, streamThumbnail);
 router.route("/").post(
     verifyJWT,
     requirePermission("video:create"),
-    upload.fields([
+    uploadVideoAndThumbnail.fields([
         { name: "videoFile", maxCount: 1 },
         { name: "thumbnail", maxCount: 1 },
     ]),
+    validateStagedMedia,
     publishAVideo
 );
 
@@ -43,7 +45,8 @@ router.route("/:videoId").patch(
         ownPermission: "video:update:own",
         anyPermission: "video:update:any",
     }),
-    upload.single("thumbnail"),
+    uploadImage.single("thumbnail"),
+    validateStagedMedia,
     updateVideo
 );
 

@@ -106,6 +106,15 @@ class FileUploadMiddleware {
         limits: { fileSize: FileUploadConfig.MAX_FILE_SIZE },
     });
 
+    static uploadVideoAndThumbnail = this.createUploader({
+        fileFilter: (req, file, cb) => {
+            if (file.fieldname === "videoFile") return this.#videoFilter(req, file, cb);
+            if (file.fieldname === "thumbnail") return this.#imageFilter(req, file, cb);
+            cb(new ApiError(400, "Unexpected media field"), false);
+        },
+        limits: { files: 2 },
+    });
+
     static uploadMedia = this.createUploader({
         fileFilter: this.#mediaFilter,
     });
@@ -151,3 +160,5 @@ export const uploadVideo = FileUploadMiddleware.uploadVideo;
 export const uploadMedia = FileUploadMiddleware.uploadMedia;
 export const handleUploadError = FileUploadMiddleware.handleError;
 export { FileUploadMiddleware };
+
+export const uploadVideoAndThumbnail = FileUploadMiddleware.uploadVideoAndThumbnail;

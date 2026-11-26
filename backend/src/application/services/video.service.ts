@@ -15,6 +15,7 @@ import { ObjectIdValidator } from "../../shared/validators/object-id.validator.j
 import { createLogger } from "../../infrastructure/logger/logger.js";
 import { appConfig } from "../../config/env.js";
 import { CacheKeys } from "../../infrastructure/cache/cache.keys.js";
+import { probeVideoDuration } from "../../infrastructure/media/probe-video.js";
 
 const videoServiceLogger = createLogger("video-service");
 
@@ -155,30 +156,41 @@ class VideoService {
             throw new BadRequestError("Thumbnail image is required");
         }
 
+        const duration = await probeVideoDuration(videoFile.path);
         const [videoUpload, thumbnailUpload] = await Promise.all([
             this.mediaStorageService.upload(videoFile.path, {
                 resource_type: "video",
+                contentType: videoFile.mimetype,
             }),
-            this.mediaStorageService.upload(thumbnailFile.path),
+            this.mediaStorageService.upload(thumbnailFile.path, { contentType: thumbnailFile.mimetype }),
         ]);
 
-        if (!videoUpload) {
-            throw new ApiError(500, "Failed to upload video");
+        if (!videoUpload || !thumbnailUpload) {
+            await Promise.allSettled([
+                videoUpload && this.mediaStorageService.delete(videoUpload.publicId, "video"),
+                thumbnailUpload && this.mediaStorageService.delete(thumbnailUpload.publicId),
+            ]);
+            throw new ApiError(500, "Failed to upload media");
         }
 
-        if (!thumbnailUpload) {
-            throw new ApiError(500, "Failed to upload thumbnail");
-        }
-
-        const video = await this.videoRepository.create({
+        let video;
+        try {
+            video = await this.videoRepository.create({
             title: title.trim(),
             description: description.trim(),
             videoFile: videoUpload.secureUrl || videoUpload.url,
             thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
-            duration: videoUpload.duration || 0,
+            duration: videoUpload.duration || duration,
             owner: ownerId,
             isPublished: true,
-        });
+            });
+        } catch (error) {
+            await Promise.allSettled([
+                this.mediaStorageService.delete(videoUpload.publicId, "video"),
+                this.mediaStorageService.delete(thumbnailUpload.publicId),
+            ]);
+            throw error;
+        }
 
         const publishedVideo = await this.videoRepository.findByIdWithOwner(
             video._id
@@ -220,12 +232,13 @@ class VideoService {
         if (body.description?.trim())
             updateData.description = body.description.trim();
 
+        let oldThumbnailPublicId;
         if (file) {
-            const oldThumbnailPublicId = this.mediaStorageService.extractPublicId(
+            oldThumbnailPublicId = this.mediaStorageService.extractPublicId(
                 video.thumbnail
             );
             const thumbnailUpload = await this.mediaStorageService.upload(
-                file.path
+                file.path, { contentType: file.mimetype }
             );
 
             if (!thumbnailUpload) {
@@ -235,16 +248,7 @@ class VideoService {
             updateData.thumbnail =
                 thumbnailUpload.secureUrl || thumbnailUpload.url;
 
-            if (oldThumbnailPublicId) {
-                this.mediaStorageService
-                    .delete(oldThumbnailPublicId)
-                    .catch((error) =>
-                        videoServiceLogger.warn(
-                            { error: { message: error.message } },
-                            "failed to delete old thumbnail"
-                        )
-                    );
-            }
+
         }
 
         if (Object.keys(updateData).length === 0) {
@@ -257,6 +261,17 @@ class VideoService {
             videoId,
             updateData
         );
+
+        if (oldThumbnailPublicId) {
+            this.mediaStorageService
+                .delete(oldThumbnailPublicId)
+                .catch((error) =>
+                    videoServiceLogger.warn(
+                        { error: { message: error.message } },
+                        "failed to delete old thumbnail"
+                    )
+                );
+        }
 
         await this.#invalidateVideoCache(videoId);
 

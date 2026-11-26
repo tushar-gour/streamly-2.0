@@ -328,3 +328,7 @@ Recovered `704a56b`: [all 8 jobs passed](https://github.com/tushar-gour/streamly
 | QUAL-02 | P2 | PENDING | every screen in both themes at 3 widths, reference acceptance |
 | QUAL-03 | P2 | PENDING | WCAG and realistic web vitals |
 | REL-01 | all above | PENDING | exact-head CI, independent diff review, deployment/rollback |
+
+## Iteration 31 — Actual storage integration gate
+
+SEC-01/02 and PROD-01 remain IMPLEMENTED, not verified. Added isolated MinIO object server and DB-backed multipart upload/range/image/visibility/owner-denial/replacement/deletion tests to CI. Added media signature and per-field validation, bounded FFmpeg duration probing, staging cleanup and partial upload rollback. Profile and thumbnail image reads use resource-scoped routes in S3 mode. Production example removes public base URL. No production access. Next: observe CI, repair failures, document AWS IAM and migration preflight, and run concurrent browser refresh.

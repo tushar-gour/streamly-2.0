@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { Router } from "express";
 
-import { upload, uploadImage } from "../middlewares/multer.middleware.js";
+import { uploadImage } from "../middlewares/multer.middleware.js";
+import { validateStagedMedia } from "../middlewares/validate-media.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requirePermission } from "../middlewares/authorization.middleware.js";
 import { authRateLimiter } from "../middlewares/security.middleware.js";
@@ -27,10 +28,11 @@ const router = Router();
 
 router.route("/register").post(
     authRateLimiter,
-    upload.fields([
+    uploadImage.fields([
         { name: "avatar", maxCount: 1 },
         { name: "coverImage", maxCount: 1 },
     ]),
+    validateStagedMedia,
     registerUser
 );
 
@@ -66,6 +68,7 @@ router
         verifyJWT,
         requirePermission("user:update:self"),
         uploadImage.single("avatar"),
+        validateStagedMedia,
         updateUserAvatar
     );
 
@@ -75,6 +78,7 @@ router
         verifyJWT,
         requirePermission("user:update:self"),
         uploadImage.single("coverImage"),
+        validateStagedMedia,
         updateCoverImage
     );
 

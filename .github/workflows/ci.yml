@@ -181,6 +181,28 @@ jobs:
       - name: Database-backed API contracts
         run: npm run test:api
 
+      - name: Seed isolated storage-test permissions
+        run: npm run seed:rbac
+
+      - name: Start disposable S3-compatible storage
+        run: |
+          docker run --rm -d --name streamly-storage-test -p 127.0.0.1:19000:9000 -e MINIO_ROOT_USER=streamlytest -e MINIO_ROOT_PASSWORD=streamlytest-secret minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:19000/minio/health/ready; then exit 0; fi
+            sleep 1
+          done
+          docker logs streamly-storage-test
+          exit 1
+
+      - name: Real isolated object-storage and media API integration
+        env:
+          RUN_STORAGE_TESTS: "true"
+        run: npx vitest run tests/integration/private-storage.test.ts
+
+      - name: Remove disposable storage
+        if: always()
+        run: docker rm -f streamly-storage-test || true
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

@@ -341,7 +341,7 @@ class UserService {
             currentUser.coverImage
         );
         const coverImage =
-            await this.mediaStorageService.upload(coverImageLocalPath);
+            await this.mediaStorageService.upload(coverImageLocalPath, { contentType: file.mimetype });
 
         if (!coverImage) {
             throw new ApiError(500, "Failed to upload cover image");
