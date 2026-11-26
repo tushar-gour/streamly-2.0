@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Router } from "express";
 
-import { upload } from "../middlewares/multer.middleware.js";
+import { upload, uploadImage } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requirePermission } from "../middlewares/authorization.middleware.js";
 import { authRateLimiter } from "../middlewares/security.middleware.js";
@@ -62,7 +62,7 @@ router
     .patch(
         verifyJWT,
         requirePermission("user:update:self"),
-        upload.single("avatar"),
+        uploadImage.single("avatar"),
         updateUserAvatar
     );
 
@@ -71,7 +71,7 @@ router
     .patch(
         verifyJWT,
         requirePermission("user:update:self"),
-        upload.single("coverImage"),
+        uploadImage.single("coverImage"),
         updateCoverImage
     );
 

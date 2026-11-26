@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { SessionSettings } from "@/components/settings/session-settings";
+import { ProfileImages } from "@/components/settings/profile-images";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -89,6 +90,7 @@ export function AccountSettings() {
       ) : null}
       <Card className="grid gap-4 p-5">
         <h2 className="text-xl font-semibold">Profile</h2>
+        <ProfileImages />
         <form className="grid gap-4" onSubmit={saveProfile}>
           <Input
             label="Full name"

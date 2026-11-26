@@ -227,3 +227,7 @@ Desktop navigation no longer overlaps its footer at short viewport heights. Adde
 ## Iteration 17 — Reference inspection and browser runner compatibility
 
 CI run 45867408921 for `61d5430` passed all seven non-browser jobs, including complete frontend lint/typecheck/test/build, database migrations and integration, backend quality, Docker, OpenAPI and Prisma. Both applications started in the browser job; Chromium installation failed because the default runner selected Ubuntu 26.04, unsupported by the pinned Playwright version. Pinned Ubuntu 24.04 for the browser job. Successfully inspected contact sheets containing all 24 reference images; they use compact spacing, cinematic navy, subdued indigo, clear content hierarchy and restrained panels. No rendered application screenshots were available in that run. Applied reported formatting corrections to shared UI. Reverification pending.
+
+## Iteration 18 — Profile media workflows
+
+Connected profile photo and cover-image updates to the existing multipart user endpoints. Added local previews with object-URL cleanup, image type/size validation, cancel/retry, and account-scoped state updates. Server profile endpoints now use the existing image-specific upload middleware. Live media-provider upload and visual testing remain pending.
