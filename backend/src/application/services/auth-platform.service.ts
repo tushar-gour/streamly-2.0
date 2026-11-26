@@ -86,7 +86,9 @@ class AuthPlatformService {
             if (
                 user.email !== email ||
                 user.username !== username ||
-                !["email_pending", "mfa_pending"].includes(user.onboardingStatus) ||
+                !["email_pending", "mfa_pending"].includes(
+                    user.onboardingStatus
+                ) ||
                 !(await bcrypt.compare(password, user.password))
             ) {
                 throw new ApiError(409, "Account already exists");
@@ -102,7 +104,10 @@ class AuthPlatformService {
                     email,
                     username,
                     fullName: fullName.trim(),
-                    password: await bcrypt.hash(password, isProduction() ? 12 : 10),
+                    password: await bcrypt.hash(
+                        password,
+                        isProduction() ? 12 : 10
+                    ),
                     avatar: `${appConfig.publicBaseUrl}/default-avatar.png`,
                     coverImage: "",
                     onboardingStatus: "email_pending",
@@ -145,7 +150,8 @@ class AuthPlatformService {
         if (
             !user ||
             !["email_pending", "mfa_pending"].includes(user.onboardingStatus) ||
-            challenge.identifierHash !== hashValue(normalizeIdentifier(user.email))
+            challenge.identifierHash !==
+                hashValue(normalizeIdentifier(user.email))
         ) {
             throw new ApiError(400, "Invalid signup challenge");
         }
@@ -167,7 +173,8 @@ class AuthPlatformService {
 
         return {
             data: {
-                onboardingToken: this.tokenService.generateOnboardingToken(user),
+                onboardingToken:
+                    this.tokenService.generateOnboardingToken(user),
             },
             message: "Email verified. Set up authenticator app to continue.",
         };
@@ -197,7 +204,10 @@ class AuthPlatformService {
             );
         }
 
-        if (typeof phoneNumber !== "string" || !/^\+[1-9]\d{7,14}$/u.test(phoneNumber)) {
+        if (
+            typeof phoneNumber !== "string" ||
+            !/^\+[1-9]\d{7,14}$/u.test(phoneNumber)
+        ) {
             throw new ApiError(400, "Invalid phone number");
         }
         const user = await prisma.user.update({
@@ -257,7 +267,11 @@ class AuthPlatformService {
 
     async setupSignupMfa(userId: string) {
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user || !user.emailVerifiedAt || user.onboardingStatus !== "mfa_pending") {
+        if (
+            !user ||
+            !user.emailVerifiedAt ||
+            user.onboardingStatus !== "mfa_pending"
+        ) {
             throw new UnauthorizedError("Invalid onboarding credential");
         }
 
@@ -370,7 +384,9 @@ class AuthPlatformService {
 
     async loginVerifyOtp({ challengeId, code, method, context }) {
         if (
-            !["email-otp", "phone-sms-otp", "phone-whatsapp-otp"].includes(method)
+            !["email-otp", "phone-sms-otp", "phone-whatsapp-otp"].includes(
+                method
+            )
         ) {
             throw new ApiError(400, "Invalid login method");
         }

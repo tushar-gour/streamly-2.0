@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AuthService } from "../../src/application/services/auth.service.js";
-import { OtpService, hashValue } from "../../src/application/services/otp.service.js";
+import {
+    OtpService,
+    hashValue,
+} from "../../src/application/services/otp.service.js";
 import { MfaService } from "../../src/application/services/mfa.service.js";
 import { TokenService } from "../../src/application/services/token.service.js";
 import { prisma } from "../../src/infrastructure/database/prisma/client.js";
@@ -9,7 +12,10 @@ import { PrismaSessionRepository } from "../../src/infrastructure/repositories/s
 import { PrismaUserRepository } from "../../src/infrastructure/repositories/user.repository.js";
 import { createId } from "../../src/shared/helpers/id-generator.js";
 import { createTestUserData } from "../factories/user.factory.js";
-import { assertSafeTestDatabase, canRunDatabaseTests } from "../helpers/test-database.js";
+import {
+    assertSafeTestDatabase,
+    canRunDatabaseTests,
+} from "../helpers/test-database.js";
 
 const databaseDescribe = canRunDatabaseTests() ? describe : describe.skip;
 
@@ -41,19 +47,29 @@ databaseDescribe("database authentication security", () => {
 
     it("rejects access immediately after revocation", async () => {
         const user = await createUser();
-        const session = await auth.createLoginSession({ user, userAgent: undefined, ipAddress: undefined });
-        await expect(auth.verifyAccessToken(session.accessToken)).resolves.toMatchObject({
+        const session = await auth.createLoginSession({
+            user,
+            userAgent: undefined,
+            ipAddress: undefined,
+        });
+        await expect(
+            auth.verifyAccessToken(session.accessToken)
+        ).resolves.toMatchObject({
             sessionId: session.sessionId,
         });
         await auth.revokeSession(session.sessionId);
-        await expect(auth.verifyAccessToken(session.accessToken)).rejects.toThrow(
-            "Invalid or expired session"
-        );
+        await expect(
+            auth.verifyAccessToken(session.accessToken)
+        ).rejects.toThrow("Invalid or expired session");
     });
 
     it("allows only one competing database refresh rotation", async () => {
         const user = await createUser();
-        const session = await auth.createLoginSession({ user, userAgent: undefined, ipAddress: undefined });
+        const session = await auth.createLoginSession({
+            user,
+            userAgent: undefined,
+            ipAddress: undefined,
+        });
         const results = await Promise.allSettled([
             auth.refreshSession(session.refreshToken),
             auth.refreshSession(session.refreshToken),

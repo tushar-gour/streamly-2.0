@@ -437,11 +437,22 @@ const openApiDocument = {
                 summary: "List the signed-in user's saved videos",
                 security: authSecurity,
                 parameters: [
-                    { name: "page", in: "query", schema: { type: "integer", minimum: 1 } },
-                    { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1 },
+                    },
+                    {
+                        name: "limit",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, maximum: 100 },
+                    },
                 ],
                 responses: {
-                    200: successResponse("Saved videos.", { type: "array", items: { type: "object" } }),
+                    200: successResponse("Saved videos.", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -451,9 +462,19 @@ const openApiDocument = {
                 tags: ["Playlists"],
                 summary: "Check whether a video is saved",
                 security: authSecurity,
-                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
                 responses: {
-                    200: successResponse("Saved status.", { type: "object", properties: { saved: { type: "boolean" } } }),
+                    200: successResponse("Saved status.", {
+                        type: "object",
+                        properties: { saved: { type: "boolean" } },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -461,14 +482,28 @@ const openApiDocument = {
                 tags: ["Playlists"],
                 summary: "Save a published video (idempotent)",
                 security: authSecurity,
-                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
                 responses: { 200: emptySuccessResponse, ...standardErrors },
             },
             delete: {
                 tags: ["Playlists"],
                 summary: "Remove a saved video (idempotent)",
                 security: authSecurity,
-                parameters: [{ name: "videoId", in: "path", required: true, schema: { type: "string" } }],
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
                 responses: { 200: emptySuccessResponse, ...standardErrors },
             },
         },
@@ -476,7 +511,8 @@ const openApiDocument = {
             get: {
                 tags: ["Auth"],
                 summary: "List the current user's active sessions",
-                description: "Returns up to 100 most recently refreshed active sessions without token hashes.",
+                description:
+                    "Returns up to 100 most recently refreshed active sessions without token hashes.",
                 security: authSecurity,
                 responses: {
                     200: successResponse("Active sessions.", {
@@ -486,9 +522,18 @@ const openApiDocument = {
                             properties: {
                                 id: { type: "string" },
                                 userAgent: { type: ["string", "null"] },
-                                createdAt: { type: "string", format: "date-time" },
-                                lastUsedAt: { type: "string", format: "date-time" },
-                                expiresAt: { type: "string", format: "date-time" },
+                                createdAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
+                                lastUsedAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
+                                expiresAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
                                 isCurrent: { type: "boolean" },
                             },
                         },

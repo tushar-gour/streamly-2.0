@@ -16,20 +16,46 @@ function userId(req: Request) {
 }
 
 router.use(verifyJWT);
-router.get("/", asyncHandler(async (req: Request, res: Response) => {
-    const result = await service.list(userId(req), req.query.page, req.query.limit);
-    res.json(ApiResponse.paginated(result.data, result.pagination, "Saved videos"));
-}));
-router.get("/:videoId", asyncHandler(async (req: Request, res: Response) => {
-    res.json(ApiResponse.success(await service.status(userId(req), String(req.params.videoId))));
-}));
-router.put("/:videoId", asyncHandler(async (req: Request, res: Response) => {
-    await service.save(userId(req), String(req.params.videoId));
-    res.json(ApiResponse.success({}, "Video saved"));
-}));
-router.delete("/:videoId", asyncHandler(async (req: Request, res: Response) => {
-    await service.remove(userId(req), String(req.params.videoId));
-    res.json(ApiResponse.success({}, "Video removed"));
-}));
+router.get(
+    "/",
+    asyncHandler(async (req: Request, res: Response) => {
+        const result = await service.list(
+            userId(req),
+            req.query.page,
+            req.query.limit
+        );
+        res.json(
+            ApiResponse.paginated(
+                result.data,
+                result.pagination,
+                "Saved videos"
+            )
+        );
+    })
+);
+router.get(
+    "/:videoId",
+    asyncHandler(async (req: Request, res: Response) => {
+        res.json(
+            ApiResponse.success(
+                await service.status(userId(req), String(req.params.videoId))
+            )
+        );
+    })
+);
+router.put(
+    "/:videoId",
+    asyncHandler(async (req: Request, res: Response) => {
+        await service.save(userId(req), String(req.params.videoId));
+        res.json(ApiResponse.success({}, "Video saved"));
+    })
+);
+router.delete(
+    "/:videoId",
+    asyncHandler(async (req: Request, res: Response) => {
+        await service.remove(userId(req), String(req.params.videoId));
+        res.json(ApiResponse.success({}, "Video removed"));
+    })
+);
 
 export default router;

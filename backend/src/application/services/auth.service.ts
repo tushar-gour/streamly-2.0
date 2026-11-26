@@ -147,7 +147,8 @@ class AuthService {
     }
 
     async listSessions(userId, currentSessionId) {
-        const sessions = await this.sessionRepository.listActiveSessions(userId);
+        const sessions =
+            await this.sessionRepository.listActiveSessions(userId);
         return sessions.map((session) => ({
             ...session,
             isCurrent: session.id === currentSessionId,

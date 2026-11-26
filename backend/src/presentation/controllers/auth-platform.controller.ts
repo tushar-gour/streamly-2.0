@@ -108,7 +108,9 @@ class AuthPlatformController {
             context: getDeviceContext(req, res),
         });
         if (result.accessToken && result.data.user) {
-            result.data.user = await authorizationService.describeUser(result.data.user);
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
         }
         setLoginCookies(res, result);
         return res
@@ -122,7 +124,9 @@ class AuthPlatformController {
             context: getDeviceContext(req, res),
         });
         if (result.accessToken && result.data.user) {
-            result.data.user = await authorizationService.describeUser(result.data.user);
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
         }
         setLoginCookies(res, result);
         return res
@@ -136,7 +140,9 @@ class AuthPlatformController {
             context: getDeviceContext(req, res),
         });
         if (result.accessToken && result.data.user) {
-            result.data.user = await authorizationService.describeUser(result.data.user);
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
         }
         setLoginCookies(res, result);
         return res

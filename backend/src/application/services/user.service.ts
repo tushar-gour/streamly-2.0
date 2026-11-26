@@ -37,7 +37,9 @@ class UserService {
 
     async register({ body, files }) {
         if (appConfig.otp.enabled || appConfig.mfa.enabled) {
-            throw new BadRequestError("Use staged registration to create an account");
+            throw new BadRequestError(
+                "Use staged registration to create an account"
+            );
         }
         const { username, email, fullName, password } = body;
 

@@ -19,7 +19,9 @@ function fixture() {
         refreshTokenHash: tokenService.hashToken(refresh),
     };
     const sessionRepository = {
-        findValidSession: vi.fn(async (): Promise<typeof session | null> => ({ ...session })),
+        findValidSession: vi.fn(
+            async (): Promise<typeof session | null> => ({ ...session })
+        ),
         rotateSessionToken: vi.fn(
             async ({
                 expectedHash,
@@ -86,9 +88,7 @@ describe("authentication session security", () => {
             f.service.refreshSession(f.refresh),
             f.service.refreshSession(f.refresh),
         ]);
-        expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(
-            1
-        );
+        expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
         expect(f.sessionRepository.revokeSession).toHaveBeenCalledOnce();
     });
 

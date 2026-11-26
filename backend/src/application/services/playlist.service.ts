@@ -21,7 +21,8 @@ class PlaylistService {
             !name.trim() ||
             name.trim().length > 100 ||
             (description !== undefined &&
-                (typeof description !== "string" || description.trim().length > 500))
+                (typeof description !== "string" ||
+                    description.trim().length > 500))
         ) {
             throw new BadRequestError("Invalid playlist details");
         }
@@ -79,13 +80,20 @@ class PlaylistService {
 
         const updateData = {};
         if (body.name !== undefined) {
-            if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 100) {
+            if (
+                typeof body.name !== "string" ||
+                !body.name.trim() ||
+                body.name.trim().length > 100
+            ) {
                 throw new BadRequestError("Invalid playlist name");
             }
             updateData.name = body.name.trim();
         }
         if (body.description !== undefined) {
-            if (typeof body.description !== "string" || body.description.trim().length > 500) {
+            if (
+                typeof body.description !== "string" ||
+                body.description.trim().length > 500
+            ) {
                 throw new BadRequestError("Invalid playlist description");
             }
             updateData.description = body.description.trim();

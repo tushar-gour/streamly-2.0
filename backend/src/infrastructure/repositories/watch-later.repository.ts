@@ -11,7 +11,12 @@ export class PrismaWatchLaterRepository {
                     video: {
                         include: {
                             owner: {
-                                select: { id: true, username: true, fullName: true, avatar: true },
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    fullName: true,
+                                    avatar: true,
+                                },
                             },
                         },
                     },
@@ -26,17 +31,21 @@ export class PrismaWatchLaterRepository {
     }
 
     async isSaved(userId: string, videoId: string) {
-        return Boolean(await prisma.watchLater.findUnique({
-            where: { userId_videoId: { userId, videoId } },
-            select: { videoId: true },
-        }));
+        return Boolean(
+            await prisma.watchLater.findUnique({
+                where: { userId_videoId: { userId, videoId } },
+                select: { videoId: true },
+            })
+        );
     }
 
     async isPublished(videoId: string) {
-        return Boolean(await prisma.video.findFirst({
-            where: { id: videoId, isPublished: true },
-            select: { id: true },
-        }));
+        return Boolean(
+            await prisma.video.findFirst({
+                where: { id: videoId, isPublished: true },
+                select: { id: true },
+            })
+        );
     }
 
     async save(userId: string, videoId: string) {

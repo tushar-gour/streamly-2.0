@@ -25,7 +25,9 @@ class UserController {
             userAgent: req.get("user-agent"),
             ipAddress: req.ip,
         });
-        result.data.user = await authorizationService.describeUser(result.data.user);
+        result.data.user = await authorizationService.describeUser(
+            result.data.user
+        );
         const cookieOptions = authService.getCookieOptions();
 
         return res
@@ -91,7 +93,9 @@ class UserController {
             req.user._id,
             req.auth.sessionId
         );
-        return res.status(200).json(ApiResponse.success(sessions, "Active sessions"));
+        return res
+            .status(200)
+            .json(ApiResponse.success(sessions, "Active sessions"));
     });
 
     static revokeSession = asyncHandler(async (req, res) => {
