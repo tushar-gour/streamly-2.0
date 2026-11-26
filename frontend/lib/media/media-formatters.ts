@@ -9,7 +9,11 @@ export function safeMediaUrl(value?: string | null) {
       return parsedUrl.toString();
     }
   } catch {
-    if (value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\")) {
+    if (
+      value.startsWith("/") &&
+      !value.startsWith("//") &&
+      !value.startsWith("/\\")
+    ) {
       return value;
     }
   }

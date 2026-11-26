@@ -158,7 +158,12 @@ export function VideoWatchPanel({ videoId }: { videoId: string }) {
                 <MessageCircle size={16} /> Comment
               </Link>
             </Button>
-            {isAuthenticated ? <><WatchLaterButton videoId={videoId} /><SaveToPlaylist videoId={videoId} /></> : null}
+            {isAuthenticated ? (
+              <>
+                <WatchLaterButton videoId={videoId} />
+                <SaveToPlaylist videoId={videoId} />
+              </>
+            ) : null}
             <Button variant="secondary" onClick={() => void share()}>
               <Share2 size={16} /> Share
             </Button>

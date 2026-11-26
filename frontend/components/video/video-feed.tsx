@@ -32,7 +32,8 @@ export function VideoFeed({
 }: VideoFeedProps) {
   const filterKey = JSON.stringify(filters);
   const [paging, setPaging] = useState({ filterKey, page: filters.page ?? 1 });
-  const page = paging.filterKey === filterKey ? paging.page : filters.page ?? 1;
+  const page =
+    paging.filterKey === filterKey ? paging.page : (filters.page ?? 1);
   const request = { ...filters, page };
   const videosQuery = useQuery({
     queryFn: () => videosApi.list(request),
@@ -61,16 +62,30 @@ export function VideoFeed({
           {description}
         </p>
       ) : null}
-      {videosQuery.isPending ? <div className="mt-6"><LoadingState label="Loading videos" /></div> : null}
+      {videosQuery.isPending ? (
+        <div className="mt-6">
+          <LoadingState label="Loading videos" />
+        </div>
+      ) : null}
       {videosQuery.isError ? (
         <div className="mt-6 grid gap-4">
           <ErrorState message="Couldn’t load videos. Try again." />
-          <Button className="w-fit" onClick={() => void videosQuery.refetch()} variant="secondary"><RefreshCw size={16} /> Retry</Button>
+          <Button
+            className="w-fit"
+            onClick={() => void videosQuery.refetch()}
+            variant="secondary"
+          >
+            <RefreshCw size={16} /> Retry
+          </Button>
         </div>
       ) : null}
       {videosQuery.isSuccess && videos.length === 0 ? (
         <div className="grid min-h-[280px] place-items-center">
-          <EmptyState eyebrow={title} title={emptyTitle} description={emptyDescription} />
+          <EmptyState
+            eyebrow={title}
+            title={emptyTitle}
+            description={emptyDescription}
+          />
         </div>
       ) : null}
       <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
@@ -78,11 +93,23 @@ export function VideoFeed({
           <VideoCard key={video._id} video={toVideoCardModel(video)} />
         ))}
       </div>
-      {(page > 1 || pagination?.hasNextPage) ? (
+      {page > 1 || pagination?.hasNextPage ? (
         <nav className="mt-6 flex items-center gap-3" aria-label="Video pages">
-          <Button variant="secondary" disabled={page === 1 || videosQuery.isFetching} onClick={() => setPaging({ filterKey, page: page - 1 })}>Previous</Button>
+          <Button
+            variant="secondary"
+            disabled={page === 1 || videosQuery.isFetching}
+            onClick={() => setPaging({ filterKey, page: page - 1 })}
+          >
+            Previous
+          </Button>
           <span className="text-sm">Page {page}</span>
-          <Button variant="secondary" disabled={!pagination?.hasNextPage || videosQuery.isFetching} onClick={() => setPaging({ filterKey, page: page + 1 })}>Next</Button>
+          <Button
+            variant="secondary"
+            disabled={!pagination?.hasNextPage || videosQuery.isFetching}
+            onClick={() => setPaging({ filterKey, page: page + 1 })}
+          >
+            Next
+          </Button>
         </nav>
       ) : null}
     </section>

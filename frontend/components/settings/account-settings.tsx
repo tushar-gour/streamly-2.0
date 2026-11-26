@@ -158,7 +158,8 @@ export function AccountSettings() {
         <div className="border-t border-[color:var(--color-border)] pt-4">
           <h3 className="font-medium">Sign out of all sessions</h3>
           <p className="my-2 text-sm text-[color:var(--color-text-secondary)]">
-            Revoke all active sessions and trusted devices. You will need to sign in again.
+            Revoke all active sessions and trusted devices. You will need to
+            sign in again.
           </p>
           <Button
             type="button"

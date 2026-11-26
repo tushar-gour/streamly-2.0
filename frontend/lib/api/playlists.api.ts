@@ -29,11 +29,14 @@ export const playlistsApi = {
     });
   },
   update(id: string, input: PlaylistInput, accessToken: string | null) {
-    return apiRequest<PlaylistDetails>(`/api/v1/playlists/${encodeURIComponent(id)}`, {
-      method: "PATCH",
-      body: JSON.stringify(input),
-      accessToken,
-    });
+    return apiRequest<PlaylistDetails>(
+      `/api/v1/playlists/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(input),
+        accessToken,
+      }
+    );
   },
   remove(id: string, accessToken: string | null) {
     return apiRequest<unknown>(`/api/v1/playlists/${encodeURIComponent(id)}`, {
@@ -54,9 +57,15 @@ export const playlistsApi = {
     );
   },
   listByUser(userId: string, accessToken?: string | null) {
-    return apiRequest<PlaylistSummary[]>(`/api/v1/playlists/user/${encodeURIComponent(userId)}`, { accessToken });
+    return apiRequest<PlaylistSummary[]>(
+      `/api/v1/playlists/user/${encodeURIComponent(userId)}`,
+      { accessToken }
+    );
   },
   detail(playlistId: string, accessToken?: string | null) {
-    return apiRequest<PlaylistDetails>(`/api/v1/playlists/${encodeURIComponent(playlistId)}`, { accessToken });
+    return apiRequest<PlaylistDetails>(
+      `/api/v1/playlists/${encodeURIComponent(playlistId)}`,
+      { accessToken }
+    );
   },
 };

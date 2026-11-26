@@ -16,9 +16,12 @@ export const sessionsApi = {
     });
   },
   revoke(id: string, accessToken: string | null) {
-    return apiRequest<unknown>(`/api/v1/users/sessions/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      accessToken,
-    });
+    return apiRequest<unknown>(
+      `/api/v1/users/sessions/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        accessToken,
+      }
+    );
   },
 };

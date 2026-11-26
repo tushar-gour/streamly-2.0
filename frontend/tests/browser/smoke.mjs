@@ -55,8 +55,12 @@ try {
   await page.goto(`${origin}/login`);
   await heading("Welcome back");
   await capture("login-desktop-dark");
-  await page.getByLabel("Email", { exact: true }).fill("browser-test@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("StreamlyBrowserTest123!");
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill("browser-test@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("StreamlyBrowserTest123!");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL("**/home");
   await heading("Latest videos");
@@ -64,18 +68,28 @@ try {
 
   await page.goto(`${origin}/playlists`);
   await heading("Your playlists");
-  await page.getByRole("button", { name: "Create playlist", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Create playlist", exact: true })
+    .click();
   await page.getByLabel("Playlist name").fill("Browser verification");
-  await page.getByLabel("Description", { exact: true }).fill("Created by real API");
-  await page.getByRole("button", { name: "Create playlist", exact: true }).click();
+  await page
+    .getByLabel("Description", { exact: true })
+    .fill("Created by real API");
+  await page
+    .getByRole("button", { name: "Create playlist", exact: true })
+    .click();
   await page.getByRole("link", { name: /Browser verification/ }).click();
   await heading("Browser verification");
-  await page.getByRole("button", { name: "Edit playlist", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Edit playlist", exact: true })
+    .click();
   await page.getByLabel("Playlist name").fill("Updated playlist");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await heading("Updated playlist");
   await capture("playlist-desktop-dark");
-  await page.getByRole("button", { name: "Delete playlist", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Delete playlist", exact: true })
+    .click();
   await page.waitForURL("**/playlists");
   await heading("Your playlists");
 
@@ -84,7 +98,9 @@ try {
   await page.getByText("Current session", { exact: true }).waitFor();
   await capture("settings-desktop-dark");
   await page.getByRole("radio", { name: "Light" }).check();
-  await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
+  await page.waitForFunction(
+    () => document.documentElement.dataset.theme === "light"
+  );
   await capture("settings-desktop-light");
   await assertNoOverflow();
 
@@ -96,7 +112,9 @@ try {
     await assertNoOverflow();
     await capture(`settings-${name}-light`);
     await page.getByRole("radio", { name: "Dark" }).check();
-    await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+    await page.waitForFunction(
+      () => document.documentElement.dataset.theme === "dark"
+    );
     await assertNoOverflow();
     await capture(`settings-${name}-dark`);
     await page.getByRole("radio", { name: "Light" }).check();
@@ -107,14 +125,22 @@ try {
   await heading("Channel overview");
   await capture("studio-desktop-light");
   const labVitals = await page.evaluate(() => window.__streamlyVitals);
-  await writeFile(`${output}/lab-vitals.json`, JSON.stringify(labVitals, null, 2));
+  await writeFile(
+    `${output}/lab-vitals.json`,
+    JSON.stringify(labVitals, null, 2)
+  );
   await page.goto(`${origin}/studio/upload`);
   await heading("Publish a video");
   await capture("upload-desktop-light");
   await assertNoOverflow();
   assert.deepEqual(pageErrors, [], "Browser page errors");
-  console.log("Browser smoke: sign-in, playlist CRUD, sessions, theme, creator routes passed.");
-  console.log("Observed lab values (not production Core Web Vitals):", JSON.stringify(labVitals));
+  console.log(
+    "Browser smoke: sign-in, playlist CRUD, sessions, theme, creator routes passed."
+  );
+  console.log(
+    "Observed lab values (not production Core Web Vitals):",
+    JSON.stringify(labVitals)
+  );
 } finally {
   await browser.close();
 }

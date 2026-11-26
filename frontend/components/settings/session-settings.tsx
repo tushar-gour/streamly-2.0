@@ -35,33 +35,68 @@ export function SessionSettings() {
           Review recent devices and remove sessions you no longer recognize.
         </p>
       </div>
-      {query.isPending ? <LoadingState label="Loading active sessions" /> : null}
+      {query.isPending ? (
+        <LoadingState label="Loading active sessions" />
+      ) : null}
       {query.isError ? (
         <div role="alert" className="grid gap-2">
           <p>Could not load sessions.</p>
-          <Button variant="secondary" onClick={() => void query.refetch()}>Retry</Button>
+          <Button variant="secondary" onClick={() => void query.refetch()}>
+            Retry
+          </Button>
         </div>
       ) : null}
-      {query.isSuccess && query.data.length === 0 ? <p className="text-sm">No active sessions were returned.</p> : null}
+      {query.isSuccess && query.data.length === 0 ? (
+        <p className="text-sm">No active sessions were returned.</p>
+      ) : null}
       <ul className="divide-y divide-[color:var(--color-border)]">
         {query.data?.map((session) => (
-          <li key={session.id} className="flex flex-wrap items-center gap-3 py-3">
-            {session.isCurrent ? <Shield size={20} aria-hidden="true" /> : <Monitor size={20} aria-hidden="true" />}
+          <li
+            key={session.id}
+            className="flex flex-wrap items-center gap-3 py-3"
+          >
+            {session.isCurrent ? (
+              <Shield size={20} aria-hidden="true" />
+            ) : (
+              <Monitor size={20} aria-hidden="true" />
+            )}
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">{session.isCurrent ? "Current session" : "Signed-in device"}</p>
-              <p className="mt-1 break-all text-xs text-[color:var(--color-text-muted)]">{session.userAgent || "Unknown browser"}</p>
-              <p className="mt-1 text-xs text-[color:var(--color-text-secondary)]">Last refreshed {formatRelativeDate(session.lastUsedAt)}</p>
+              <p className="text-sm font-medium">
+                {session.isCurrent ? "Current session" : "Signed-in device"}
+              </p>
+              <p className="mt-1 break-all text-xs text-[color:var(--color-text-muted)]">
+                {session.userAgent || "Unknown browser"}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--color-text-secondary)]">
+                Last refreshed {formatRelativeDate(session.lastUsedAt)}
+              </p>
             </div>
             {!session.isCurrent ? (
-              <Button size="sm" variant="secondary" disabled={revoke.isPending} onClick={() => {
-                if (window.confirm("Sign out this session?")) revoke.mutate(session.id);
-              }}>Revoke</Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={revoke.isPending}
+                onClick={() => {
+                  if (window.confirm("Sign out this session?"))
+                    revoke.mutate(session.id);
+                }}
+              >
+                Revoke
+              </Button>
             ) : null}
           </li>
         ))}
       </ul>
-      {revoke.isError ? <p role="alert" className="text-sm">Revocation could not be confirmed. Review the updated list.</p> : null}
-      {revoke.isSuccess ? <p role="status" className="text-sm">Session revoked.</p> : null}
+      {revoke.isError ? (
+        <p role="alert" className="text-sm">
+          Revocation could not be confirmed. Review the updated list.
+        </p>
+      ) : null}
+      {revoke.isSuccess ? (
+        <p role="status" className="text-sm">
+          Session revoked.
+        </p>
+      ) : null}
     </section>
   );
 }
