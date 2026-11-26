@@ -16,8 +16,14 @@ class PlaylistService {
     async create({ body, userId }) {
         const { name, description } = body;
 
-        if (!name?.trim()) {
-            throw new BadRequestError("Playlist name is required");
+        if (
+            typeof name !== "string" ||
+            !name.trim() ||
+            name.trim().length > 100 ||
+            (description !== undefined &&
+                (typeof description !== "string" || description.trim().length > 500))
+        ) {
+            throw new BadRequestError("Invalid playlist details");
         }
 
         const playlist = await this.playlistRepository.create({
@@ -72,8 +78,16 @@ class PlaylistService {
         this.#verifyOwnership(playlist, userId);
 
         const updateData = {};
-        if (body.name?.trim()) updateData.name = body.name.trim();
+        if (body.name !== undefined) {
+            if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 100) {
+                throw new BadRequestError("Invalid playlist name");
+            }
+            updateData.name = body.name.trim();
+        }
         if (body.description !== undefined) {
+            if (typeof body.description !== "string" || body.description.trim().length > 500) {
+                throw new BadRequestError("Invalid playlist description");
+            }
             updateData.description = body.description.trim();
         }
 
@@ -115,12 +129,11 @@ class PlaylistService {
             throw new NotFoundError("Video", videoId);
         }
 
-        if (playlist.videos.includes(videoId)) {
-            throw new BadRequestError("Video is already in the playlist");
+        if (!video.isPublished) {
+            throw new NotFoundError("Video", videoId);
         }
 
-        playlist.videos.push(videoId);
-        await playlist.save();
+        await this.playlistRepository.addVideo(playlistId, videoId);
 
         return {
             data: await this.playlistRepository.findByIdWithOwnerAndVideos(
@@ -137,16 +150,7 @@ class PlaylistService {
         const playlist = await this.#findPlaylistOrFail(playlistId);
         this.#verifyOwnership(playlist, userId);
 
-        const videoIndex = playlist.videos.findIndex(
-            (video) => video.toString() === videoId
-        );
-
-        if (videoIndex === -1) {
-            throw new BadRequestError("Video is not in the playlist");
-        }
-
-        playlist.videos.splice(videoIndex, 1);
-        await playlist.save();
+        await this.playlistRepository.removeVideo(playlistId, videoId);
 
         return {
             data: await this.playlistRepository.findByIdWithOwnerAndVideos(

@@ -9,6 +9,7 @@ export type PlaylistSummary = Readonly<{
   videos?: VideoListItem[];
   videosCount?: number;
   createdAt?: string;
+  owner?: { _id: string; username?: string };
 }>;
 
 export type PlaylistDetails = PlaylistSummary &
@@ -17,11 +18,45 @@ export type PlaylistDetails = PlaylistSummary &
     totalViews?: number;
   }>;
 
+type PlaylistInput = Readonly<{ name: string; description: string }>;
+
 export const playlistsApi = {
-  listByUser(userId: string) {
-    return apiRequest<PlaylistSummary[]>(`/api/v1/playlists/user/${userId}`);
+  create(input: PlaylistInput, accessToken: string | null) {
+    return apiRequest<PlaylistDetails>("/api/v1/playlists", {
+      method: "POST",
+      body: JSON.stringify(input),
+      accessToken,
+    });
   },
-  detail(playlistId: string) {
-    return apiRequest<PlaylistDetails>(`/api/v1/playlists/${playlistId}`);
+  update(id: string, input: PlaylistInput, accessToken: string | null) {
+    return apiRequest<PlaylistDetails>(`/api/v1/playlists/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+      accessToken,
+    });
+  },
+  remove(id: string, accessToken: string | null) {
+    return apiRequest<unknown>(`/api/v1/playlists/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      accessToken,
+    });
+  },
+  addVideo(id: string, videoId: string, accessToken: string | null) {
+    return apiRequest<PlaylistDetails>(
+      `/api/v1/playlists/add/${encodeURIComponent(videoId)}/${encodeURIComponent(id)}`,
+      { method: "PATCH", accessToken }
+    );
+  },
+  removeVideo(id: string, videoId: string, accessToken: string | null) {
+    return apiRequest<PlaylistDetails>(
+      `/api/v1/playlists/remove/${encodeURIComponent(videoId)}/${encodeURIComponent(id)}`,
+      { method: "PATCH", accessToken }
+    );
+  },
+  listByUser(userId: string, accessToken?: string | null) {
+    return apiRequest<PlaylistSummary[]>(`/api/v1/playlists/user/${encodeURIComponent(userId)}`, { accessToken });
+  },
+  detail(playlistId: string, accessToken?: string | null) {
+    return apiRequest<PlaylistDetails>(`/api/v1/playlists/${encodeURIComponent(playlistId)}`, { accessToken });
   },
 };

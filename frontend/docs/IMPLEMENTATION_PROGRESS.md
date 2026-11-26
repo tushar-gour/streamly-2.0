@@ -191,3 +191,7 @@ Signup is connected to the scoped onboarding backend: form, email OTP, manual au
 ## Iteration 9 — Real database verification
 
 Added isolated PostgreSQL 16 CI service; applies existing migrations only to the disposable CI database. Integration tests cover immediate access revocation, simultaneous refresh, concurrent OTP consumption, MFA device binding and onboarding/access token separation. Previous suite explicitly skipped database tests; do not count skipped cases as passed. Current results pending.
+
+## Iteration 10 — Playlist workflows
+
+Implemented playlist creation, metadata editing, deletion, adding from the watch page and removing existing items. List thumbnails now use the actual summary field. Backend membership writes operate on the unique playlist/video row instead of rewriting the entire collection; add/remove are idempotent. Input bounds match the database. Pending verification: ownership, simultaneous membership mutations, playlist privacy audit, keyboard/browser testing and formatter checks.

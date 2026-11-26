@@ -49,6 +49,19 @@ class PrismaPlaylistRepository extends PlaylistRepository {
         };
     }
 
+    addVideo(playlistId, videoId) {
+        return prisma.playlistVideo.createMany({
+            data: { playlistId, videoId },
+            skipDuplicates: true,
+        });
+    }
+
+    removeVideo(playlistId, videoId) {
+        return prisma.playlistVideo.deleteMany({
+            where: { playlistId, videoId },
+        });
+    }
+
     async findByIdWithOwner(playlistId) {
         return toPlaylist(
             await prisma.playlist.findUnique({

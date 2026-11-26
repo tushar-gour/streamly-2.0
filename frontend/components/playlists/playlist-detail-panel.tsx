@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { PlaylistManagement } from "@/components/playlists/playlist-management";
+import { useAuthStore } from "@/stores/auth-store";
 import { RefreshCw } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -17,9 +19,11 @@ type PlaylistDetailPanelProps = Readonly<{
 }>;
 
 export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
+  const token = useAuthStore((state) => state.accessToken);
+  const userId = useAuthStore((state) => state.user?._id);
   const playlistQuery = useQuery({
     queryFn: async () => {
-      const response = await playlistsApi.detail(playlistId);
+      const response = await playlistsApi.detail(playlistId, token);
       return response.data;
     },
     queryKey: queryKeys.playlists.detail(playlistId),
@@ -74,6 +78,7 @@ export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
           {playlist.description}
         </p>
       ) : null}
+      {userId && playlist.owner?._id === userId ? <PlaylistManagement playlist={playlist} /> : null}
       {videos.length === 0 ? (
         <div className="mt-16 grid place-items-center">
           <EmptyState
