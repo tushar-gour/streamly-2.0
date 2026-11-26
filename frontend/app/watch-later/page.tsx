@@ -5,8 +5,8 @@ export default function WatchLaterPage() {
     <RouteEmptyState
       permission={{ authenticated: true }}
       eyebrow="Watch Later"
-      title="No saved videos yet."
-      description="Videos saved for later will appear here after real saved-video data is connected."
+      title="Watch Later is not available yet."
+      description="Use playlists to organize videos you want to revisit."
     />
   );
 }

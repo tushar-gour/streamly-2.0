@@ -1,7 +1,5 @@
-import { ShieldCheck } from "lucide-react";
-
 import { AppShell } from "@/components/layout/app-shell";
-import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/feedback/empty-state";
 
 export default function AdminPage() {
   return (
@@ -12,25 +10,11 @@ export default function AdminPage() {
         anyRole: ["admin"],
       }}
     >
-      <section>
-        <p className="text-sm uppercase tracking-[0.22em] text-periwinkle">
-          Admin
-        </p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-[-0.03em]">
-          Moderation overview
-        </h1>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {["Users", "Videos", "Reports"].map((item) => (
-            <Card key={item} className="p-5">
-              <ShieldCheck className="text-periwinkle" size={24} />
-              <h2 className="mt-4 text-xl font-semibold">{item}</h2>
-              <p className="mt-2 text-sm text-[color:var(--color-text-secondary)]">
-                RBAC-protected shell for future administrative workflows.
-              </p>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <EmptyState
+        eyebrow="Administration"
+        title="Moderation is not available yet."
+        description="The server does not currently expose administrative management or reporting endpoints."
+      />
     </AppShell>
   );
 }

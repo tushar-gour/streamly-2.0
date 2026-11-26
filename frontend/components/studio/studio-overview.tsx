@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { StatCard } from "@/components/cards/stat-card";
+import { VideoManagement } from "@/components/studio/video-management";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { Button } from "@/components/ui/button";
 import { dashboardApi } from "@/lib/api/dashboard.api";
@@ -97,6 +98,7 @@ export function StudioOverview() {
                 <span className="text-sm">
                   {(video.views ?? 0).toLocaleString()} views
                 </span>
+                <VideoManagement video={video} />
               </li>
             ))}
           </ul>

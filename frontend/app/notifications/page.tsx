@@ -5,8 +5,8 @@ export default function NotificationsPage() {
     <RouteEmptyState
       permission={{ authenticated: true }}
       eyebrow="Notifications"
-      title="No notifications yet."
-      description="Security, creator, and activity notifications will appear after real notification data is connected."
+      title="Notifications are not available yet."
+      description="Activity and security notifications are not supported by the current service."
     />
   );
 }

@@ -92,3 +92,23 @@ server-requested captcha is pending; it is cleared on challenge progression or
 failure. Direct captcha/MFA URLs restart sign-in rather than accepting an
 unbound code. The legacy store method remains for compatibility and needs
 migration/testing. Signup UI remains incomplete.
+
+## Iteration 3 — Studio management, settings and unsupported states
+
+Implemented, awaiting verification:
+
+- [ ] Edit title, description and optional thumbnail; publish/unpublish and
+  delete own uploads with explicit confirmation. Invalidate relevant queries
+  after mutations; never automatically retry toggle/delete.
+- [ ] Account settings: full name, password change, logout-all and dark/light
+  preference. No email change because backend does not reset email verification.
+- [ ] Replace misleading empty states for unsupported notifications, watch later,
+  and admin screens with explicit capability limitations.
+
+Remaining: avatar/cover changes, system theme, playlist/comment/subscription
+mutation audit, secure signup, safe refresh/revocation, all visual/runtime QA.
+Existing backend ownership checks still limit elevated moderation. No admin
+endpoint fabricated. The existing admin API module is unused and must be removed
+or replaced after a full import audit.
+
+Verification pending. No production deployment or merge.
