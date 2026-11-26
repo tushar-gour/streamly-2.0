@@ -17,8 +17,9 @@ describe("video upload validation", () => {
   });
 
   it("rejects empty, oversized, and incompatible media", () => {
-    expect(validateUploadFile({ size: 0, type: "video/mp4" }, videoTypes))
-      .toBeDefined();
+    expect(
+      validateUploadFile({ size: 0, type: "video/mp4" }, videoTypes)
+    ).toBeDefined();
     expect(
       validateUploadFile(
         { size: 50 * 1024 * 1024 + 1, type: "video/mp4" },

@@ -2,10 +2,7 @@ import { apiRequest } from "@/lib/api/client";
 import type { AuthenticatedUserPayload } from "@/lib/api/types";
 
 export type LoginMethod =
-  | "email-password"
-  | "email-otp"
-  | "phone-sms-otp"
-  | "phone-whatsapp-otp";
+  "email-password" | "email-otp" | "phone-sms-otp" | "phone-whatsapp-otp";
 
 export type LoginStep =
   | { captchaRequired: true; captchaProvider: string; siteKey: string }

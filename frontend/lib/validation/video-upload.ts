@@ -20,6 +20,7 @@ export function validateUploadFile(
 ): string | undefined {
   if (file.size === 0) return "Select a non-empty file.";
   if (file.size > MAX_FILE_SIZE) return "Each file must be 50 MB or smaller.";
-  if (!allowedTypes.includes(file.type)) return "This file type is not supported.";
+  if (!allowedTypes.includes(file.type))
+    return "This file type is not supported.";
   return undefined;
 }

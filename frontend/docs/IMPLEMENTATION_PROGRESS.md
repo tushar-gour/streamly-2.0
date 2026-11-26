@@ -9,8 +9,8 @@ Branch: frontend/production-completion.
 
 - [ ] Creator overview: fetch actual channel totals and paginated owner uploads.
 - [ ] Publish: required title, description, videoFile and thumbnail multipart
-  fields; upload-byte progress; separate server-confirmation state; no automatic
-  retries of a potentially successful mutation.
+      fields; upload-byte progress; separate server-confirmation state; no automatic
+      retries of a potentially successful mutation.
 - [ ] Validate media MIME and per-file 50 MiB limit; unit tests added.
 - [ ] Gate upload route on video:create; backend remains authoritative.
 
@@ -56,14 +56,14 @@ Branch: frontend/production-completion.
 ## Iteration 2 — Smart login and security audit (implementation unverified)
 
 - [ ] Replace four login entry screens with one challenge-driven form and typed
-  API module. OTP and MFA use backend challenge identifiers. Captcha uses the
-  backend-provided Turnstile site key. No standalone MFA login, no simulated
-  verification, no client-persisted passwords or refresh/trust tokens.
+      API module. OTP and MFA use backend challenge identifiers. Captcha uses the
+      backend-provided Turnstile site key. No standalone MFA login, no simulated
+      verification, no client-persisted passwords or refresh/trust tokens.
 - [ ] Clear query cache on identity changes to reduce cross-account data leakage.
 - [ ] Correct iteration 1 route gate: current-user does not return roles or
-  permissions in the inspected backend. Upload requires authentication locally;
-  actual video:create permission is enforced by the API. No client-side role
-  inference or backend authorization bypass.
+      permissions in the inspected backend. Upload requires authentication locally;
+      actual video:create permission is enforced by the API. No client-side role
+      inference or backend authorization bypass.
 
 ### Release-blocking backend findings
 
@@ -98,12 +98,12 @@ migration/testing. Signup UI remains incomplete.
 Implemented, awaiting verification:
 
 - [ ] Edit title, description and optional thumbnail; publish/unpublish and
-  delete own uploads with explicit confirmation. Invalidate relevant queries
-  after mutations; never automatically retry toggle/delete.
+      delete own uploads with explicit confirmation. Invalidate relevant queries
+      after mutations; never automatically retry toggle/delete.
 - [ ] Account settings: full name, password change, logout-all and dark/light
-  preference. No email change because backend does not reset email verification.
+      preference. No email change because backend does not reset email verification.
 - [ ] Replace misleading empty states for unsupported notifications, watch later,
-  and admin screens with explicit capability limitations.
+      and admin screens with explicit capability limitations.
 
 Remaining: avatar/cover changes, system theme, playlist/comment/subscription
 mutation audit, secure signup, safe refresh/revocation, all visual/runtime QA.
@@ -145,12 +145,19 @@ Final checkpoint status: PARTIAL. Do not merge or deploy.
 ## Iteration 4 — Watch and discussion
 
 - [ ] Comment creation, ownership-gated editing/deletion, comment likes and
-  backend pagination.
+      backend pagination.
 - [ ] Playback error recovery, poster, share action, accessible comment anchor.
 - [ ] Update video like count from the mutation response rather than refetching
-  video detail (which increments views). Invalidate liked-video cache.
+      video detail (which increments views). Invalidate liked-video cache.
 - [ ] Scope detail/comment query keys to account identity.
 
 Verification pending; initial frontend CI installed dependencies but failed
 formatting on eight changed files. Follow-up CI now emits formatting diffs and
 runs lint, typecheck, test and build independently without hiding failures.
+
+## CI verification and formatting repair
+
+- Source checkpoint `6f3f5a1d52d3271167b3e3d22ce9c5c0792115a1`: lint, typecheck, test and build passed in [CI](https://github.com/tushar-gour/streamly-2.0/actions/runs/45861555254).
+- Vitest: 7 test files, 19 tests passed. Next.js reported 102 kB shared first-load JS (build metric, not a Web Vital).
+- Formatting failed; applied the actual Prettier diagnostic diff to the relevant files, preserving the later discussion implementation. Latest branch verification remains pending.
+- No browser interaction, visual comparison or LCP/INP/CLS measurements are available.

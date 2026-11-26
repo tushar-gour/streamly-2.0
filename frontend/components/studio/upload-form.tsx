@@ -129,9 +129,7 @@ export function UploadForm() {
             required
             accept={thumbnailTypes.join(",")}
             aria-describedby="thumbnail-help"
-            onChange={(event) =>
-              setThumbnail(event.target.files?.[0] ?? null)
-            }
+            onChange={(event) => setThumbnail(event.target.files?.[0] ?? null)}
           />
           <span id="thumbnail-help">
             {thumbnailError || "JPEG, PNG, GIF or WebP, up to 50 MB."}

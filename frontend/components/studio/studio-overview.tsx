@@ -27,8 +27,7 @@ export function StudioOverview() {
   });
   const overview = stats.data?.overview;
   const pagination = videos.data?.meta?.pagination as
-    | { hasNextPage?: boolean }
-    | undefined;
+    { hasNextPage?: boolean } | undefined;
 
   return (
     <div className="grid gap-8">

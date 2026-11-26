@@ -159,7 +159,11 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
     <AuthShell guestOnly>
       <AuthCard title={title} description="Sign in to continue to Streamly.">
         <form className="grid gap-5" onSubmit={submit}>
-          {error ? <p role="alert" className="text-sm">{error}</p> : null}
+          {error ? (
+            <p role="alert" className="text-sm">
+              {error}
+            </p>
+          ) : null}
           {stage.kind === "credentials" ? (
             <>
               <Input
@@ -191,7 +195,11 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
           ) : null}
           {isCode ? (
             <Input
-              label={stage.kind === "mfa" ? "Authenticator code" : "Verification code"}
+              label={
+                stage.kind === "mfa"
+                  ? "Authenticator code"
+                  : "Verification code"
+              }
               autoComplete="one-time-code"
               inputMode="numeric"
               pattern={stage.kind === "mfa" ? "[0-9]{6}" : "[0-9]+"}
@@ -199,7 +207,9 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
               required
               value={code}
               disabled={pending}
-              onChange={(event) => setCode(event.target.value.replace(/\D/gu, ""))}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/gu, ""))
+              }
             />
           ) : null}
           <Button
@@ -208,16 +218,28 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
             isLoading={pending}
             disabled={stage.kind === "captcha" && !captchaToken}
           >
-            {stage.kind !== "credentials" ? "Verify and continue" : isPassword ? "Sign in" : "Send code"}
+            {stage.kind !== "credentials"
+              ? "Verify and continue"
+              : isPassword
+                ? "Sign in"
+                : "Send code"}
           </Button>
           {stage.kind !== "credentials" ? (
-            <Button type="button" disabled={pending} variant="secondary" onClick={restart}>
+            <Button
+              type="button"
+              disabled={pending}
+              variant="secondary"
+              onClick={restart}
+            >
               Restart sign-in
             </Button>
           ) : (
             <>
               {isPassword ? (
-                <Link href="/forgot-password" className="text-sm text-periwinkle">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-periwinkle"
+                >
                   Forgot password?
                 </Link>
               ) : null}
@@ -227,7 +249,10 @@ export function SmartLoginForm({ method }: { method: LoginMethod }) {
                 </Link>
               </Button>
               <p className="text-center text-sm">
-                New to Streamly? <Link href="/signup" className="text-periwinkle">Create an account</Link>
+                New to Streamly?{" "}
+                <Link href="/signup" className="text-periwinkle">
+                  Create an account
+                </Link>
               </p>
             </>
           )}

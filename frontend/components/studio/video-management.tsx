@@ -28,8 +28,7 @@ export function VideoManagement({ video }: { video: StudioVideo }) {
   const [description, setDescription] = useState(video.description ?? "");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [confirmation, setConfirmation] = useState("");
-  const fileError =
-    thumbnail && validateUploadFile(thumbnail, thumbnailTypes);
+  const fileError = thumbnail && validateUploadFile(thumbnail, thumbnailTypes);
 
   const mutation = useMutation({
     mutationFn: async (action: Action) => {
