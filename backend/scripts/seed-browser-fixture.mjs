@@ -2,7 +2,11 @@ import bcrypt from "bcrypt";
 import ffmpegPath from "ffmpeg-static";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { CreateBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+    CreateBucketCommand,
+    PutObjectCommand,
+    S3Client,
+} from "@aws-sdk/client-s3";
 
 import { prisma } from "../src/infrastructure/database/prisma/client.js";
 import { createId } from "../src/shared/helpers/id-generator.js";

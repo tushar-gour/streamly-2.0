@@ -474,3 +474,7 @@ Replaced synchronous effect state updates in video moderation (account-keyed Rea
 ### Iteration 65 — Real storage in browser workflow
 
 Root cause of browser upload failure: standalone server does not load the Vitest Cloudinary mock. Browser CI now provisions the existing checksum-pinned disposable S3-compatible server, seeds private objects and exercises the actual upload/stream path. No mock publication response. Reused storage startup script in both jobs. Added explicit HTTP publication assertion before UI completion. Verification pending. Next: exact CI, repair diagnostics; residual Prisma advisory chain and accessibility remain release gates.
+
+### Iteration 66 — Migration format reconciliation and frontend audit gate
+
+Applied CI formatter output after React and browser storage changes. Frontend lint, strict typecheck, unit tests and production build passed in 46047215320; actual production npm audit added as a required frontend step. Database and browser jobs pending when inspected. Backend audit remains report-only and high-severity Prisma CLI advisories remain a release blocker. Next: browser storage verification and repair; Prisma 7 migration must be explicitly tested, not forced by audit.

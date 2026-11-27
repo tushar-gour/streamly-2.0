@@ -34,7 +34,8 @@ function ModerationPanel() {
   const videos = query.data?.videos ?? [];
   const counts = query.data?.counts ?? null;
   const loading = query.isPending || query.isFetching;
-  const feedback = error || (query.isError ? "Could not load moderation data." : "");
+  const feedback =
+    error || (query.isError ? "Could not load moderation data." : "");
 
   async function apply() {
     if (!selected || !reason.trim() || pending) return;
@@ -44,7 +45,9 @@ function ModerationPanel() {
       await adminApi.setHold(selected.id, !selected.moderationHeld, reason);
       setSelected(null);
       setReason("");
-      await queryClient.invalidateQueries({ queryKey: ["admin", userId, "videos"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin", userId, "videos"],
+      });
     } catch (cause) {
       setError(
         cause instanceof StreamlyApiError && cause.statusCode < 500

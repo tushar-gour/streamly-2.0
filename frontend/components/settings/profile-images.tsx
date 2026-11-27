@@ -21,7 +21,10 @@ function ImageEditor({
 }) {
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore((state) => state.user?._id);
-  const [selection, setSelection] = useState<{ file: File; url: string } | null>(null);
+  const [selection, setSelection] = useState<{
+    file: File;
+    url: string;
+  } | null>(null);
   const file = selection?.file;
   const preview = selection?.url;
   const [pending, setPending] = useState(false);
