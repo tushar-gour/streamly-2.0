@@ -1,15 +1,20 @@
 // @ts-nocheck
 import { container } from "../../core/container/index.js";
 import { asyncHandler } from "../../shared/helpers/async-handler.js";
+import { BadRequestError } from "../../shared/errors/api-error.js";
 import { ApiResponse } from "../../shared/responses/api-response.js";
 
 const subscriptionService = container.services.subscriptionService;
 
 class SubscriptionController {
     static toggleSubscription = asyncHandler(async (req, res) => {
+        if (req.method === "PUT" && typeof req.body?.isSubscribed !== "boolean") {
+            throw new BadRequestError("Subscription state is required");
+        }
         const result = await subscriptionService.toggleSubscription({
             channelId: req.params.channelId,
             userId: req.user._id,
+            desired: req.method === "PUT" ? req.body?.isSubscribed : undefined,
         });
         return res
             .status(result.statusCode)

@@ -48,6 +48,32 @@ class PrismaSubscriptionRepository extends SubscriptionRepository {
         });
     }
 
+    async setSubscription(subscriberId, channelId, desired) {
+        return prisma.$transaction(async (tx) => {
+            // Serialize changes initiated by the same subscriber.
+            await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${subscriberId} FOR UPDATE`;
+            const existing = await tx.subscription.findUnique({
+                where: { subscriberId_channelId: { subscriberId, channelId } },
+            });
+            const isSubscribed = desired ?? !existing;
+            if (isSubscribed && !existing) {
+                await tx.subscription.create({
+                    data: { id: createId(), subscriberId, channelId },
+                });
+                await recordNotification(
+                    tx,
+                    channelId,
+                    "subscription",
+                    "A viewer subscribed to your channel."
+                );
+            } else if (!isSubscribed && existing) {
+                await tx.subscription.delete({ where: { id: existing.id } });
+            }
+            const subscribersCount = await tx.subscription.count({ where: { channelId } });
+            return { isSubscribed, subscribersCount, created: isSubscribed && !existing };
+        });
+    }
+
     deleteById(subscriptionId) {
         return prisma.subscription.delete({ where: { id: subscriptionId } });
     }

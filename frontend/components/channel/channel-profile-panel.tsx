@@ -17,6 +17,7 @@ import {
   formatRelativeDate,
   safeMediaUrl,
 } from "@/lib/media/media-formatters";
+import { useAuthStore } from "@/stores/auth-store";
 import { toVideoCardModel } from "@/lib/media/video-mappers";
 
 type ChannelProfilePanelProps = Readonly<{
@@ -25,12 +26,13 @@ type ChannelProfilePanelProps = Readonly<{
 
 export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?._id);
   const channelQuery = useQuery({
     queryFn: async () => {
       const response = await usersApi.channel(username);
       return response.data;
     },
-    queryKey: queryKeys.users.channel(username),
+    queryKey: [...queryKeys.users.channel(username), userId ?? "anonymous"],
     retry: false,
     staleTime: 60_000,
   });
@@ -48,11 +50,13 @@ export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: () => subscriptionsApi.toggleChannel(channel?._id ?? ""),
+    mutationFn: () => subscriptionsApi.setChannel(channel?._id ?? "", !channel?.isSubscribed),
+    retry: false,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.users.channel(username),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.channel(username) }),
+        queryClient.invalidateQueries({ queryKey: ["subscriptions"] }),
+      ]);
     },
   });
 
@@ -117,7 +121,7 @@ export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
             </p>
           </div>
         </div>
-        <Button
+        {userId && userId !== channel._id ? <Button
           disabled={!channel._id}
           isLoading={subscribeMutation.isPending}
           onClick={() => subscribeMutation.mutate()}
@@ -125,7 +129,8 @@ export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
         >
           <UserPlus size={16} />
           {channel.isSubscribed ? "Subscribed" : "Subscribe"}
-        </Button>
+        </Button> : null}
+        {subscribeMutation.isError ? <p role="alert" className="text-sm">Could not update subscription. Please retry.</p> : null}
       </div>
       {videosQuery.isLoading ? <LoadingState label="Loading uploads" /> : null}
       {videosQuery.isError ? (

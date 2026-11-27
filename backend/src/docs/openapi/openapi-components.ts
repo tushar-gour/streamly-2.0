@@ -390,6 +390,7 @@ const components = {
             type: "object",
             required: ["title", "description", "videoFile", "thumbnail"],
             properties: {
+                requestId: { type: "string", format: "uuid" },
                 title: { type: "string" },
                 description: { type: "string" },
                 videoFile: { type: "string", format: "binary" },
@@ -417,6 +418,7 @@ const components = {
             properties: {
                 name: { type: "string" },
                 description: { type: "string" },
+                isPublic: { type: "boolean", default: false },
             },
         },
     },

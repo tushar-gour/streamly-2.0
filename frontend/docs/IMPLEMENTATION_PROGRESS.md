@@ -414,3 +414,7 @@ Added account-scoped comment moderation query and action panel, accessible reaso
 ### Iteration 50 — Playlist visibility (implemented, unverified)
 
 Playlist create/update accepts validated boolean visibility; new playlists default private through API, existing records unchanged. Added visibility selector and labels and account-scoped detail caching. Browser and database privacy transition tests pending. Next: reconcile CI, then remaining creator/subscription/library workflows and quality gates.
+
+### Iteration 51 — Subscription idempotency and library privacy regressions
+
+Comment moderation database regression VERIFIED in [46044233950](https://github.com/tushar-gour/streamly-2.0/actions/runs/46044233950), 27 database tests passed, 8 API tests, 2 actual storage tests. Added atomic subscriber-scoped state transitions and idempotent PUT; existing POST toggle retained. Frontend uses explicit desired state and hides self-subscribe. Added concurrent subscribe/unsubscribe and playlist visibility transition regressions. Worker repeat scheduling reformatted to stable local variable. CI pending; OpenAPI PUT contract and formatter reconciliation next.

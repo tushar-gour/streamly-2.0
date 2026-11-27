@@ -346,6 +346,43 @@ databaseDescribe("media and object privacy", () => {
         ).toBe(200);
     });
 
+    it("defaults new playlists to private and validates visibility changes", async () => {
+        const owner = await account();
+        const viewer = await account();
+        const role = await prisma.role.findUniqueOrThrow({ where: { name: "user" } });
+        await prisma.userRole.create({ data: { id: createId(), userId: owner.user._id, roleId: role.id } });
+        const auth = "Bearer " + owner.token;
+        const other = "Bearer " + viewer.token;
+        const created = await request(app).post("/api/v1/playlists").set("Authorization", auth).send({ name: "Private by default" });
+        expect(created.status).toBe(201);
+        expect(created.body.data.isPublic).toBe(false);
+        const path = "/api/v1/playlists/" + created.body.data._id;
+        expect((await request(app).get(path).set("Authorization", other)).status).toBe(404);
+        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: "true" })).status).toBe(400);
+        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: true })).status).toBe(200);
+        expect((await request(app).get(path).set("Authorization", other)).status).toBe(200);
+        expect((await request(app).patch(path).set("Authorization", other).send({ isPublic: false })).status).toBe(403);
+        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: false })).status).toBe(200);
+        expect((await request(app).get(path).set("Authorization", other)).status).toBe(404);
+    });
+
+    it("makes concurrent desired subscription changes idempotent", async () => {
+        const owner = await account();
+        const viewer = await account();
+        const path = "/api/v1/subscriptions/c/" + owner.user._id;
+        const auth = "Bearer " + viewer.token;
+        const subscribe = () => request(app).put(path).set("Authorization", auth).send({ isSubscribed: true });
+        const results = await Promise.all([subscribe(), subscribe()]);
+        expect(results.map((r) => r.status).sort()).toEqual([200, 201]);
+        expect(results.every((r) => r.body.data.isSubscribed)).toBe(true);
+        expect(await prisma.subscription.count({ where: { subscriberId: viewer.user._id, channelId: owner.user._id } })).toBe(1);
+        expect(await prisma.notification.count({ where: { userId: owner.user._id, kind: "subscription" } })).toBe(1);
+        expect((await request(app).put(path).set("Authorization", auth).send({})).status).toBe(400);
+        const remove = () => request(app).put(path).set("Authorization", auth).send({ isSubscribed: false });
+        expect((await Promise.all([remove(), remove()])).every((r) => r.status === 200 && !r.body.data.isSubscribed)).toBe(true);
+        expect(await prisma.subscription.count({ where: { subscriberId: viewer.user._id, channelId: owner.user._id } })).toBe(0);
+    });
+
     it("restricts private playlists to their owner", async () => {
         const { owner, viewer, playlist } = await fixture();
         const path = "/api/v1/playlists/" + playlist.id;

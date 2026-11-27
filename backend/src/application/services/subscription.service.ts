@@ -13,7 +13,7 @@ class SubscriptionService {
         this.userRepository = userRepository;
     }
 
-    async toggleSubscription({ channelId, userId }) {
+    async toggleSubscription({ channelId, userId, desired }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         if (channelId === userId.toString()) {
@@ -25,31 +25,14 @@ class SubscriptionService {
             throw new NotFoundError("Channel", channelId);
         }
 
-        const existingSubscription =
-            await this.subscriptionRepository.findBySubscriberAndChannel(
-                userId,
-                channelId
-            );
-
-        let isSubscribed;
-        if (existingSubscription) {
-            await this.subscriptionRepository.deleteById(
-                existingSubscription._id
-            );
-            isSubscribed = false;
-        } else {
-            await this.subscriptionRepository.create({
-                channel: channelId,
-                subscriber: userId,
-            });
-            isSubscribed = true;
+        if (desired !== undefined && typeof desired !== "boolean") {
+            throw new BadRequestError("Invalid subscription state");
         }
-
-        const subscribersCount =
-            await this.subscriptionRepository.countByChannel(channelId);
+        const { isSubscribed, subscribersCount, created } =
+            await this.subscriptionRepository.setSubscription(userId, channelId, desired);
 
         return {
-            statusCode: isSubscribed ? 201 : 200,
+            statusCode: created ? 201 : 200,
             data: { isSubscribed, subscribersCount },
             message: isSubscribed
                 ? "Subscribed successfully"
