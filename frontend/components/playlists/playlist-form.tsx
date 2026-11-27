@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 export function PlaylistForm({
   initialName = "",
   initialDescription = "",
+  initialIsPublic = false,
   pending,
   submitLabel,
   onSubmit,
@@ -16,17 +17,19 @@ export function PlaylistForm({
 }: {
   initialName?: string;
   initialDescription?: string;
+  initialIsPublic?: boolean;
   pending: boolean;
   submitLabel: string;
-  onSubmit: (values: { name: string; description: string }) => void;
+  onSubmit: (values: { name: string; description: string; isPublic: boolean }) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
+  const [isPublic, setIsPublic] = useState(initialIsPublic);
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!pending && name.trim()) {
-      onSubmit({ name: name.trim(), description: description.trim() });
+      onSubmit({ name: name.trim(), description: description.trim(), isPublic });
     }
   }
   return (
@@ -48,6 +51,18 @@ export function PlaylistForm({
           disabled={pending}
           onChange={(event) => setDescription(event.target.value)}
         />
+      </label>
+      <label className="grid gap-2 text-sm">
+        Visibility
+        <select
+          className="rounded-input border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-3"
+          value={isPublic ? "public" : "private"}
+          onChange={(event) => setIsPublic(event.target.value === "public")}
+          disabled={pending}
+        >
+          <option value="private">Private — only you</option>
+          <option value="public">Public — other users</option>
+        </select>
       </label>
       <div className="flex flex-wrap gap-2">
         <Button type="submit" isLoading={pending} disabled={!name.trim()}>

@@ -5,6 +5,7 @@ export type PlaylistSummary = Readonly<{
   _id: string;
   name: string;
   description?: string;
+  isPublic?: boolean;
   thumbnail?: string;
   videos?: VideoListItem[];
   videosCount?: number;
@@ -18,7 +19,7 @@ export type PlaylistDetails = PlaylistSummary &
     totalViews?: number;
   }>;
 
-type PlaylistInput = Readonly<{ name: string; description: string }>;
+type PlaylistInput = Readonly<{ name: string; description: string; isPublic: boolean }>;
 
 export const playlistsApi = {
   create(input: PlaylistInput, accessToken: string | null) {

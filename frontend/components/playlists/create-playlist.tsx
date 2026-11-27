@@ -13,7 +13,7 @@ export function CreatePlaylist() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const mutation = useMutation({
-    mutationFn: (input: { name: string; description: string }) =>
+    mutationFn: (input: { name: string; description: string; isPublic: boolean }) =>
       playlistsApi.create(input, token),
     retry: false,
     onSuccess: async () => {

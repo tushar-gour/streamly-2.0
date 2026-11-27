@@ -11,7 +11,7 @@ import type { PlaylistDetails } from "@/lib/api/playlists.api";
 import { useAuthStore } from "@/stores/auth-store";
 
 type Action =
-  | { kind: "edit"; name: string; description: string }
+  | { kind: "edit"; name: string; description: string; isPublic: boolean }
   | { kind: "remove-video"; videoId: string }
   | { kind: "delete" };
 
@@ -29,7 +29,7 @@ export function PlaylistManagement({
       if (action.kind === "edit") {
         await playlistsApi.update(
           playlist._id,
-          { name: action.name, description: action.description },
+          { name: action.name, description: action.description, isPublic: action.isPublic },
           token
         );
       } else if (action.kind === "remove-video") {
@@ -75,6 +75,7 @@ export function PlaylistManagement({
         <PlaylistForm
           initialName={playlist.name}
           initialDescription={playlist.description}
+          initialIsPublic={playlist.isPublic ?? false}
           pending={mutation.isPending}
           submitLabel="Save changes"
           onSubmit={(values) => mutation.mutate({ kind: "edit", ...values })}

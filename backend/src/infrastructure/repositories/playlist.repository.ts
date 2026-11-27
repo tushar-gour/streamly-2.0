@@ -24,6 +24,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                     name: playlistData.name,
                     description: playlistData.description || "",
                     ownerId: playlistData.owner,
+                    isPublic: playlistData.isPublic,
                 },
                 include: { owner: { select: ownerSelect }, videos: true },
             })
@@ -163,6 +164,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                 _id: playlist.id,
                 name: playlist.name,
                 description: playlist.description,
+                isPublic: playlist.isPublic,
                 videosCount: playlist.videos.length,
                 thumbnail: firstVideo?.thumbnail,
                 thumbnailVideoId: firstVideo?.id,

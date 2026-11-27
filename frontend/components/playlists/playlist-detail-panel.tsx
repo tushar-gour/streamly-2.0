@@ -26,9 +26,9 @@ export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
       const response = await playlistsApi.detail(playlistId, token);
       return response.data;
     },
-    queryKey: queryKeys.playlists.detail(playlistId),
+    queryKey: [...queryKeys.playlists.detail(playlistId), userId ?? "anonymous"],
     retry: false,
-    staleTime: 60_000,
+    staleTime: 0,
   });
 
   if (playlistQuery.isLoading) {
@@ -68,7 +68,7 @@ export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
   return (
     <section>
       <p className="text-sm uppercase tracking-[0.22em] text-periwinkle">
-        Playlist
+        Playlist · {playlist.isPublic ? "Public" : "Private"}
       </p>
       <h1 className="mt-2 text-4xl font-semibold tracking-[-0.03em]">
         {playlist.name}

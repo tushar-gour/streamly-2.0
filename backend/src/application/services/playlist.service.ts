@@ -14,9 +14,10 @@ class PlaylistService {
     }
 
     async create({ body, userId }) {
-        const { name, description } = body;
+        const { name, description, isPublic = false } = body;
 
         if (
+            typeof isPublic !== "boolean" ||
             typeof name !== "string" ||
             !name.trim() ||
             name.trim().length > 100 ||
@@ -31,6 +32,7 @@ class PlaylistService {
             name: name.trim(),
             description: description?.trim() || "",
             owner: userId,
+            isPublic,
             videos: [],
         });
 
@@ -104,6 +106,13 @@ class PlaylistService {
                 throw new BadRequestError("Invalid playlist description");
             }
             updateData.description = body.description.trim();
+        }
+
+        if (body.isPublic !== undefined) {
+            if (typeof body.isPublic !== "boolean") {
+                throw new BadRequestError("Invalid playlist visibility");
+            }
+            updateData.isPublic = body.isPublic;
         }
 
         if (Object.keys(updateData).length === 0) {

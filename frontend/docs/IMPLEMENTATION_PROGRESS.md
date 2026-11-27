@@ -410,3 +410,7 @@ Added durable reversible comment holds with permission-scoped moderator endpoint
 ### Iteration 49 — Moderator interface (implemented, unverified)
 
 Added account-scoped comment moderation query and action panel, accessible reason form, pagination, permission-aware navigation and OpenAPI documentation. CI pending. No deployment or merge.
+
+### Iteration 50 — Playlist visibility (implemented, unverified)
+
+Playlist create/update accepts validated boolean visibility; new playlists default private through API, existing records unchanged. Added visibility selector and labels and account-scoped detail caching. Browser and database privacy transition tests pending. Next: reconcile CI, then remaining creator/subscription/library workflows and quality gates.
