@@ -33,10 +33,16 @@ class WorkerRunner {
 
         this.#registerWorkers();
         if (appConfig.jobs.cleanupQueueEnabled) {
-            await queueRegistry.getQueue(QueueNames.CLEANUP).add(
-                JobNames.CLEANUP_EXPIRED_AUTH, {},
-                { repeat: { every: 5 * 60_000 }, jobId: "periodic-expired-auth-and-uploads" }
-            );
+            await queueRegistry
+                .getQueue(QueueNames.CLEANUP)
+                .add(
+                    JobNames.CLEANUP_EXPIRED_AUTH,
+                    {},
+                    {
+                        repeat: { every: 5 * 60_000 },
+                        jobId: "periodic-expired-auth-and-uploads",
+                    }
+                );
         }
 
         workerRunnerLogger.info(

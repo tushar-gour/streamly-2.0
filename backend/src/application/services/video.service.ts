@@ -132,7 +132,14 @@ class VideoService {
     async publish({ body, files, ownerId }) {
         const { title, description } = body;
 
-        if (typeof title !== "string" || typeof description !== "string" || !title.trim() || !description.trim() || title.trim().length > 200 || description.trim().length > 5000) {
+        if (
+            typeof title !== "string" ||
+            typeof description !== "string" ||
+            !title.trim() ||
+            !description.trim() ||
+            title.trim().length > 200 ||
+            description.trim().length > 5000
+        ) {
             throw new BadRequestError("Title and description are required");
         }
 
@@ -148,15 +155,27 @@ class VideoService {
         }
 
         const { attempt, started } = await this.videoUploadRepository.begin(
-            ownerId, title.trim(), body.requestId,
+            ownerId,
+            title.trim(),
+            body.requestId,
             appConfig.media.storageProvider === "s3"
         );
         if (!started) {
             if (attempt.status === "ready" && attempt.videoId) {
-                const existing = await this.videoRepository.findByIdWithOwner(attempt.videoId);
-                if (existing) return { statusCode: 201, data: existing, message: SuccessMessages.VIDEO_CREATED };
+                const existing = await this.videoRepository.findByIdWithOwner(
+                    attempt.videoId
+                );
+                if (existing)
+                    return {
+                        statusCode: 201,
+                        data: existing,
+                        message: SuccessMessages.VIDEO_CREATED,
+                    };
             }
-            throw new ApiError(409, "Upload identifier already used. Check Creator Studio.");
+            throw new ApiError(
+                409,
+                "Upload identifier already used. Check Creator Studio."
+            );
         }
 
         let videoUpload, thumbnailUpload, videoId;
@@ -167,46 +186,74 @@ class VideoService {
                 this.mediaStorageService.upload(videoFile.path, {
                     resource_type: "video",
                     contentType: videoFile.mimetype,
-                    ...(attempt.videoKey ? { objectKey: attempt.videoKey } : {}),
+                    ...(attempt.videoKey
+                        ? { objectKey: attempt.videoKey }
+                        : {}),
                 }),
                 this.mediaStorageService.upload(thumbnailFile.path, {
                     contentType: thumbnailFile.mimetype,
-                    ...(attempt.thumbnailKey ? { objectKey: attempt.thumbnailKey } : {}),
+                    ...(attempt.thumbnailKey
+                        ? { objectKey: attempt.thumbnailKey }
+                        : {}),
                 }),
             ]);
-            videoUpload = outcomes[0].status === "fulfilled" ? outcomes[0].value : null;
-            thumbnailUpload = outcomes[1].status === "fulfilled" ? outcomes[1].value : null;
-            if (!videoUpload || !thumbnailUpload) throw new ApiError(503, "Media storage is unavailable");
-            videoId = await this.videoUploadRepository.complete(attempt.id, ownerId, {
-                title: title.trim(),
-                description: description.trim(),
-                videoFile: videoUpload.secureUrl || videoUpload.url,
-                thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
-                duration: videoUpload.duration || duration,
-            });
+            videoUpload =
+                outcomes[0].status === "fulfilled" ? outcomes[0].value : null;
+            thumbnailUpload =
+                outcomes[1].status === "fulfilled" ? outcomes[1].value : null;
+            if (!videoUpload || !thumbnailUpload)
+                throw new ApiError(503, "Media storage is unavailable");
+            videoId = await this.videoUploadRepository.complete(
+                attempt.id,
+                ownerId,
+                {
+                    title: title.trim(),
+                    description: description.trim(),
+                    videoFile: videoUpload.secureUrl || videoUpload.url,
+                    thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
+                    duration: videoUpload.duration || duration,
+                }
+            );
         } catch (error) {
             // Only clean failed attempts, never an ambiguously committed published video.
-            const failed = await this.videoUploadRepository.fail(attempt.id,
-                error?.statusCode === 422 ? "Invalid or unsupported video file" : "Processing failed. Start a new upload."
+            const failed = await this.videoUploadRepository.fail(
+                attempt.id,
+                error?.statusCode === 422
+                    ? "Invalid or unsupported video file"
+                    : "Processing failed. Start a new upload."
             );
             if (failed.count === 1) {
                 if (attempt.videoKey) {
-                    await this.videoUploadRepository.cleanupFailed(attempt.id,
-                        (key, resource) => this.mediaStorageService.delete(key, resource)
+                    await this.videoUploadRepository.cleanupFailed(
+                        attempt.id,
+                        (key, resource) =>
+                            this.mediaStorageService.delete(key, resource)
                     );
                 } else {
                     await Promise.allSettled([
-                        videoUpload && this.mediaStorageService.delete(videoUpload.publicId, "video"),
-                        thumbnailUpload && this.mediaStorageService.delete(thumbnailUpload.publicId),
+                        videoUpload &&
+                            this.mediaStorageService.delete(
+                                videoUpload.publicId,
+                                "video"
+                            ),
+                        thumbnailUpload &&
+                            this.mediaStorageService.delete(
+                                thumbnailUpload.publicId
+                            ),
                     ]);
                 }
             }
             throw error;
         }
         // The supplied thumbnail is intentional; do not overwrite it with a generated frame.
-        const publishedVideo = await this.videoRepository.findByIdWithOwner(videoId);
+        const publishedVideo =
+            await this.videoRepository.findByIdWithOwner(videoId);
         await this.#invalidateAllVideoCache();
-        return { statusCode: 201, data: publishedVideo, message: SuccessMessages.VIDEO_CREATED };
+        return {
+            statusCode: 201,
+            data: publishedVideo,
+            message: SuccessMessages.VIDEO_CREATED,
+        };
     }
 
     async update({ videoId, body, file, userId }) {

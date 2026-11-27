@@ -6,16 +6,20 @@ import { FileUploadConfig } from "../../shared/constants/index.js";
 import { ApiError } from "../../shared/errors/api-error.js";
 
 const active = ["validating", "storing"];
-const requestIdPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+const requestIdPattern =
+    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 type Cleanup = (key: string, resource: "image" | "video") => Promise<boolean>;
 
 function publicAttempt(attempt: VideoUploadAttempt) {
-    const interrupted = active.includes(attempt.status) && attempt.expiresAt <= new Date();
+    const interrupted =
+        active.includes(attempt.status) && attempt.expiresAt <= new Date();
     return {
         requestId: attempt.requestId,
         title: attempt.title,
         status: interrupted ? "interrupted" : attempt.status,
-        error: interrupted ? "Processing was interrupted. Start a new upload." : attempt.error,
+        error: interrupted
+            ? "Processing was interrupted. Start a new upload."
+            : attempt.error,
         videoId: attempt.videoId,
         createdAt: attempt.createdAt,
         updatedAt: attempt.updatedAt,
@@ -23,7 +27,12 @@ function publicAttempt(attempt: VideoUploadAttempt) {
 }
 
 export class PrismaVideoUploadRepository {
-    async begin(ownerId: string, title: string, input: unknown, privateStorage: boolean) {
+    async begin(
+        ownerId: string,
+        title: string,
+        input: unknown,
+        privateStorage: boolean
+    ) {
         const requestId = input === undefined ? crypto.randomUUID() : input;
         if (typeof requestId !== "string" || !requestIdPattern.test(requestId))
             throw new ApiError(400, "Invalid upload request identifier");
@@ -32,7 +41,10 @@ export class PrismaVideoUploadRepository {
         const folder = FileUploadConfig.UPLOAD_FOLDER + "/attempts/" + id;
         const inserted = await prisma.videoUploadAttempt.createMany({
             data: {
-                id, ownerId, title, requestId: normalized,
+                id,
+                ownerId,
+                title,
+                requestId: normalized,
                 status: "validating",
                 expiresAt: new Date(Date.now() + 30 * 60_000),
                 videoKey: privateStorage ? folder + "/video" : null,
@@ -51,22 +63,33 @@ export class PrismaVideoUploadRepository {
             where: { id, status: "validating", expiresAt: { gt: new Date() } },
             data: { status: "storing" },
         });
-        if (result.count !== 1) throw new ApiError(409, "Upload attempt is no longer active");
+        if (result.count !== 1)
+            throw new ApiError(409, "Upload attempt is no longer active");
     }
 
-    async complete(id: string, ownerId: string, video: {
-        title: string;
-        description: string;
-        videoFile: string;
-        thumbnail: string;
-        duration: number;
-    }) {
+    async complete(
+        id: string,
+        ownerId: string,
+        video: {
+            title: string;
+            description: string;
+            videoFile: string;
+            thumbnail: string;
+            duration: number;
+        }
+    ) {
         return prisma.$transaction(async (tx) => {
             const claimed = await tx.videoUploadAttempt.updateMany({
-                where: { id, ownerId, status: "storing", expiresAt: { gt: new Date() } },
+                where: {
+                    id,
+                    ownerId,
+                    status: "storing",
+                    expiresAt: { gt: new Date() },
+                },
                 data: { status: "ready" },
             });
-            if (claimed.count !== 1) throw new ApiError(409, "Upload attempt is no longer active");
+            if (claimed.count !== 1)
+                throw new ApiError(409, "Upload attempt is no longer active");
             const record = await tx.video.create({
                 data: { id: createId(), ownerId, ...video, isPublished: true },
             });
@@ -86,9 +109,15 @@ export class PrismaVideoUploadRepository {
     }
 
     async status(ownerId: string, requestId: string) {
-        if (!requestIdPattern.test(requestId)) throw new ApiError(400, "Invalid upload request identifier");
+        if (!requestIdPattern.test(requestId))
+            throw new ApiError(400, "Invalid upload request identifier");
         const record = await prisma.videoUploadAttempt.findUnique({
-            where: { ownerId_requestId: { ownerId, requestId: requestId.toLowerCase() } },
+            where: {
+                ownerId_requestId: {
+                    ownerId,
+                    requestId: requestId.toLowerCase(),
+                },
+            },
         });
         if (!record) throw new ApiError(404, "Upload attempt not found");
         return publicAttempt(record);
@@ -109,10 +138,18 @@ export class PrismaVideoUploadRepository {
         });
         if (!attempt) return false;
         const results = await Promise.allSettled([
-            attempt.videoKey ? remove(attempt.videoKey, "video") : Promise.resolve(true),
-            attempt.thumbnailKey ? remove(attempt.thumbnailKey, "image") : Promise.resolve(true),
+            attempt.videoKey
+                ? remove(attempt.videoKey, "video")
+                : Promise.resolve(true),
+            attempt.thumbnailKey
+                ? remove(attempt.thumbnailKey, "image")
+                : Promise.resolve(true),
         ]);
-        if (!results.every((result) => result.status === "fulfilled" && result.value))
+        if (
+            !results.every(
+                (result) => result.status === "fulfilled" && result.value
+            )
+        )
             return false;
         await prisma.videoUploadAttempt.updateMany({
             where: { id, status: "failed" },
@@ -131,7 +168,10 @@ export class PrismaVideoUploadRepository {
             take: 100,
         });
         for (const attempt of expired) {
-            await this.fail(attempt.id, "Processing was interrupted. Start a new upload.");
+            await this.fail(
+                attempt.id,
+                "Processing was interrupted. Start a new upload."
+            );
         }
         const failed = await prisma.videoUploadAttempt.findMany({
             where: { status: "failed", cleanedAt: null },

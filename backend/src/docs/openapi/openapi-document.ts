@@ -933,7 +933,9 @@ const openApiDocument = {
             post: {
                 tags: ["Videos"],
                 summary: "Publish video",
-                description: protectedDescription("video:create") + " Optional multipart requestId (UUID v4) provides idempotent publication; use the upload status endpoints to reconcile an interrupted response.",
+                description:
+                    protectedDescription("video:create") +
+                    " Optional multipart requestId (UUID v4) provides idempotent publication; use the upload status endpoints to reconcile an interrupted response.",
                 security: authSecurity,
                 requestBody: {
                     required: true,
@@ -955,7 +957,10 @@ const openApiDocument = {
                 summary: "List the signed-in creator's recent upload attempts",
                 security: authSecurity,
                 responses: {
-                    200: successResponse("Upload attempts.", { type: "array", items: { type: "object" } }),
+                    200: successResponse("Upload attempts.", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -966,7 +971,12 @@ const openApiDocument = {
                 summary: "Get an owner-scoped upload attempt",
                 security: authSecurity,
                 parameters: [
-                    { name: "requestId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+                    {
+                        name: "requestId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string", format: "uuid" },
+                    },
                 ],
                 responses: {
                     200: successResponse("Upload status.", {
@@ -974,7 +984,16 @@ const openApiDocument = {
                         properties: {
                             requestId: { type: "string", format: "uuid" },
                             title: { type: "string" },
-                            status: { type: "string", enum: ["validating", "storing", "ready", "failed", "interrupted"] },
+                            status: {
+                                type: "string",
+                                enum: [
+                                    "validating",
+                                    "storing",
+                                    "ready",
+                                    "failed",
+                                    "interrupted",
+                                ],
+                            },
                             videoId: { type: ["string", "null"] },
                             error: { type: ["string", "null"] },
                             createdAt: { type: "string", format: "date-time" },

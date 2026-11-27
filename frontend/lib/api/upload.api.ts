@@ -72,9 +72,12 @@ export type UploadAttempt = Readonly<{
 }>;
 
 export function uploadStatus(requestId: string, token: string | null) {
-  return apiRequest<UploadAttempt>(`/api/v1/videos/uploads/${encodeURIComponent(requestId)}`, {
-    accessToken: token,
-  });
+  return apiRequest<UploadAttempt>(
+    `/api/v1/videos/uploads/${encodeURIComponent(requestId)}`,
+    {
+      accessToken: token,
+    }
+  );
 }
 
 export function listUploadAttempts(token: string | null) {

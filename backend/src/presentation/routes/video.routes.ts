@@ -29,14 +29,31 @@ const router = Router();
 
 router.route("/").get(getAllVideos);
 
-router.get("/uploads", verifyJWT, requirePermission("video:create"), asyncHandler(async (req, res) => {
-    const attempts = await container.repositories.videoUploadRepository.list(req.user._id);
-    res.json(ApiResponse.success(attempts));
-}));
-router.get("/uploads/:requestId", verifyJWT, requirePermission("video:create"), asyncHandler(async (req, res) => {
-    const attempt = await container.repositories.videoUploadRepository.status(req.user._id, req.params.requestId);
-    res.json(ApiResponse.success(attempt));
-}));
+router.get(
+    "/uploads",
+    verifyJWT,
+    requirePermission("video:create"),
+    asyncHandler(async (req, res) => {
+        const attempts =
+            await container.repositories.videoUploadRepository.list(
+                req.user._id
+            );
+        res.json(ApiResponse.success(attempts));
+    })
+);
+router.get(
+    "/uploads/:requestId",
+    verifyJWT,
+    requirePermission("video:create"),
+    asyncHandler(async (req, res) => {
+        const attempt =
+            await container.repositories.videoUploadRepository.status(
+                req.user._id,
+                req.params.requestId
+            );
+        res.json(ApiResponse.success(attempt));
+    })
+);
 
 router.route("/:videoId").get(optionalAuth, getVideoById);
 router.route("/:videoId/stream").get(optionalAuth, streamVideo);

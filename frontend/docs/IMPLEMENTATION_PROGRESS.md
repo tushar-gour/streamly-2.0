@@ -398,3 +398,7 @@ PROD-01 IN_PROGRESS: added owner-scoped upload attempt ledger (validating/storin
 ### Iteration 46 — Upload status UI and real storage assertions
 
 PROD-01 IMPLEMENTED: multipart request IDs reconcile lost responses without duplicates; settings-independent owner status/list APIs and Creator Studio recent attempts display real stages and failure feedback. Failed or expired attempts use new identifiers; unknown responses retain the same identifier. API docs and isolated storage tests added for replay, owner scope, failure and expired-object cleanup. CI pending; no deployment. Next: repair checks, broaden moderation.
+
+### Iteration 47 — Upload verification
+
+PROD-01 storage regressions VERIFIED at `d540036`: database integration, including actual S3-compatible storage, passed in [run 46043687314](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043687314). Applied backend and frontend formatter output; exact-head CI pending. Credential checkpoint `5514b40` passed all eight jobs ([46043384721](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043384721)). Next: audited comment moderation.

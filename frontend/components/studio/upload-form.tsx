@@ -36,10 +36,14 @@ export function UploadForm() {
     queryFn: async () => (await uploadStatus(requestId!, token)).data,
     enabled: Boolean(requestId && userId && !pending && !publishedId),
     retry: false,
-    refetchInterval: (query) => ["validating", "storing"].includes(query.state.data?.status ?? "") ? 2000 : false,
+    refetchInterval: (query) =>
+      ["validating", "storing"].includes(query.state.data?.status ?? "")
+        ? 2000
+        : false,
   });
   const serverStatus = status.data?.status;
-  const serverActive = serverStatus === "validating" || serverStatus === "storing";
+  const serverActive =
+    serverStatus === "validating" || serverStatus === "storing";
   const completedId = publishedId ?? status.data?.videoId;
   const videoError = video && validateUploadFile(video, videoTypes);
   const thumbnailError =
@@ -63,7 +67,13 @@ export function UploadForm() {
     setPending(true);
     setProgress(null);
     setError("");
-    const nextId = !requestId || serverStatus === "failed" || serverStatus === "interrupted" || serverStatus === "ready" ? crypto.randomUUID() : requestId;
+    const nextId =
+      !requestId ||
+      serverStatus === "failed" ||
+      serverStatus === "interrupted" ||
+      serverStatus === "ready"
+        ? crypto.randomUUID()
+        : requestId;
     setRequestId(nextId);
     try {
       const result = await uploadVideo(
@@ -188,12 +198,24 @@ export function UploadForm() {
         <div className="grid gap-2 rounded-input border border-[color:var(--color-border)] p-4">
           <p role="status">
             {serverActive
-              ? serverStatus === "validating" ? "Server is validating your media." : "Server is storing your media."
+              ? serverStatus === "validating"
+                ? "Server is validating your media."
+                : "Server is storing your media."
               : status.data?.error
                 ? status.data.error
-                : status.isFetching ? "Checking server status…" : "Publication is not yet confirmed. Retrying uses the same request identifier unless processing has failed."}
+                : status.isFetching
+                  ? "Checking server status…"
+                  : "Publication is not yet confirmed. Retrying uses the same request identifier unless processing has failed."}
           </p>
-          <Button type="button" variant="secondary" className="w-fit" disabled={status.isFetching} onClick={() => void status.refetch()}>Check upload status</Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-fit"
+            disabled={status.isFetching}
+            onClick={() => void status.refetch()}
+          >
+            Check upload status
+          </Button>
         </div>
       ) : null}
       <Button

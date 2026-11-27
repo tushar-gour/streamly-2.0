@@ -34,9 +34,12 @@ const processCleanupJob = async (job) => {
             }),
         ]);
 
-    const cleanedUploads = appConfig.media.storageProvider === "s3"
-        ? await new PrismaVideoUploadRepository().cleanupExpired((key, resource) => mediaStorageService.delete(key, resource))
-        : 0;
+    const cleanedUploads =
+        appConfig.media.storageProvider === "s3"
+            ? await new PrismaVideoUploadRepository().cleanupExpired(
+                  (key, resource) => mediaStorageService.delete(key, resource)
+              )
+            : 0;
     return {
         cleanedUploads,
         expiredSessions: expiredSessions.count,

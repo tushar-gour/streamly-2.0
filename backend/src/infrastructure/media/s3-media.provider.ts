@@ -190,7 +190,9 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
             return null;
         }
 
-        const objectKey = requestedKey ? getObjectKeyFromTrustedUrl(requestedKey) : createObjectKey(folder, localFilePath);
+        const objectKey = requestedKey
+            ? getObjectKeyFromTrustedUrl(requestedKey)
+            : createObjectKey(folder, localFilePath);
         const resolvedContentType = getContentType(localFilePath, contentType);
         const stats = fs.statSync(localFilePath);
 
