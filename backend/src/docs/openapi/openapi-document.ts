@@ -1513,6 +1513,29 @@ const openApiDocument = {
                     200: successResponse("Subscription toggled.", {
                         type: "object",
                     }),
+                    201: successResponse("Subscription created.", {
+                        type: "object",
+                    }),
+                    ...standardErrors,
+                },
+            },
+            put: {
+                tags: ["Subscriptions"],
+                summary: "Set desired channel subscription state",
+                description: protectedDescription() + " Idempotent across concurrent retries.",
+                security: authSecurity,
+                parameters: [idParameter("channelId", "Channel user id.")],
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["isSubscribed"],
+                        properties: { isSubscribed: { type: "boolean" } },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Subscription state set.", { type: "object" }),
+                    201: successResponse("Subscription created.", { type: "object" }),
                     ...standardErrors,
                 },
             },

@@ -422,3 +422,7 @@ Comment moderation database regression VERIFIED in [46044233950](https://github.
 ### Iteration 52 — Library integration evidence and dependency release blocker
 
 Playlist privacy and concurrent desired-subscription regressions passed database CI in [46044630070](https://github.com/tushar-gour/streamly-2.0/actions/runs/46044630070). Applied backend/frontend formatter diagnostics; exact-head CI pending. Backend npm audit report flags 40 vulnerabilities including 2 critical, 24 high (pre-existing report-only step; not a security pass). Dependency remediation must precede production review; local GitHub and npm network unavailable. Next: candidate lockfile refresh in isolated CI, review upgrades and rerun all gates.
+
+### Iteration 53 — Dependency candidate and API contract
+
+Added OpenAPI idempotent subscription PUT. Temporary read-only CI candidate resolves compatible package updates and bcrypt 6 without install scripts, emits reviewable lockfile diffs; does not change branch or use npm audit --force. Actual upgrade requires review and full install/build/test verification. Prisma major migration intentionally not automated. Database evidence: 29 integration tests passed, 8 API tests and 2 separate real storage tests in run 46044630070.
