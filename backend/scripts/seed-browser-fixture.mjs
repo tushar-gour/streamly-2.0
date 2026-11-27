@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import ffmpegPath from "ffmpeg-static";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { CreateBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import { prisma } from "../src/infrastructure/database/prisma/client.js";
 import { createId } from "../src/shared/helpers/id-generator.js";
@@ -84,14 +85,54 @@ try {
             "base64"
         )
     );
+    // Browser smoke uses the same private storage and streaming path as production.
+    const bucket = process.env.AWS_S3_BUCKET;
+    if (
+        process.env.MEDIA_STORAGE_PROVIDER !== "s3" ||
+        process.env.AWS_S3_ENDPOINT !== "http://127.0.0.1:19000" ||
+        bucket !== "streamly-browser-test"
+    ) {
+        throw new Error("Browser fixture requires isolated object storage");
+    }
+    const storage = new S3Client({
+        endpoint: process.env.AWS_S3_ENDPOINT,
+        region: "ap-south-1",
+        forcePathStyle: true,
+        credentials: {
+            accessKeyId: "streamlytest",
+            secretAccessKey: "streamlytest-secret",
+        },
+        requestChecksumCalculation: "WHEN_REQUIRED",
+    });
+    try {
+        await storage.send(new CreateBucketCommand({ Bucket: bucket }));
+        await storage.send(
+            new PutObjectCommand({
+                Bucket: bucket,
+                Key: "fixtures/sample.webm",
+                Body: readFileSync("public/browser-fixtures/sample.webm"),
+                ContentType: "video/webm",
+            })
+        );
+        await storage.send(
+            new PutObjectCommand({
+                Bucket: bucket,
+                Key: "fixtures/thumbnail.png",
+                Body: readFileSync("public/browser-fixtures/thumbnail.png"),
+                ContentType: "image/png",
+            })
+        );
+    } finally {
+        storage.destroy();
+    }
     await prisma.video.create({
         data: {
             id: createId(),
             ownerId: user.id,
             title: "Browser fixture video",
             description: "Generated local video for CI integration testing.",
-            videoFile: "http://127.0.0.1:8000/browser-fixtures/sample.webm",
-            thumbnail: "/browser-fixtures/thumbnail.svg",
+            videoFile: "fixtures/sample.webm",
+            thumbnail: "fixtures/thumbnail.png",
             duration: 2,
             isPublished: true,
         },

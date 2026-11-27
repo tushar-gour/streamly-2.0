@@ -185,20 +185,7 @@ jobs:
         run: npm run test:api
 
       - name: Start disposable S3-compatible storage
-        run: |
-          mkdir -p "$RUNNER_TEMP/streamly-storage/data"
-          curl --fail --location --retry 2 --output "$RUNNER_TEMP/streamly-storage/weed.tar.gz" https://github.com/seaweedfs/seaweedfs/releases/download/4.55/linux_amd64.tar.gz
-          echo "f156c609eeaf9e5fcfeea33fd70411222005f83760aa95893c9d58eff006b45c  $RUNNER_TEMP/streamly-storage/weed.tar.gz" | sha256sum --check
-          tar -xzf "$RUNNER_TEMP/streamly-storage/weed.tar.gz" -C "$RUNNER_TEMP/streamly-storage" weed
-          AWS_ACCESS_KEY_ID=streamlytest AWS_SECRET_ACCESS_KEY=streamlytest-secret "$RUNNER_TEMP/streamly-storage/weed" mini -dir="$RUNNER_TEMP/streamly-storage/data" -ip=127.0.0.1 -ip.bind=127.0.0.1 -s3.port=19000 -master.telemetry=false > "$RUNNER_TEMP/streamly-storage/server.log" 2>&1 &
-          echo $! > "$RUNNER_TEMP/streamly-storage/pid"
-          for i in $(seq 1 60); do
-            status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:19000/ || true)
-            if [ "$status" = 403 ]; then exit 0; fi
-            sleep 1
-          done
-          cat "$RUNNER_TEMP/streamly-storage/server.log"
-          exit 1
+        run: bash scripts/start-ci-storage.sh
 
       - name: Real isolated object-storage and media API integration
         env:
@@ -282,6 +269,13 @@ jobs:
       CORS_ORIGIN: http://127.0.0.1:3000
       NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
       BROWSER_BASE_URL: http://127.0.0.1:3000
+      MOCK_CLOUDINARY: false
+      MEDIA_STORAGE_PROVIDER: s3
+      AWS_S3_BUCKET: streamly-browser-test
+      AWS_S3_ENDPOINT: http://127.0.0.1:19000
+      AWS_S3_FORCE_PATH_STYLE: 'true'
+      AWS_ACCESS_KEY_ID: streamlytest
+      AWS_SECRET_ACCESS_KEY: streamlytest-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -289,6 +283,8 @@ jobs:
           node-version: 20
       - name: Install backend dependencies
         run: npm ci
+      - name: Start disposable S3-compatible storage
+        run: bash scripts/start-ci-storage.sh
       - name: Prepare isolated backend
         run: |
           npx prisma migrate deploy

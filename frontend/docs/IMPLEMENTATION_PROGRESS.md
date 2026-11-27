@@ -470,3 +470,7 @@ Resolved Next 16.4.6 with ESLint 9 and matching Next config using the successful
 ### Iteration 64 — React effect and pagination repairs
 
 Replaced synchronous effect state updates in video moderation (account-keyed React Query), image previews (object URL created on user action and cleaned on change/unmount) and theme persistence (external-store subscription with SSR-safe snapshot). Preserved all lint rules. Subscription listing database tests passed and browser advanced beyond subscription workflow; upload completion still failed. Backend Multer upgrade passed tests, database storage, OpenAPI, Prisma and Docker in 46046583320. Frontend migration lint/type/build verification pending.
+
+### Iteration 65 — Real storage in browser workflow
+
+Root cause of browser upload failure: standalone server does not load the Vitest Cloudinary mock. Browser CI now provisions the existing checksum-pinned disposable S3-compatible server, seeds private objects and exercises the actual upload/stream path. No mock publication response. Reused storage startup script in both jobs. Added explicit HTTP publication assertion before UI completion. Verification pending. Next: exact CI, repair diagnostics; residual Prisma advisory chain and accessibility remain release gates.

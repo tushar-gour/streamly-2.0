@@ -266,9 +266,16 @@ try {
   await page
     .getByLabel("Description", { exact: true })
     .fill("Actual form submission in disposable CI");
+  const uploadResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/v1/videos") &&
+      response.request().method() === "POST"
+  );
   await page
     .getByRole("button", { name: "Publish video", exact: true })
     .click();
+  const uploaded = await uploadResponse;
+  assert.equal(uploaded.status(), 201, "Multipart publication failed");
   await page.getByText("Your upload is complete.", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Back to Studio" }).click();
   await heading("Channel overview");
