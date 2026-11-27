@@ -89,7 +89,11 @@ class SubscriptionService {
 
         return {
             data: subscribers,
-            pagination: new PaginationBuilder(pageNum, limitNum, totalDocs).build(),
+            pagination: new PaginationBuilder(
+                pageNum,
+                limitNum,
+                totalDocs
+            ).build(),
             message: "Channel subscribers fetched successfully",
         };
     }
@@ -117,7 +121,11 @@ class SubscriptionService {
 
         return {
             data: channels,
-            pagination: new PaginationBuilder(pageNum, limitNum, totalDocs).build(),
+            pagination: new PaginationBuilder(
+                pageNum,
+                limitNum,
+                totalDocs
+            ).build(),
             message: "Subscribed channels fetched successfully",
         };
     }

@@ -450,3 +450,7 @@ Removed type suppressions from API error/response, pagination, identifier valida
 ### Iteration 59 — Compatible security refresh
 
 Applied CI-generated compatible-range dependency candidate from 46045680724. Candidate production audit dropped to 4 high backend (Prisma CLI dependency chain) and 1 high frontend (Next major required); no critical reported. Retained existing independent Prettier lock entries to avoid a repository-wide style-only change. Full npm ci/build/runtime tests required. Next candidate: Multer 2 and Next 16.4.6; do not force Prisma major migration or claim advisories resolved without actual audit and tests.
+
+### Iteration 60 — Async type repair
+
+Typecheck exposed generic Result versus Awaited<Result> return typing in shared async helper. Explicitly await the service function, retaining rejection propagation. Applied CI formatter diagnostics from 46045822745. Database tests passed on that commit, but build/browser/Docker were blocked by the type error. Exact-head CI pending.

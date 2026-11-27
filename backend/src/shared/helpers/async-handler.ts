@@ -19,6 +19,6 @@ const tryCatch = (fn: AsyncRequestHandler): RequestHandler => asyncHandler(fn);
 const handleService = async <Args extends unknown[], Result>(
     serviceFunction: (...args: Args) => Result,
     ...args: Args
-): Promise<Awaited<Result>> => serviceFunction(...args);
+): Promise<Awaited<Result>> => await serviceFunction(...args);
 
 export { asyncHandler, tryCatch, handleService };
