@@ -129,7 +129,12 @@ class PrismaVideoRepository extends VideoRepository {
                 where,
                 include: {
                     owner: { select: ownerSelect },
-                    _count: { select: { likes: true, comments: { where: { moderationHeld: false } } } },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: { where: { moderationHeld: false } },
+                        },
+                    },
                 },
                 orderBy: {
                     [this.#toSortField(sortBy)]:
@@ -165,7 +170,12 @@ class PrismaVideoRepository extends VideoRepository {
             include: {
                 owner: { select: ownerSelect },
                 ...likeInclude,
-                _count: { select: { likes: true, comments: { where: { moderationHeld: false } } } },
+                _count: {
+                    select: {
+                        likes: true,
+                        comments: { where: { moderationHeld: false } },
+                    },
+                },
             },
         });
 
@@ -197,7 +207,12 @@ class PrismaVideoRepository extends VideoRepository {
             prisma.video.findMany({
                 where,
                 include: {
-                    _count: { select: { likes: true, comments: { where: { moderationHeld: false } } } },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: { where: { moderationHeld: false } },
+                        },
+                    },
                 },
                 orderBy: {
                     [this.#toSortField(sortBy)]:

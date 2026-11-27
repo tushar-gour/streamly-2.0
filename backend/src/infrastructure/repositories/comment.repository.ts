@@ -21,7 +21,11 @@ class PrismaCommentRepository extends CommentRepository {
     async findOnPublishedVideo(commentId) {
         return toComment(
             await prisma.comment.findFirst({
-                where: { id: commentId, moderationHeld: false, video: { isPublished: true } },
+                where: {
+                    id: commentId,
+                    moderationHeld: false,
+                    video: { isPublished: true },
+                },
             })
         );
     }
@@ -67,7 +71,9 @@ class PrismaCommentRepository extends CommentRepository {
     }
 
     countByVideo(videoId) {
-        return prisma.comment.count({ where: { videoId, moderationHeld: false } });
+        return prisma.comment.count({
+            where: { videoId, moderationHeld: false },
+        });
     }
 
     countByVideos(videoIds) {

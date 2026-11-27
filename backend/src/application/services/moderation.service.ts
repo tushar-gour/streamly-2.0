@@ -115,7 +115,10 @@ export class ModerationService {
             !reason.trim() ||
             reason.trim().length > 500
         ) {
-            throw new ApiError(400, "A comment, hold state and reason are required");
+            throw new ApiError(
+                400,
+                "A comment, hold state and reason are required"
+            );
         }
         const result = await prisma.$transaction(async (tx) => {
             const changed = await tx.comment.updateMany({
@@ -123,7 +126,10 @@ export class ModerationService {
                 data: { moderationHeld: held },
             });
             if (changed.count !== 1)
-                throw new ApiError(409, "Comment unavailable or moderation state unchanged");
+                throw new ApiError(
+                    409,
+                    "Comment unavailable or moderation state unchanged"
+                );
             const comment = await tx.comment.findUniqueOrThrow({
                 where: { id: commentId },
                 select: { ownerId: true },
@@ -147,7 +153,11 @@ export class ModerationService {
             );
             return { id: commentId, moderationHeld: held };
         });
-        audit.info("moderation.comment_visibility", { actorId, commentId, held });
+        audit.info("moderation.comment_visibility", {
+            actorId,
+            commentId,
+            held,
+        });
         return result;
     }
 }

@@ -189,11 +189,13 @@ const openApiDocument = {
                 summary: "List comments for moderation",
                 description: protectedDescription("comment:delete:any"),
                 security: authSecurity,
-                parameters: [{
-                    name: "page",
-                    in: "query",
-                    schema: { type: "integer", minimum: 1, maximum: 10000 },
-                }],
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, maximum: 10000 },
+                    },
+                ],
                 responses: {
                     200: successResponse("25 comments per page", {
                         type: "array",
@@ -217,12 +219,18 @@ const openApiDocument = {
                         required: ["held", "reason"],
                         properties: {
                             held: { type: "boolean" },
-                            reason: { type: "string", minLength: 1, maxLength: 500 },
+                            reason: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 500,
+                            },
                         },
                     }),
                 },
                 responses: {
-                    200: successResponse("Moderation updated", { type: "object" }),
+                    200: successResponse("Moderation updated", {
+                        type: "object",
+                    }),
                     ...standardErrors,
                 },
             },

@@ -199,33 +199,106 @@ databaseDescribe("media and object privacy", () => {
     it("holds comments without exposing held content or allowing authors to edit it", async () => {
         const { owner, viewer, video } = await fixture();
         const mod = await account();
-        const role = await prisma.role.findUniqueOrThrow({ where: { name: "moderator" } });
-        const userRole = await prisma.role.findUniqueOrThrow({ where: { name: "user" } });
-        await prisma.userRole.createMany({ data: [
-            { id: createId(), userId: mod.user._id, roleId: role.id },
-            { id: createId(), userId: owner.user._id, roleId: userRole.id },
-        ] });
-        await prisma.video.update({ where: { id: video.id }, data: { isPublished: true } });
-        const comment = await prisma.comment.findFirstOrThrow({ where: { videoId: video.id } });
+        const role = await prisma.role.findUniqueOrThrow({
+            where: { name: "moderator" },
+        });
+        const userRole = await prisma.role.findUniqueOrThrow({
+            where: { name: "user" },
+        });
+        await prisma.userRole.createMany({
+            data: [
+                { id: createId(), userId: mod.user._id, roleId: role.id },
+                { id: createId(), userId: owner.user._id, roleId: userRole.id },
+            ],
+        });
+        await prisma.video.update({
+            where: { id: video.id },
+            data: { isPublished: true },
+        });
+        const comment = await prisma.comment.findFirstOrThrow({
+            where: { videoId: video.id },
+        });
         const list = "/api/v1/comments/" + video.id;
         const path = "/api/v1/admin/comments/" + comment.id + "/hold";
         const hold = { held: true, reason: "Policy review" };
         const bearer = "Bearer " + mod.token;
         expect((await request(app).get(list)).body.data).toHaveLength(1);
-        expect((await request(app).get("/api/v1/admin/comments")).status).toBe(401);
-        expect((await request(app).get("/api/v1/admin/comments").set("Authorization", "Bearer " + viewer.token)).status).toBe(403);
-        expect((await request(app).patch(path).set("Authorization", "Bearer " + owner.token).send(hold)).status).toBe(403);
-        expect((await request(app).get("/api/v1/admin/comments").set("Authorization", bearer)).status).toBe(200);
-        expect((await request(app).patch(path).set("Authorization", bearer).send(hold)).status).toBe(200);
+        expect((await request(app).get("/api/v1/admin/comments")).status).toBe(
+            401
+        );
+        expect(
+            (
+                await request(app)
+                    .get("/api/v1/admin/comments")
+                    .set("Authorization", "Bearer " + viewer.token)
+            ).status
+        ).toBe(403);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", "Bearer " + owner.token)
+                    .send(hold)
+            ).status
+        ).toBe(403);
+        expect(
+            (
+                await request(app)
+                    .get("/api/v1/admin/comments")
+                    .set("Authorization", bearer)
+            ).status
+        ).toBe(200);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", bearer)
+                    .send(hold)
+            ).status
+        ).toBe(200);
         expect((await request(app).get(list)).body.data).toEqual([]);
-        expect((await request(app).get(list).set("Authorization", "Bearer " + owner.token)).body.data).toEqual([]);
-        expect((await request(app).patch("/api/v1/comments/c/" + comment.id).set("Authorization", "Bearer " + owner.token).send({ content: "changed" })).status).toBe(409);
-        expect((await request(app).patch(path).set("Authorization", bearer).send(hold)).status).toBe(409);
-        expect((await request(app).patch(path).set("Authorization", bearer).send({ held: false, reason: "Resolved" })).status).toBe(200);
+        expect(
+            (
+                await request(app)
+                    .get(list)
+                    .set("Authorization", "Bearer " + owner.token)
+            ).body.data
+        ).toEqual([]);
+        expect(
+            (
+                await request(app)
+                    .patch("/api/v1/comments/c/" + comment.id)
+                    .set("Authorization", "Bearer " + owner.token)
+                    .send({ content: "changed" })
+            ).status
+        ).toBe(409);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", bearer)
+                    .send(hold)
+            ).status
+        ).toBe(409);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", bearer)
+                    .send({ held: false, reason: "Resolved" })
+            ).status
+        ).toBe(200);
         expect((await request(app).get(list)).body.data).toHaveLength(1);
-        const actions = await prisma.moderationAction.findMany({ where: { resourceId: comment.id } });
-        expect(actions.map((action) => action.action).sort()).toEqual(["comment_hold", "comment_release"]);
-        expect(actions.every((action) => action.actorId === mod.user._id)).toBe(true);
+        const actions = await prisma.moderationAction.findMany({
+            where: { resourceId: comment.id },
+        });
+        expect(actions.map((action) => action.action).sort()).toEqual([
+            "comment_hold",
+            "comment_release",
+        ]);
+        expect(actions.every((action) => action.actorId === mod.user._id)).toBe(
+            true
+        );
     });
 
     it("persists subscription notifications and scopes read state to the recipient", async () => {
@@ -349,21 +422,62 @@ databaseDescribe("media and object privacy", () => {
     it("defaults new playlists to private and validates visibility changes", async () => {
         const owner = await account();
         const viewer = await account();
-        const role = await prisma.role.findUniqueOrThrow({ where: { name: "user" } });
-        await prisma.userRole.create({ data: { id: createId(), userId: owner.user._id, roleId: role.id } });
+        const role = await prisma.role.findUniqueOrThrow({
+            where: { name: "user" },
+        });
+        await prisma.userRole.create({
+            data: { id: createId(), userId: owner.user._id, roleId: role.id },
+        });
         const auth = "Bearer " + owner.token;
         const other = "Bearer " + viewer.token;
-        const created = await request(app).post("/api/v1/playlists").set("Authorization", auth).send({ name: "Private by default" });
+        const created = await request(app)
+            .post("/api/v1/playlists")
+            .set("Authorization", auth)
+            .send({ name: "Private by default" });
         expect(created.status).toBe(201);
         expect(created.body.data.isPublic).toBe(false);
         const path = "/api/v1/playlists/" + created.body.data._id;
-        expect((await request(app).get(path).set("Authorization", other)).status).toBe(404);
-        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: "true" })).status).toBe(400);
-        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: true })).status).toBe(200);
-        expect((await request(app).get(path).set("Authorization", other)).status).toBe(200);
-        expect((await request(app).patch(path).set("Authorization", other).send({ isPublic: false })).status).toBe(403);
-        expect((await request(app).patch(path).set("Authorization", auth).send({ isPublic: false })).status).toBe(200);
-        expect((await request(app).get(path).set("Authorization", other)).status).toBe(404);
+        expect(
+            (await request(app).get(path).set("Authorization", other)).status
+        ).toBe(404);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", auth)
+                    .send({ isPublic: "true" })
+            ).status
+        ).toBe(400);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", auth)
+                    .send({ isPublic: true })
+            ).status
+        ).toBe(200);
+        expect(
+            (await request(app).get(path).set("Authorization", other)).status
+        ).toBe(200);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", other)
+                    .send({ isPublic: false })
+            ).status
+        ).toBe(403);
+        expect(
+            (
+                await request(app)
+                    .patch(path)
+                    .set("Authorization", auth)
+                    .send({ isPublic: false })
+            ).status
+        ).toBe(200);
+        expect(
+            (await request(app).get(path).set("Authorization", other)).status
+        ).toBe(404);
     });
 
     it("makes concurrent desired subscription changes idempotent", async () => {
@@ -371,16 +485,49 @@ databaseDescribe("media and object privacy", () => {
         const viewer = await account();
         const path = "/api/v1/subscriptions/c/" + owner.user._id;
         const auth = "Bearer " + viewer.token;
-        const subscribe = () => request(app).put(path).set("Authorization", auth).send({ isSubscribed: true });
+        const subscribe = () =>
+            request(app)
+                .put(path)
+                .set("Authorization", auth)
+                .send({ isSubscribed: true });
         const results = await Promise.all([subscribe(), subscribe()]);
         expect(results.map((r) => r.status).sort()).toEqual([200, 201]);
         expect(results.every((r) => r.body.data.isSubscribed)).toBe(true);
-        expect(await prisma.subscription.count({ where: { subscriberId: viewer.user._id, channelId: owner.user._id } })).toBe(1);
-        expect(await prisma.notification.count({ where: { userId: owner.user._id, kind: "subscription" } })).toBe(1);
-        expect((await request(app).put(path).set("Authorization", auth).send({})).status).toBe(400);
-        const remove = () => request(app).put(path).set("Authorization", auth).send({ isSubscribed: false });
-        expect((await Promise.all([remove(), remove()])).every((r) => r.status === 200 && !r.body.data.isSubscribed)).toBe(true);
-        expect(await prisma.subscription.count({ where: { subscriberId: viewer.user._id, channelId: owner.user._id } })).toBe(0);
+        expect(
+            await prisma.subscription.count({
+                where: {
+                    subscriberId: viewer.user._id,
+                    channelId: owner.user._id,
+                },
+            })
+        ).toBe(1);
+        expect(
+            await prisma.notification.count({
+                where: { userId: owner.user._id, kind: "subscription" },
+            })
+        ).toBe(1);
+        expect(
+            (await request(app).put(path).set("Authorization", auth).send({}))
+                .status
+        ).toBe(400);
+        const remove = () =>
+            request(app)
+                .put(path)
+                .set("Authorization", auth)
+                .send({ isSubscribed: false });
+        expect(
+            (await Promise.all([remove(), remove()])).every(
+                (r) => r.status === 200 && !r.body.data.isSubscribed
+            )
+        ).toBe(true);
+        expect(
+            await prisma.subscription.count({
+                where: {
+                    subscriberId: viewer.user._id,
+                    channelId: owner.user._id,
+                },
+            })
+        ).toBe(0);
     });
 
     it("restricts private playlists to their owner", async () => {

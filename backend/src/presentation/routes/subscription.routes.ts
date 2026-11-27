@@ -12,7 +12,8 @@ const router = Router();
 
 router.route("/c/:channelId").get(optionalAuth, getUserChannelSubscribers);
 
-router.route("/c/:channelId")
+router
+    .route("/c/:channelId")
     .post(verifyJWT, toggleSubscription)
     .put(verifyJWT, toggleSubscription);
 

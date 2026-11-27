@@ -29,7 +29,11 @@ class SubscriptionService {
             throw new BadRequestError("Invalid subscription state");
         }
         const { isSubscribed, subscribersCount, created } =
-            await this.subscriptionRepository.setSubscription(userId, channelId, desired);
+            await this.subscriptionRepository.setSubscription(
+                userId,
+                channelId,
+                desired
+            );
 
         return {
             statusCode: created ? 201 : 200,

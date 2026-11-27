@@ -69,8 +69,14 @@ class PrismaSubscriptionRepository extends SubscriptionRepository {
             } else if (!isSubscribed && existing) {
                 await tx.subscription.delete({ where: { id: existing.id } });
             }
-            const subscribersCount = await tx.subscription.count({ where: { channelId } });
-            return { isSubscribed, subscribersCount, created: isSubscribed && !existing };
+            const subscribersCount = await tx.subscription.count({
+                where: { channelId },
+            });
+            return {
+                isSubscribed,
+                subscribersCount,
+                created: isSubscribed && !existing,
+            };
         });
     }
 

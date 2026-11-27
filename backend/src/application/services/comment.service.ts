@@ -54,7 +54,11 @@ class CommentService {
     async addComment({ videoId, content, userId }) {
         ObjectIdValidator.ensureValid(videoId, "video ID");
 
-        if (typeof content !== "string" || !content.trim() || content.trim().length > 2000) {
+        if (
+            typeof content !== "string" ||
+            !content.trim() ||
+            content.trim().length > 2000
+        ) {
             throw new BadRequestError("Comment content is required");
         }
 
@@ -82,7 +86,11 @@ class CommentService {
     async updateComment({ commentId, content, userId }) {
         ObjectIdValidator.ensureValid(commentId, "comment ID");
 
-        if (typeof content !== "string" || !content.trim() || content.trim().length > 2000) {
+        if (
+            typeof content !== "string" ||
+            !content.trim() ||
+            content.trim().length > 2000
+        ) {
             throw new BadRequestError("Comment content is required");
         }
 

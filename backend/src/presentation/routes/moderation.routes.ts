@@ -63,12 +63,16 @@ router.patch(
         if (!req.user?._id) throw new UnauthorizedError();
         if (typeof req.params.commentId !== "string")
             throw new ApiError(400, "Invalid comment");
-        res.json(ApiResponse.success(await service.setCommentHold(
-            req.user._id,
-            req.params.commentId,
-            req.body?.held,
-            req.body?.reason
-        )));
+        res.json(
+            ApiResponse.success(
+                await service.setCommentHold(
+                    req.user._id,
+                    req.params.commentId,
+                    req.body?.held,
+                    req.body?.reason
+                )
+            )
+        );
     })
 );
 export default router;

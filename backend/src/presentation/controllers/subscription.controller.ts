@@ -8,7 +8,10 @@ const subscriptionService = container.services.subscriptionService;
 
 class SubscriptionController {
     static toggleSubscription = asyncHandler(async (req, res) => {
-        if (req.method === "PUT" && typeof req.body?.isSubscribed !== "boolean") {
+        if (
+            req.method === "PUT" &&
+            typeof req.body?.isSubscribed !== "boolean"
+        ) {
             throw new BadRequestError("Subscription state is required");
         }
         const result = await subscriptionService.toggleSubscription({
