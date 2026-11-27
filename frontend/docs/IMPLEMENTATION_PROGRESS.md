@@ -374,3 +374,7 @@ PROD-03 IN_PROGRESS: generated high-entropy hashed recovery codes at enrollment,
 ### Iteration 40 — Secure phone enrollment backend
 
 PROD-03 phone enrollment IMPLEMENTED (backend): existing phone routes now require password and current TOTP when configured. Proposed number remains in a session-bound, expiring challenge; per-account locking serializes starts and completion, one-minute resend limit, HMAC-protected six-digit code, five attempts, single-use transaction, existing unique phone constraint, all credential sessions/trust revoked on success while MFA remains enrolled. No schema change. Existing insecure service methods removed. Real Twilio delivery remains deployment-stage; integration tests and settings UI next. Baseline e194c5f all eight jobs passed in run 45886206678.
+
+### Iteration 41 — Phone enrollment settings and regression suite
+
+PROD-03 phone enrollment IMPLEMENTED: settings now exposes verified phone state, international number, SMS/WhatsApp choice, password and conditional TOTP proof, one-time code confirmation, cancel/retry and session invalidation feedback. Backend tests use actual PostgreSQL and a test-only injected delivery adapter to observe codes. Assertions cover preserved verified number, wrong password, MFA requirement, wrong channel/account/session, attempts, expiry, replay, concurrent start/verify and database uniqueness. CI pending; Twilio production delivery not tested. Next: CI repairs and credential issuance races.

@@ -12,6 +12,15 @@ function post<T>(path: string, body: object, guest = false) {
 }
 
 export const credentialsApi = {
+  startPhoneEnrollment: (body: {
+    phoneNumber: string;
+    channel: "sms" | "whatsapp";
+    password: string;
+    mfaCode?: string;
+  }) => post<{ otp: Challenge & { expiresAt: string } }>("signup/phone/start", body),
+  completePhoneEnrollment: (
+    body: Confirmation & { channel: "sms" | "whatsapp" }
+  ) => post<object>("signup/phone/verify", body),
   startRecovery: (email: string) =>
     post<Challenge>("recovery/start", { email }, true),
   completeRecovery: (body: Confirmation & { password: string }) =>

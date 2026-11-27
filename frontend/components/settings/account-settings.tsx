@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SessionSettings } from "@/components/settings/session-settings";
 import { MfaManagement } from "@/components/settings/mfa-management";
+import { PhoneEnrollment } from "@/components/settings/phone-enrollment";
 import { EmailChange } from "@/components/settings/email-change";
 import { ProfileImages } from "@/components/settings/profile-images";
 import { Card } from "@/components/ui/card";
@@ -189,6 +190,7 @@ export function AccountSettings() {
           </Button>
         </div>
         <EmailChange />
+        <PhoneEnrollment />
         <SessionSettings />
         <MfaManagement />
       </Card>

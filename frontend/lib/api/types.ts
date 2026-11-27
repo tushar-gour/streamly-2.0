@@ -24,6 +24,8 @@ export type CurrentUser = Readonly<{
   avatar?: string;
   coverImage?: string;
   mfaEnabledAt?: string | null;
+  phoneNumber?: string | null;
+  phoneVerifiedAt?: string | null;
   roles?: string[];
   permissions?: string[];
 }>;
