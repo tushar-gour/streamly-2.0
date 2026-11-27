@@ -1,22 +1,25 @@
-// @ts-nocheck
 import { HttpStatus } from "../constants/index.js";
 import { appConfig } from "../../config/env.js";
 
 class ApiError extends Error {
+    readonly statusCode: number;
+    readonly success = false;
+    readonly errors: unknown;
+    readonly data = null;
+    readonly timestamp: string;
+    isOperational = true;
+
     constructor(
-        statusCode,
+        statusCode: number,
         message = "Something went wrong",
-        errors = [],
+        errors: unknown = [],
         stack = ""
     ) {
         super(message);
         this.statusCode = statusCode;
         this.message = message;
-        this.success = false;
         this.errors = errors;
-        this.data = null;
         this.timestamp = new Date().toISOString();
-        this.isOperational = true;
 
         if (stack) {
             this.stack = stack;
@@ -42,14 +45,14 @@ class ApiError extends Error {
 }
 
 class BadRequestError extends ApiError {
-    constructor(message = "Bad request", errors = []) {
+    constructor(message = "Bad request", errors: unknown = []) {
         super(HttpStatus.BAD_REQUEST, message, errors);
         this.name = "BadRequestError";
     }
 }
 
 class ValidationError extends ApiError {
-    constructor(errors = [], message = "Validation failed") {
+    constructor(errors: unknown = [], message = "Validation failed") {
         super(HttpStatus.BAD_REQUEST, message, errors);
         this.name = "ValidationError";
     }
@@ -70,6 +73,8 @@ class ForbiddenError extends ApiError {
 }
 
 class NotFoundError extends ApiError {
+    readonly resource: string;
+
     constructor(resource = "Resource", identifier: string | null = null) {
         const message = identifier
             ? `${resource} with identifier '${identifier}' not found`

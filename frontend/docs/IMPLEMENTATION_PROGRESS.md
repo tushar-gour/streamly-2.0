@@ -442,3 +442,7 @@ Applied reviewed CI-generated lockfile diff from run 46045094417: bcrypt 5.1.1 t
 ### Iteration 57 — Browser coverage for new product workflows
 
 Extended existing Playwright smoke using isolated moderator fixture, actual playlist visibility selector, desired subscription operations, phone credential-rejection feedback, multipart upload form and persistent processing history, moderator hold/release with a separate browser context. Upload browser uses existing test Cloudinary adapter; real storage covered separately. Browser result pending; no claim of end-to-end phone delivery. Updated upload wording to describe completion rather than current publication state.
+
+### Iteration 58 — Strict shared API primitives
+
+Removed type suppressions from API error/response, pagination, identifier validation and async request handling. Request IDs now require strings instead of invoking arbitrary object coercion. Subscription row locking uses FOR NO KEY UPDATE to avoid cross-channel foreign-key lock conflicts. CI pending; if any caller depends on legacy helper behavior, correct the caller rather than reinstate suppressions.

@@ -58,7 +58,7 @@ class PrismaSubscriptionRepository implements SubscriptionRepository {
     ) {
         return prisma.$transaction(async (tx) => {
             // Serialize changes initiated by the same subscriber.
-            await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${subscriberId} FOR UPDATE`;
+            await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${subscriberId} FOR NO KEY UPDATE`;
             const existing = await tx.subscription.findUnique({
                 where: { subscriberId_channelId: { subscriberId, channelId } },
             });
