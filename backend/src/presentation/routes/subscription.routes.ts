@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from "express";
 
 import { verifyJWT, optionalAuth } from "../middlewares/auth.middleware.js";

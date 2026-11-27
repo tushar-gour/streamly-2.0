@@ -426,3 +426,7 @@ Playlist privacy and concurrent desired-subscription regressions passed database
 ### Iteration 53 — Dependency candidate and API contract
 
 Added OpenAPI idempotent subscription PUT. Temporary read-only CI candidate resolves compatible package updates and bcrypt 6 without install scripts, emits reviewable lockfile diffs; does not change branch or use npm audit --force. Actual upgrade requires review and full install/build/test verification. Prisma major migration intentionally not automated. Database evidence: 29 integration tests passed, 8 API tests and 2 separate real storage tests in run 46044630070.
+
+### Iteration 54 — Strict subscription boundary and bounded queries
+
+Removed `@ts-nocheck` from subscription domain port, repository, service, controller and routes. Added typed pagination and request checks, replaced full subscriber relationship materialization with count and at-most-one viewer relation, projected latest video fields. Typecheck and integration verification pending. Dependency candidate CI running independently.

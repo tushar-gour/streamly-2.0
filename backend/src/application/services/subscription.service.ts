@@ -1,4 +1,4 @@
-// @ts-nocheck
+import type { SubscriptionRepository } from "../../domain/repositories/subscription.repository.js";
 import {
     BadRequestError,
     NotFoundError,
@@ -7,13 +7,18 @@ import { PaginationDefaults } from "../../shared/constants/index.js";
 import { PaginationBuilder } from "../../shared/responses/api-response.js";
 import { ObjectIdValidator } from "../../shared/validators/object-id.validator.js";
 
+type UserLookup = { findById(id: string): Promise<unknown> };
+type PageQuery = { page?: unknown; limit?: unknown };
+
 class SubscriptionService {
-    constructor({ subscriptionRepository, userRepository }) {
+    private readonly subscriptionRepository: SubscriptionRepository;
+    private readonly userRepository: UserLookup;
+    constructor({ subscriptionRepository, userRepository }: { subscriptionRepository: SubscriptionRepository; userRepository: UserLookup }) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
     }
 
-    async toggleSubscription({ channelId, userId, desired }) {
+    async toggleSubscription({ channelId, userId, desired }: { channelId: string; userId: string; desired?: unknown }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         if (channelId === userId.toString()) {
@@ -44,7 +49,7 @@ class SubscriptionService {
         };
     }
 
-    async getChannelSubscribers({ channelId, currentUserId, query }) {
+    async getChannelSubscribers({ channelId, currentUserId, query }: { channelId: string; currentUserId?: string | null; query: PageQuery }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -71,7 +76,7 @@ class SubscriptionService {
         };
     }
 
-    async getSubscribedChannels({ subscriberId, query }) {
+    async getSubscribedChannels({ subscriberId, query }: { subscriberId: string; query: PageQuery }) {
         ObjectIdValidator.ensureValid(subscriberId, "subscriber ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -97,13 +102,18 @@ class SubscriptionService {
         };
     }
 
-    #getPagination(page, limit) {
+    #getPagination(page: unknown, limit: unknown) {
+        const positiveInteger = (value: unknown, maximum: number) => {
+            if ((typeof value !== "string" && typeof value !== "number") || !/^\\d+$/.test(String(value))) {
+                throw new BadRequestError("Invalid pagination");
+            }
+            const n = Number(value);
+            if (!Number.isSafeInteger(n) || n < 1) throw new BadRequestError("Invalid pagination");
+            return Math.min(n, maximum);
+        };
         return {
-            pageNum: Math.max(1, parseInt(page, 10)),
-            limitNum: Math.min(
-                Math.max(1, parseInt(limit, 10)),
-                PaginationDefaults.MAX_LIMIT
-            ),
+            pageNum: positiveInteger(page, 10000),
+            limitNum: positiveInteger(limit, PaginationDefaults.MAX_LIMIT),
         };
     }
 }

@@ -1,19 +1,21 @@
-// @ts-nocheck
+import type { Request, Response } from "express";
 import { container } from "../../core/container/index.js";
 import { asyncHandler } from "../../shared/helpers/async-handler.js";
-import { BadRequestError } from "../../shared/errors/api-error.js";
+import { BadRequestError, UnauthorizedError } from "../../shared/errors/api-error.js";
 import { ApiResponse } from "../../shared/responses/api-response.js";
 
 const subscriptionService = container.services.subscriptionService;
 
 class SubscriptionController {
-    static toggleSubscription = asyncHandler(async (req, res) => {
+    static toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
         if (
             req.method === "PUT" &&
             typeof req.body?.isSubscribed !== "boolean"
         ) {
             throw new BadRequestError("Subscription state is required");
         }
+        if (!req.user?._id) throw new UnauthorizedError();
+        if (typeof req.params.channelId !== "string") throw new BadRequestError("Invalid channel ID");
         const result = await subscriptionService.toggleSubscription({
             channelId: req.params.channelId,
             userId: req.user._id,
@@ -24,7 +26,8 @@ class SubscriptionController {
             .json(ApiResponse.success(result.data, result.message));
     });
 
-    static getChannelSubscribers = asyncHandler(async (req, res) => {
+    static getChannelSubscribers = asyncHandler(async (req: Request, res: Response) => {
+        if (typeof req.params.channelId !== "string") throw new BadRequestError("Invalid channel ID");
         const result = await subscriptionService.getChannelSubscribers({
             channelId: req.params.channelId,
             currentUserId: req.user?._id,
@@ -41,7 +44,8 @@ class SubscriptionController {
             );
     });
 
-    static getSubscribedChannels = asyncHandler(async (req, res) => {
+    static getSubscribedChannels = asyncHandler(async (req: Request, res: Response) => {
+        if (typeof req.params.subscriberId !== "string") throw new BadRequestError("Invalid subscriber ID");
         const result = await subscriptionService.getSubscribedChannels({
             subscriberId: req.params.subscriberId,
             query: req.query,
