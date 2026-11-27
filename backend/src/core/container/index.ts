@@ -129,15 +129,32 @@ const container = Object.freeze({
         authPlatformService,
         phoneEnrollmentService: new PhoneEnrollmentService(
             async ({ phoneNumber, channel, code, userId }) => {
-                if (!appConfig.otp.enabled || !appConfig.sms.enabled || appConfig.sms.provider !== "twilio" ||
-                    (channel === "whatsapp" && !appConfig.sms.twilioWhatsAppFrom)) {
+                if (
+                    !appConfig.otp.enabled ||
+                    !appConfig.sms.enabled ||
+                    appConfig.sms.provider !== "twilio" ||
+                    (channel === "whatsapp" &&
+                        !appConfig.sms.twilioWhatsAppFrom)
+                ) {
                     throw new Error("Phone delivery unavailable");
                 }
-                const message = "Your Streamly phone verification code is " + code + ". It expires in 5 minutes.";
-                const result = channel === "sms"
-                    ? await smsProvider.sendSms({ to: phoneNumber, message, userId })
-                    : await whatsappProvider.sendWhatsApp({ to: phoneNumber, body: message });
-                if (!result.delivered) throw new Error("Phone delivery unavailable");
+                const message =
+                    "Your Streamly phone verification code is " +
+                    code +
+                    ". It expires in 5 minutes.";
+                const result =
+                    channel === "sms"
+                        ? await smsProvider.sendSms({
+                              to: phoneNumber,
+                              message,
+                              userId,
+                          })
+                        : await whatsappProvider.sendWhatsApp({
+                              to: phoneNumber,
+                              body: message,
+                          });
+                if (!result.delivered)
+                    throw new Error("Phone delivery unavailable");
             },
             (userId, code) => mfaService.verifyCurrentTotp(userId, code)
         ),

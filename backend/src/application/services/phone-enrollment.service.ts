@@ -54,22 +54,36 @@ async function lockAccount(
     const user = await tx.user.findUnique({ where: { id: userId } });
     await tx.$queryRaw`SELECT id FROM sessions WHERE id = ${sessionId} AND "userId" = ${userId} FOR UPDATE`;
     const session = await tx.session.findFirst({
-        where: { id: sessionId, userId, revokedAt: null, expiresAt: { gt: new Date() } },
+        where: {
+            id: sessionId,
+            userId,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+        },
     });
-    if (!user || user.onboardingStatus !== "active" || !session) throw invalid();
+    if (!user || user.onboardingStatus !== "active" || !session)
+        throw invalid();
     return user;
 }
 
 export class PhoneEnrollmentService {
     constructor(
         private readonly deliver: Deliver,
-        private readonly verifyMfa: (userId: string, code: string) => Promise<void>
+        private readonly verifyMfa: (
+            userId: string,
+            code: string
+        ) => Promise<void>
     ) {}
 
     async start(
         userId: string,
         sessionId: string,
-        input: { phoneNumber?: unknown; channel?: unknown; password?: unknown; mfaCode?: unknown }
+        input: {
+            phoneNumber?: unknown;
+            channel?: unknown;
+            password?: unknown;
+            mfaCode?: unknown;
+        }
     ) {
         const phoneNumber = normalizePhone(input.phoneNumber);
         const channel = input.channel;
@@ -84,7 +98,10 @@ export class PhoneEnrollmentService {
             Buffer.byteLength(password, "utf8") > 72 ||
             !(await bcrypt.compare(password, user.password))
         ) {
-            throw new ApiError(403, "Current credentials could not be verified");
+            throw new ApiError(
+                403,
+                "Current credentials could not be verified"
+            );
         }
         if (user.phoneNumber === phoneNumber && user.phoneVerifiedAt)
             throw new ApiError(400, "This phone number is already verified");
@@ -97,25 +114,43 @@ export class PhoneEnrollmentService {
         const code = crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
         const challenge = await prisma.$transaction(async (tx) => {
             const current = await lockAccount(tx, userId, sessionId);
-            if (current.password !== user.password ||
-                JSON.stringify(snapshot(current)) !== JSON.stringify(snapshot(user)))
+            if (
+                current.password !== user.password ||
+                JSON.stringify(snapshot(current)) !==
+                    JSON.stringify(snapshot(user))
+            )
                 throw invalid();
             const recent = await tx.authChallenge.count({
-                where: { userId, purpose, createdAt: { gt: new Date(Date.now() - 60_000) } },
+                where: {
+                    userId,
+                    purpose,
+                    createdAt: { gt: new Date(Date.now() - 60_000) },
+                },
             });
-            if (recent) throw new ApiError(429, "Wait before requesting another phone code");
+            if (recent)
+                throw new ApiError(
+                    429,
+                    "Wait before requesting another phone code"
+                );
             await tx.authChallenge.updateMany({
                 where: { userId, purpose, consumedAt: null },
                 data: { consumedAt: new Date() },
             });
             return tx.authChallenge.create({
                 data: {
-                    id, userId, channel, purpose,
+                    id,
+                    userId,
+                    channel,
+                    purpose,
                     identifierHash: hashValue(phoneNumber),
                     codeHash: digest(id, code),
                     expiresAt: new Date(Date.now() + 5 * 60_000),
                     maxAttempts: 5,
-                    metadataJson: { ...snapshot(current), sessionId, targetPhone: phoneNumber },
+                    metadataJson: {
+                        ...snapshot(current),
+                        sessionId,
+                        targetPhone: phoneNumber,
+                    },
                 },
             });
         });
@@ -126,9 +161,17 @@ export class PhoneEnrollmentService {
                 where: { id, consumedAt: null },
                 data: { consumedAt: new Date() },
             });
-            throw new ApiError(503, "Phone verification delivery is unavailable");
+            throw new ApiError(
+                503,
+                "Phone verification delivery is unavailable"
+            );
         }
-        return { challengeId: id, channel, purpose, expiresAt: challenge.expiresAt };
+        return {
+            challengeId: id,
+            channel,
+            purpose,
+            expiresAt: challenge.expiresAt,
+        };
     }
 
     async verify(
@@ -137,46 +180,91 @@ export class PhoneEnrollmentService {
         input: { challengeId?: unknown; code?: unknown; channel?: unknown }
     ) {
         const { challengeId, code, channel } = input;
-        if (typeof challengeId !== "string" || !/^[a-f0-9]{24}$/.test(challengeId) ||
-            typeof code !== "string" || !/^\d{6}$/.test(code) ||
-            (channel !== "sms" && channel !== "whatsapp")) throw invalid();
+        if (
+            typeof challengeId !== "string" ||
+            !/^[a-f0-9]{24}$/.test(challengeId) ||
+            typeof code !== "string" ||
+            !/^\d{6}$/.test(code) ||
+            (channel !== "sms" && channel !== "whatsapp")
+        )
+            throw invalid();
         try {
             const verified = await prisma.$transaction(async (tx) => {
                 const user = await lockAccount(tx, userId, sessionId);
                 const challenge = await tx.authChallenge.findFirst({
-                    where: { id: challengeId, userId, purpose, channel, consumedAt: null, expiresAt: { gt: new Date() } },
+                    where: {
+                        id: challengeId,
+                        userId,
+                        purpose,
+                        channel,
+                        consumedAt: null,
+                        expiresAt: { gt: new Date() },
+                    },
                 });
-                if (!challenge || challenge.failedAttempts >= challenge.maxAttempts) throw invalid();
+                if (
+                    !challenge ||
+                    challenge.failedAttempts >= challenge.maxAttempts
+                )
+                    throw invalid();
                 const details = challenge.metadataJson;
-                if (!details || typeof details !== "object" || Array.isArray(details) ||
-                    details.sessionId !== sessionId || typeof details.targetPhone !== "string" ||
-                    hashValue(details.targetPhone) !== challenge.identifierHash ||
-                    Object.entries(snapshot(user)).some(([key, value]) => details[key] !== value))
+                if (
+                    !details ||
+                    typeof details !== "object" ||
+                    Array.isArray(details) ||
+                    details.sessionId !== sessionId ||
+                    typeof details.targetPhone !== "string" ||
+                    hashValue(details.targetPhone) !==
+                        challenge.identifierHash ||
+                    Object.entries(snapshot(user)).some(
+                        ([key, value]) => details[key] !== value
+                    )
+                )
                     throw invalid();
                 const now = new Date();
                 const available = {
-                    id: challenge.id, userId, purpose, channel,
-                    consumedAt: null, expiresAt: { gt: now },
+                    id: challenge.id,
+                    userId,
+                    purpose,
+                    channel,
+                    consumedAt: null,
+                    expiresAt: { gt: now },
                     failedAttempts: { lt: challenge.maxAttempts },
                 };
-                if (!crypto.timingSafeEqual(Buffer.from(digest(challenge.id, code), "hex"), Buffer.from(challenge.codeHash, "hex"))) {
-                    await tx.authChallenge.updateMany({ where: available, data: { failedAttempts: { increment: 1 } } });
+                if (
+                    !crypto.timingSafeEqual(
+                        Buffer.from(digest(challenge.id, code), "hex"),
+                        Buffer.from(challenge.codeHash, "hex")
+                    )
+                ) {
+                    await tx.authChallenge.updateMany({
+                        where: available,
+                        data: { failedAttempts: { increment: 1 } },
+                    });
                     return false;
                 }
                 const consumed = await tx.authChallenge.updateMany({
-                    where: available, data: { consumedAt: now },
+                    where: available,
+                    data: { consumedAt: now },
                 });
                 if (consumed.count !== 1) throw invalid();
                 await tx.user.update({
                     where: { id: userId },
-                    data: { phoneNumber: details.targetPhone, phoneVerifiedAt: now },
+                    data: {
+                        phoneNumber: details.targetPhone,
+                        phoneVerifiedAt: now,
+                    },
                 });
                 await revokeCredentialSessions(tx, userId, now, purpose);
                 return true;
             });
             if (!verified) throw invalid();
         } catch (error) {
-            if (error && typeof error === "object" && "code" in error && error.code === "P2002")
+            if (
+                error &&
+                typeof error === "object" &&
+                "code" in error &&
+                error.code === "P2002"
+            )
                 throw invalid();
             throw error;
         }

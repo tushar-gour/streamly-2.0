@@ -446,7 +446,10 @@ const openApiDocument = {
                         properties: {
                             phoneNumber: { type: "string" },
                             password: { type: "string", format: "password" },
-                            mfaCode: { type: "string", description: "Required when MFA is enabled" },
+                            mfaCode: {
+                                type: "string",
+                                description: "Required when MFA is enabled",
+                            },
                             channel: {
                                 type: "string",
                                 enum: ["sms", "whatsapp"],

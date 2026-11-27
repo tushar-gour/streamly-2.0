@@ -17,7 +17,11 @@ export const credentialsApi = {
     channel: "sms" | "whatsapp";
     password: string;
     mfaCode?: string;
-  }) => post<{ otp: Challenge & { expiresAt: string } }>("signup/phone/start", body),
+  }) =>
+    post<{ otp: Challenge & { expiresAt: string } }>(
+      "signup/phone/start",
+      body
+    ),
   completePhoneEnrollment: (
     body: Confirmation & { channel: "sms" | "whatsapp" }
   ) => post<object>("signup/phone/verify", body),

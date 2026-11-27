@@ -67,18 +67,27 @@ class AuthPlatformController {
 
     static signupPhoneStart = asyncHandler(async (req, res) => {
         const otp = await container.services.phoneEnrollmentService.start(
-            req.user._id, req.auth.sessionId, req.body ?? {}
+            req.user._id,
+            req.auth.sessionId,
+            req.body ?? {}
         );
-        return res.status(200).json(ApiResponse.success({ otp }, "Phone verification code sent."));
+        return res
+            .status(200)
+            .json(
+                ApiResponse.success({ otp }, "Phone verification code sent.")
+            );
     });
 
     static signupPhoneVerify = asyncHandler(async (req, res) => {
         await container.services.phoneEnrollmentService.verify(
-            req.user._id, req.auth.sessionId, req.body ?? {}
+            req.user._id,
+            req.auth.sessionId,
+            req.body ?? {}
         );
         const { secure, httpOnly, sameSite } = authService.getCookieOptions();
         const options = { secure, httpOnly, sameSite };
-        return res.status(200)
+        return res
+            .status(200)
             .clearCookie("accessToken", options)
             .clearCookie("refreshToken", options)
             .clearCookie(appConfig.mfa.trustCookieName, options)

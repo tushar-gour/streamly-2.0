@@ -378,3 +378,7 @@ PROD-03 phone enrollment IMPLEMENTED (backend): existing phone routes now requir
 ### Iteration 41 — Phone enrollment settings and regression suite
 
 PROD-03 phone enrollment IMPLEMENTED: settings now exposes verified phone state, international number, SMS/WhatsApp choice, password and conditional TOTP proof, one-time code confirmation, cancel/retry and session invalidation feedback. Backend tests use actual PostgreSQL and a test-only injected delivery adapter to observe codes. Assertions cover preserved verified number, wrong password, MFA requirement, wrong channel/account/session, attempts, expiry, replay, concurrent start/verify and database uniqueness. CI pending; Twilio production delivery not tested. Next: CI repairs and credential issuance races.
+
+### Iteration 42 — Phone enrollment database evidence
+
+PROD-03 phone security regressions VERIFIED on `48124b8`: [run 46042750890](https://github.com/tushar-gour/streamly-2.0/actions/runs/46042750890), PostgreSQL integration and security job passed. Frontend lint/typecheck/tests/build passed separately from formatting. Applied exact CI formatter diffs for seven files. New npm audit advisories appeared in the backend quality log; assess dependency remediation separately without weakening the audit gate. UI integration and real Twilio delivery still require verification. Next: bind login issuance to credential state under lock.

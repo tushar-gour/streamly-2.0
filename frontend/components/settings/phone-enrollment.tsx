@@ -89,7 +89,9 @@ export function PhoneEnrollment() {
             disabled={pending}
           />
           <fieldset className="flex flex-wrap gap-4">
-            <legend className="mb-2 text-sm font-medium">Delivery method</legend>
+            <legend className="mb-2 text-sm font-medium">
+              Delivery method
+            </legend>
             {(["sms", "whatsapp"] as const).map((method) => (
               <label key={method} className="flex min-h-11 items-center gap-2">
                 <input
@@ -128,7 +130,8 @@ export function PhoneEnrollment() {
       ) : (
         <>
           <p role="status">
-            Enter the six-digit code sent to {number}. It expires in five minutes.
+            Enter the six-digit code sent to {number}. It expires in five
+            minutes.
           </p>
           <Input
             id="phone-change-code"
