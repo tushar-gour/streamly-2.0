@@ -128,7 +128,7 @@ jobs:
         working-directory: frontend
         run: |
           npm install --package-lock-only --ignore-scripts --no-audit next@16.4.6
-          npm install --package-lock-only --ignore-scripts --no-audit --save-dev eslint-config-next@16.4.6
+          npm install --package-lock-only --ignore-scripts --no-audit --save-dev eslint@9 eslint-config-next@16.4.6
           npm audit --omit=dev --audit-level=high || true
           git diff -- package.json package-lock.json
 

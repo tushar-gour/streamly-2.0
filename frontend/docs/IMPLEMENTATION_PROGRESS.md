@@ -454,3 +454,7 @@ Applied CI-generated compatible-range dependency candidate from 46045680724. Can
 ### Iteration 60 — Async type repair
 
 Typecheck exposed generic Result versus Awaited<Result> return typing in shared async helper. Explicitly await the service function, retaining rejection propagation. Applied CI formatter diagnostics from 46045822745. Database tests passed on that commit, but build/browser/Docker were blocked by the type error. Exact-head CI pending.
+
+### Iteration 61 — Subscription listing regression repair
+
+Browser smoke exposed a subscription listing error (actual failure screenshot and API source review). Fixed escaped pagination regex rejecting all valid numeric values. Added database-backed GET list regression including default, explicit and invalid pagination. Applied formatter output; corrected Next candidate ESLint peer resolution without forcing dependencies. Run 46046088357 passed backend quality, database, tests, Docker, OpenAPI and Prisma, frontend format still failed and browser pending at inspection. Next: verify corrected browser journey, inspect Multer candidate and audit.

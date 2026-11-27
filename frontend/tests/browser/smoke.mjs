@@ -173,11 +173,9 @@ try {
   await heading("Settings");
   await page.getByText("Current session", { exact: true }).waitFor();
   await capture("settings-desktop-dark");
-  const phoneForm = page
-    .locator("form")
-    .filter({
-      has: page.getByRole("heading", { name: "Verified phone number" }),
-    });
+  const phoneForm = page.locator("form").filter({
+    has: page.getByRole("heading", { name: "Verified phone number" }),
+  });
   await phoneForm.getByLabel("New phone number").fill("+12025550101");
   await phoneForm.getByLabel("Current password").fill("invalid-test-password");
   await phoneForm

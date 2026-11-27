@@ -134,7 +134,7 @@ class SubscriptionService {
         const positiveInteger = (value: unknown, maximum: number) => {
             if (
                 (typeof value !== "string" && typeof value !== "number") ||
-                !/^\\d+$/.test(String(value))
+                !/^[0-9]+$/.test(String(value))
             ) {
                 throw new BadRequestError("Invalid pagination");
             }
