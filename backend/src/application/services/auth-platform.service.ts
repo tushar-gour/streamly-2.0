@@ -305,6 +305,7 @@ class AuthPlatformService {
             channel: otpChannel,
             purpose,
             username: user.username,
+            credentialVersion: user.credentialVersion,
         });
 
         return {
@@ -341,6 +342,7 @@ class AuthPlatformService {
         if (
             !user ||
             user.onboardingStatus !== "active" ||
+            challenge.metadataJson?.credentialVersion !== user.credentialVersion ||
             (method !== "email-otp" && !user.phoneVerifiedAt) ||
             challenge.identifierHash !==
                 hashValue(
@@ -369,7 +371,8 @@ class AuthPlatformService {
         const user = await prisma.user.findUnique({
             where: { id: challenge?.userId || "" },
         });
-        if (!user) throw new UnauthorizedError("Invalid MFA challenge");
+        if (!user || challenge?.credentialVersion !== user.credentialVersion)
+            throw new UnauthorizedError("Invalid MFA challenge");
 
         const session = await this.authService.createLoginSession({
             user: withId(user),
@@ -410,7 +413,8 @@ class AuthPlatformService {
             const challenge = await this.#mfaService.createChallenge(
                 user.id,
                 method,
-                context
+                context,
+                user.credentialVersion
             );
             return {
                 data: {

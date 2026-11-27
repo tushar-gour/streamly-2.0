@@ -382,3 +382,7 @@ PROD-03 phone enrollment IMPLEMENTED: settings now exposes verified phone state,
 ### Iteration 42 — Phone enrollment database evidence
 
 PROD-03 phone security regressions VERIFIED on `48124b8`: [run 46042750890](https://github.com/tushar-gour/streamly-2.0/actions/runs/46042750890), PostgreSQL integration and security job passed. Frontend lint/typecheck/tests/build passed separately from formatting. Applied exact CI formatter diffs for seven files. New npm audit advisories appeared in the backend quality log; assess dependency remediation separately without weakening the audit gate. UI integration and real Twilio delivery still require verification. Next: bind login issuance to credential state under lock.
+
+### Iteration 43 — Credential issuance generation
+
+SEC-03/04/PROD-03 race containment IMPLEMENTED: additive credentialVersion on users, nullable version on MFA challenges (old in-flight challenges fail closed). Credential mutation/recovery/MFA enrollment and recovery-code regeneration advance the version. Session issuance checks the proven version under a user row lock; login OTP and MFA challenges retain the originating version; trust-token creation occurs in the MFA verification transaction. Regression tests cover stale password proof and MFA issuance after credential change. Existing sessions are preserved for MFA enrollment/regeneration; password/email/phone changes revoke all. Integration and exact-head CI pending; review migration and browser compatibility. Next: CI repair, durable processing.

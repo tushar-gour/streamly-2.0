@@ -1,19 +1,39 @@
 // @ts-nocheck
 import { SessionRepository } from "../../domain/repositories/session.repository.js";
+import { UnauthorizedError } from "../../shared/errors/api-error.js";
 import { createId } from "../../shared/helpers/id-generator.js";
 import { prisma } from "../database/prisma/client.js";
 
 class PrismaSessionRepository extends SessionRepository {
     createSession(sessionData) {
-        return prisma.session.create({
-            data: {
-                id: sessionData.id || createId(),
-                userId: sessionData.userId,
-                refreshTokenHash: sessionData.refreshTokenHash,
-                userAgent: sessionData.userAgent,
-                ipAddress: sessionData.ipAddress,
-                expiresAt: sessionData.expiresAt,
-            },
+        return prisma.$transaction(async (tx) => {
+            await tx.$queryRaw`SELECT id FROM users WHERE id = ${sessionData.userId} FOR UPDATE`;
+            const user = await tx.user.findUnique({
+                where: { id: sessionData.userId },
+                select: { credentialVersion: true, onboardingStatus: true },
+            });
+            if (
+                !user ||
+                user.onboardingStatus !== "active" ||
+                user.credentialVersion !== sessionData.expectedCredentialVersion
+            ) {
+                throw new UnauthorizedError("Credentials changed; sign in again");
+            }
+            const session = await tx.session.create({
+                data: {
+                    id: sessionData.id || createId(),
+                    userId: sessionData.userId,
+                    refreshTokenHash: sessionData.refreshTokenHash,
+                    userAgent: sessionData.userAgent,
+                    ipAddress: sessionData.ipAddress,
+                    expiresAt: sessionData.expiresAt,
+                },
+            });
+            await tx.user.update({
+                where: { id: sessionData.userId },
+                data: { lastLoginAt: new Date() },
+            });
+            return session;
         });
     }
 

@@ -7,6 +7,10 @@ export async function revokeCredentialSessions(
     now: Date,
     reason: string
 ) {
+    await tx.user.update({
+        where: { id: userId },
+        data: { credentialVersion: { increment: 1 } },
+    });
     await recordNotification(
         tx,
         userId,

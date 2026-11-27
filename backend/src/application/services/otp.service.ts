@@ -27,6 +27,7 @@ type CreateChallengeInput = {
     channel: OtpChannel;
     purpose: string;
     username?: string;
+    credentialVersion?: number;
 };
 
 class OtpService {
@@ -40,6 +41,7 @@ class OtpService {
         channel,
         purpose,
         username,
+        credentialVersion,
     }: CreateChallengeInput) {
         if (!appConfig.otp.enabled) {
             throw new ApiError(503, "OTP authentication is disabled");
@@ -58,6 +60,9 @@ class OtpService {
                     Date.now() + appConfig.otp.expirySeconds * 1000
                 ),
                 maxAttempts: appConfig.otp.maxAttempts,
+                ...(credentialVersion !== undefined
+                    ? { metadataJson: { credentialVersion } }
+                    : {}),
             },
         });
 

@@ -40,7 +40,7 @@ router.post(
             throw new ApiError(400, "Authenticator code required");
         res.json(
             ApiResponse.success(
-                await service.verifyTotpSetup(user.id, req.body.code, true)
+                await service.verifyTotpSetup(user.id, req.body.code, true, user.credentialVersion)
             )
         );
     })

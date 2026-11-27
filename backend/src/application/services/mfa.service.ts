@@ -8,6 +8,7 @@ import { createId } from "../../shared/helpers/id-generator.js";
 import { hashValue } from "./otp.service.js";
 import { recordNotification } from "../../infrastructure/database/notification-record.js";
 import bcrypt from "bcrypt";
+import type { Prisma } from "@prisma/client";
 
 const makeRecoveryCodes = () =>
     Array.from({ length: 10 }, () => crypto.randomBytes(16).toString("hex"));
@@ -98,7 +99,8 @@ class MfaService {
     async verifyTotpSetup(
         userId: string,
         code: string,
-        activeEnrollment = false
+        activeEnrollment = false,
+        expectedCredentialVersion?: number
     ) {
         const method = await prisma.userMfa.findUnique({
             where: { userId_type: { userId, type: "totp" } },
@@ -115,6 +117,7 @@ class MfaService {
         const now = new Date();
         const recoveryCodes = makeRecoveryCodes();
         await prisma.$transaction(async (tx) => {
+            await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
             const enabled = await tx.userMfa.updateMany({
                 where: {
                     id: method.id,
@@ -138,8 +141,15 @@ class MfaService {
                         : "mfa_pending",
                     mfaEnabledAt: null,
                     emailVerifiedAt: { not: null },
+                    ...(expectedCredentialVersion === undefined
+                        ? {}
+                        : { credentialVersion: expectedCredentialVersion }),
                 },
-                data: { mfaEnabledAt: now, onboardingStatus: "active" },
+                data: {
+                    mfaEnabledAt: now,
+                    onboardingStatus: "active",
+                    credentialVersion: { increment: 1 },
+                },
             });
             if (activated.count !== 1) {
                 throw new ApiError(409, "Account setup is no longer available");
@@ -171,12 +181,21 @@ class MfaService {
         password: unknown,
         code: unknown
     ) {
-        await this.authorizeManagement(userId, password);
+        const user = await this.authorizeManagement(userId, password);
         if (typeof code !== "string")
             throw new ApiError(400, "Authenticator code required");
         await this.verifyCurrentTotp(userId, code);
         const recoveryCodes = makeRecoveryCodes();
         await prisma.$transaction(async (tx) => {
+            const changed = await tx.user.updateMany({
+                where: { id: userId, credentialVersion: user.credentialVersion },
+                data: { credentialVersion: { increment: 1 } },
+            });
+            if (changed.count !== 1) throw new ApiError(409, "Credentials changed");
+            await tx.mfaTrustToken.updateMany({
+                where: { userId, revokedAt: null },
+                data: { revokedAt: new Date() },
+            });
             const result = await tx.userMfa.updateMany({
                 where: { userId, type: "totp", enabledAt: { not: null } },
                 data: { recoveryCodesHash: recoveryCodes.map(hashValue) },
@@ -228,13 +247,21 @@ class MfaService {
     async createChallenge(
         userId: string,
         loginMethod: string,
-        context: DeviceContext
+        context: DeviceContext,
+        expectedCredentialVersion?: number
     ) {
-        return prisma.mfaChallenge.create({
+        return prisma.$transaction(async (tx) => {
+            await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+            const user = await tx.user.findUnique({ where: { id: userId } });
+            if (!user || user.onboardingStatus !== "active" ||
+                (expectedCredentialVersion !== undefined && user.credentialVersion !== expectedCredentialVersion))
+                throw new ApiError(401, "Credentials changed; sign in again");
+            return tx.mfaChallenge.create({
             data: {
                 id: createId(),
                 userId,
                 loginMethod,
+                credentialVersion: user.credentialVersion,
                 expiresAt: new Date(
                     Date.now() + appConfig.mfa.challengeExpirySeconds * 1000
                 ),
@@ -242,6 +269,7 @@ class MfaService {
                 ipHash: hashContext(context.ipAddress),
                 userAgentHash: hashContext(context.userAgent),
             },
+            });
         });
     }
 
@@ -304,8 +332,11 @@ class MfaService {
             throw new ApiError(400, "Invalid authenticator or recovery code");
         }
 
-        await prisma.$transaction(async (tx) => {
+        return prisma.$transaction(async (tx) => {
             await tx.$queryRaw`SELECT id FROM users WHERE id = ${challenge.userId} FOR UPDATE`;
+            const user = await tx.user.findUnique({ where: { id: challenge.userId } });
+            if (!user || user.onboardingStatus !== "active" || user.credentialVersion !== challenge.credentialVersion)
+                throw new ApiError(401, "Credentials changed; sign in again");
             const now = new Date();
             const consumed = await tx.mfaChallenge.updateMany({
                 where: { ...available, expiresAt: { gt: now } },
@@ -356,17 +387,20 @@ class MfaService {
                     data: { lastVerifiedAt: now },
                 });
             }
+            // Issue trust under the same account lock as challenge consumption.
+            return recovery
+                ? undefined
+                : this.createTrustToken(tx, challenge.userId, context);
         });
-
-        // Recovery codes do not establish persistent trusted devices.
-        return recovery
-            ? undefined
-            : this.createTrustToken(challenge.userId, context);
     }
 
-    async createTrustToken(userId: string, context: DeviceContext) {
+    private async createTrustToken(
+        tx: Prisma.TransactionClient,
+        userId: string,
+        context: DeviceContext
+    ) {
         const token = crypto.randomBytes(32).toString("base64url");
-        await prisma.mfaTrustToken.create({
+        await tx.mfaTrustToken.create({
             data: {
                 id: createId(),
                 userId,

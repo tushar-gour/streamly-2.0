@@ -38,6 +38,7 @@ function normalizePhone(value: unknown) {
 function snapshot(user: User) {
     return {
         email: user.email,
+        credentialVersion: user.credentialVersion,
         passwordChangedAt: user.passwordChangedAt?.toISOString() ?? null,
         mfaEnabledAt: user.mfaEnabledAt?.toISOString() ?? null,
         phoneNumber: user.phoneNumber,

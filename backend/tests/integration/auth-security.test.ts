@@ -317,6 +317,39 @@ databaseDescribe("database authentication security", () => {
         ).rejects.toThrow("Invalid or expired");
     });
 
+    it("rejects a session issued from a stale credential proof", async () => {
+        const user = await createUser();
+        await container.services.userService.changePassword({
+            userId: user._id,
+            body: {
+                oldPassword: "ValidPassword123!",
+                newPassword: "UpdatedPassword123!",
+            },
+        });
+        await expect(auth.createLoginSession({
+            user, userAgent: undefined, ipAddress: undefined,
+        })).rejects.toThrow("Credentials changed");
+        const current = await users.findPublicById(user._id);
+        await expect(auth.createLoginSession({
+            user: current, userAgent: undefined, ipAddress: undefined,
+        })).resolves.toHaveProperty("accessToken");
+    });
+
+    it("does not issue an MFA challenge after the primary credential has changed", async () => {
+        const user = await createUser();
+        await container.services.userService.changePassword({
+            userId: user._id,
+            body: {
+                oldPassword: "ValidPassword123!",
+                newPassword: "UpdatedPassword123!",
+            },
+        });
+        const mfa = new MfaService();
+        await expect(mfa.createChallenge(
+            user._id, "email-password", { deviceId: "test" }, user.credentialVersion
+        )).rejects.toThrow("Credentials changed");
+    });
+
     it("never treats an onboarding credential as an access token", async () => {
         const user = await createUser();
         const onboarding = tokens.generateOnboardingToken({

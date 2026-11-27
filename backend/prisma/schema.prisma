@@ -17,6 +17,7 @@ model User {
   password                String
   emailVerifiedAt         DateTime?
   passwordChangedAt       DateTime?
+  credentialVersion       Int                      @default(0)
   lastLoginAt             DateTime?
   phoneNumber             String?                  @unique @db.VarChar(32)
   phoneVerifiedAt         DateTime?
@@ -105,6 +106,7 @@ model MfaChallenge {
   userId                String    @db.Char(24)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   loginMethod           String    @db.VarChar(40)
+  credentialVersion     Int?
   expiresAt             DateTime
   consumedAt            DateTime?
   failedAttempts        Int       @default(0)

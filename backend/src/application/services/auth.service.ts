@@ -47,12 +47,12 @@ class AuthService {
             await this.sessionRepository.createSession({
                 id: sessionId,
                 userId: user._id,
+                expectedCredentialVersion: user.credentialVersion,
                 refreshTokenHash: this.tokenService.hashToken(refreshToken),
                 userAgent,
                 ipAddress,
                 expiresAt: this.tokenService.getRefreshTokenExpiresAt(),
             });
-            await this.userRepository.updateLastLoginAt(user._id);
 
             return { accessToken, refreshToken, sessionId };
         } catch (error) {

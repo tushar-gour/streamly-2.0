@@ -63,6 +63,7 @@ function metadata(challenge: AuthChallenge) {
         return null;
     if (
         typeof value.currentEmail !== "string" ||
+        typeof value.credentialVersion !== "number" ||
         typeof value.targetEmail !== "string" ||
         (value.passwordChangedAt !== null &&
             typeof value.passwordChangedAt !== "string")
@@ -70,6 +71,7 @@ function metadata(challenge: AuthChallenge) {
         return null;
     return {
         currentEmail: value.currentEmail,
+        credentialVersion: value.credentialVersion,
         targetEmail: value.targetEmail,
         passwordChangedAt: value.passwordChangedAt,
         sessionId: typeof value.sessionId === "string" ? value.sessionId : null,
@@ -88,6 +90,7 @@ function matchesUser(
     return (
         user.onboardingStatus === "active" &&
         user.email === details.currentEmail &&
+        user.credentialVersion === details.credentialVersion &&
         (user.passwordChangedAt?.toISOString() ?? null) ===
             details.passwordChangedAt
     );
@@ -239,6 +242,7 @@ export class CredentialChallengeService {
                     ? {
                           metadataJson: {
                               currentEmail: user.email,
+                              credentialVersion: user.credentialVersion,
                               targetEmail: email,
                               passwordChangedAt:
                                   user.passwordChangedAt?.toISOString() ?? null,
