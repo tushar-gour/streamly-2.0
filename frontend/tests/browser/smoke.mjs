@@ -83,12 +83,15 @@ try {
     .click();
   await page.getByRole("link", { name: /Browser verification/ }).click();
   await heading("Browser verification");
+  await page.getByText("Playlist · Private", { exact: true }).waitFor();
   await page
     .getByRole("button", { name: "Edit playlist", exact: true })
     .click();
   await page.getByLabel("Playlist name").fill("Updated playlist");
+  await page.getByLabel("Visibility").selectOption("public");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
   await heading("Updated playlist");
+  await page.getByText("Playlist · Public", { exact: true }).waitFor();
   await capture("playlist-desktop-dark");
 
   await page.goto(`${origin}/home`);
@@ -134,6 +137,17 @@ try {
     .getByText("Browser verification comment", { exact: true })
     .waitFor();
   await capture("watch-desktop-dark");
+  const fixtureWatchUrl = page.url();
+
+  await page.goto(`${origin}/channel/browser-moderator`);
+  await heading("Browser Moderator");
+  await page.getByRole("button", { name: "Subscribe", exact: true }).click();
+  await page.getByRole("button", { name: "Subscribed", exact: true }).waitFor();
+  await page.goto(`${origin}/subscriptions`);
+  await page.getByRole("link", { name: /Browser Moderator/ }).waitFor();
+  await page.goto(`${origin}/channel/browser-moderator`);
+  await page.getByRole("button", { name: "Subscribed", exact: true }).click();
+  await page.getByRole("button", { name: "Subscribe", exact: true }).waitFor();
 
   await page.goto(`${origin}/watch-later`);
   await heading("Watch Later");
@@ -159,6 +173,12 @@ try {
   await heading("Settings");
   await page.getByText("Current session", { exact: true }).waitFor();
   await capture("settings-desktop-dark");
+  const phoneForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Verified phone number" }) });
+  await phoneForm.getByLabel("New phone number").fill("+12025550101");
+  await phoneForm.getByLabel("Current password").fill("invalid-test-password");
+  await phoneForm.getByRole("button", { name: "Send phone verification code" }).click();
+  await phoneForm.getByRole("alert").waitFor();
+  await phoneForm.getByText("No verified phone number.", { exact: false }).waitFor();
 
   // Same browser context shares cookies; two documents share Web Locks.
   const secondTab = await context.newPage();
@@ -228,9 +248,52 @@ try {
   await heading("Publish a video");
   await capture("upload-desktop-light");
   await assertNoOverflow();
+  await page.getByLabel("Video file (required)").setInputFiles("../backend/public/browser-fixtures/sample.webm");
+  await page.getByLabel("Thumbnail (required)").setInputFiles("../backend/public/browser-fixtures/thumbnail.png");
+  await page.getByLabel("Title", { exact: true }).fill("Browser upload processing");
+  await page.getByLabel("Description", { exact: true }).fill("Actual form submission in disposable CI");
+  await page.getByRole("button", { name: "Publish video", exact: true }).click();
+  await page.getByText("Your upload is complete.", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "Back to Studio" }).click();
+  await heading("Channel overview");
+  await page.getByRole("region", { name: "Recent processing attempts" }).getByText("Browser upload processing", { exact: true }).waitFor();
+  await capture("studio-processing-desktop-light");
+
+  const moderatorContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  try {
+    const moderator = await moderatorContext.newPage();
+    moderator.on("pageerror", (error) => pageErrors.push(error.message));
+    await moderator.goto(`${origin}/login`);
+    await moderator.getByLabel("Email", { exact: true }).fill("browser-moderator@example.com");
+    await moderator.getByLabel("Password", { exact: true }).fill("StreamlyBrowserTest123!");
+    await moderator.getByRole("button", { name: "Sign in", exact: true }).click();
+    await moderator.waitForURL("**/home");
+    await moderator.goto(`${origin}/admin`);
+    const comments = moderator.getByRole("region", { name: "Comment moderation" });
+    await comments.getByText("Browser verification comment", { exact: true }).waitFor();
+    await comments.getByRole("button", { name: "Place hold", exact: true }).click();
+    await comments.getByLabel("Comment moderation reason").fill("Browser moderation test");
+    await comments.getByRole("button", { name: "Confirm", exact: true }).click();
+    await comments.getByRole("button", { name: "Release hold", exact: true }).waitFor();
+    await moderator.screenshot({ path: `${output}/admin-comment-held-desktop-dark.png`, fullPage: true });
+    const loading = page.waitForResponse((response) => response.url().includes("/api/v1/comments/") && response.request().method() === "GET");
+    await page.goto(fixtureWatchUrl);
+    const hidden = await loading;
+    assert.equal(hidden.status(), 200);
+    const payload = await hidden.json();
+    assert.ok(!payload.data.some((comment) => comment.content === "Browser verification comment"));
+    await comments.getByRole("button", { name: "Release hold", exact: true }).click();
+    await comments.getByLabel("Comment moderation reason").fill("Browser review complete");
+    await comments.getByRole("button", { name: "Confirm", exact: true }).click();
+    await comments.getByRole("button", { name: "Place hold", exact: true }).waitFor();
+    await page.reload();
+    await page.getByText("Browser verification comment", { exact: true }).waitFor();
+  } finally {
+    await moderatorContext.close();
+  }
   assert.deepEqual(pageErrors, [], "Browser page errors");
   console.log(
-    "Browser smoke: sign-in, playlists, video playback/seek, concurrent refresh, likes, comments, Watch Later, sessions, theme and creator routes passed."
+    "Browser smoke: sign-in, playlists, video playback/seek, concurrent refresh, likes, comments, Watch Later, sessions, theme, creator upload, playlist visibility, subscription and comment moderation passed."
   );
   console.log(
     "Observed lab values (not production Core Web Vitals):",

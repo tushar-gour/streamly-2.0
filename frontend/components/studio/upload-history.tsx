@@ -10,7 +10,7 @@ import { useAuthStore } from "@/stores/auth-store";
 const labels = {
   validating: "Validating",
   storing: "Storing",
-  ready: "Published",
+  ready: "Upload complete",
   failed: "Failed",
   interrupted: "Interrupted",
 };

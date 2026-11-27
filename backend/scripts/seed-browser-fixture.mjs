@@ -38,6 +38,26 @@ try {
         },
     });
 
+    const moderator = await prisma.role.findUniqueOrThrow({
+        where: { name: "moderator" },
+    });
+    await prisma.user.create({
+        data: {
+            id: createId(),
+            email: "browser-moderator@example.com",
+            username: "browser-moderator",
+            fullName: "Browser Moderator",
+            avatar: "",
+            coverImage: "",
+            password,
+            onboardingStatus: "active",
+            emailVerifiedAt: new Date(),
+            userRoles: {
+                create: { id: createId(), roleId: moderator.id },
+            },
+        },
+    });
+
     // Generated test assets, confined to the disposable CI environment.
     mkdirSync("public/browser-fixtures", { recursive: true });
     mkdirSync("../frontend/public/browser-fixtures", { recursive: true });
@@ -57,6 +77,7 @@ try {
         "../frontend/public/browser-fixtures/thumbnail.svg",
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#17213e"/><stop offset="1" stop-color="#6c5ce7"/></linearGradient></defs><rect width="320" height="180" fill="url(#g)"/><circle cx="240" cy="55" r="28" fill="#a79cff" opacity=".5"/><path d="M0 180L100 65l70 80 45-50 105 85Z" fill="#0d111b"/></svg>'
     );
+    writeFileSync("public/browser-fixtures/thumbnail.png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+kvX8AAAAASUVORK5CYII=", "base64"));
     await prisma.video.create({
         data: {
             id: createId(),

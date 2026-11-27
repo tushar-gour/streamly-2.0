@@ -103,7 +103,7 @@ export function UploadForm() {
     return (
       <section className="grid gap-4 rounded-card border border-[color:var(--color-border)] p-6">
         <h1 className="text-2xl font-semibold" role="status">
-          Your video is published.
+          Your upload is complete.
         </h1>
         <div className="flex flex-wrap gap-3">
           <Button asChild>

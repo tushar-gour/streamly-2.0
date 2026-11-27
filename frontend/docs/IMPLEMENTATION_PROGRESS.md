@@ -438,3 +438,7 @@ CI caught legacy helper signatures (NotFoundError identifier inferred null and P
 ### Iteration 56 — Dependency remediation candidate applied
 
 Applied reviewed CI-generated lockfile diff from run 46045094417: bcrypt 5.1.1 to 6.0.0 (removes obsolete node-pre-gyp/tar chain), frontend compatible-range audit refresh (Next 15.5.20 to 15.5.29 and related packages). No forced Prisma or Next major upgrade. Candidate audit still reports high/critical issues, including proxy-addr; npm audit fix backend resolver crashed. Switched read-only diagnostic to npm update within declared ranges. Full install/test gates and final production audit pending.
+
+### Iteration 57 — Browser coverage for new product workflows
+
+Extended existing Playwright smoke using isolated moderator fixture, actual playlist visibility selector, desired subscription operations, phone credential-rejection feedback, multipart upload form and persistent processing history, moderator hold/release with a separate browser context. Upload browser uses existing test Cloudinary adapter; real storage covered separately. Browser result pending; no claim of end-to-end phone delivery. Updated upload wording to describe completion rather than current publication state.
