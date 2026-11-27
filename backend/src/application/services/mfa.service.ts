@@ -188,10 +188,14 @@ class MfaService {
         const recoveryCodes = makeRecoveryCodes();
         await prisma.$transaction(async (tx) => {
             const changed = await tx.user.updateMany({
-                where: { id: userId, credentialVersion: user.credentialVersion },
+                where: {
+                    id: userId,
+                    credentialVersion: user.credentialVersion,
+                },
                 data: { credentialVersion: { increment: 1 } },
             });
-            if (changed.count !== 1) throw new ApiError(409, "Credentials changed");
+            if (changed.count !== 1)
+                throw new ApiError(409, "Credentials changed");
             await tx.mfaTrustToken.updateMany({
                 where: { userId, revokedAt: null },
                 data: { revokedAt: new Date() },
@@ -253,22 +257,26 @@ class MfaService {
         return prisma.$transaction(async (tx) => {
             await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
             const user = await tx.user.findUnique({ where: { id: userId } });
-            if (!user || user.onboardingStatus !== "active" ||
-                (expectedCredentialVersion !== undefined && user.credentialVersion !== expectedCredentialVersion))
+            if (
+                !user ||
+                user.onboardingStatus !== "active" ||
+                (expectedCredentialVersion !== undefined &&
+                    user.credentialVersion !== expectedCredentialVersion)
+            )
                 throw new ApiError(401, "Credentials changed; sign in again");
             return tx.mfaChallenge.create({
-            data: {
-                id: createId(),
-                userId,
-                loginMethod,
-                credentialVersion: user.credentialVersion,
-                expiresAt: new Date(
-                    Date.now() + appConfig.mfa.challengeExpirySeconds * 1000
-                ),
-                deviceFingerprintHash: hashValue(context.deviceId),
-                ipHash: hashContext(context.ipAddress),
-                userAgentHash: hashContext(context.userAgent),
-            },
+                data: {
+                    id: createId(),
+                    userId,
+                    loginMethod,
+                    credentialVersion: user.credentialVersion,
+                    expiresAt: new Date(
+                        Date.now() + appConfig.mfa.challengeExpirySeconds * 1000
+                    ),
+                    deviceFingerprintHash: hashValue(context.deviceId),
+                    ipHash: hashContext(context.ipAddress),
+                    userAgentHash: hashContext(context.userAgent),
+                },
             });
         });
     }
@@ -334,8 +342,14 @@ class MfaService {
 
         return prisma.$transaction(async (tx) => {
             await tx.$queryRaw`SELECT id FROM users WHERE id = ${challenge.userId} FOR UPDATE`;
-            const user = await tx.user.findUnique({ where: { id: challenge.userId } });
-            if (!user || user.onboardingStatus !== "active" || user.credentialVersion !== challenge.credentialVersion)
+            const user = await tx.user.findUnique({
+                where: { id: challenge.userId },
+            });
+            if (
+                !user ||
+                user.onboardingStatus !== "active" ||
+                user.credentialVersion !== challenge.credentialVersion
+            )
                 throw new ApiError(401, "Credentials changed; sign in again");
             const now = new Date();
             const consumed = await tx.mfaChallenge.updateMany({

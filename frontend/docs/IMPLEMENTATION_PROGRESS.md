@@ -386,3 +386,7 @@ PROD-03 phone security regressions VERIFIED on `48124b8`: [run 46042750890](http
 ### Iteration 43 — Credential issuance generation
 
 SEC-03/04/PROD-03 race containment IMPLEMENTED: additive credentialVersion on users, nullable version on MFA challenges (old in-flight challenges fail closed). Credential mutation/recovery/MFA enrollment and recovery-code regeneration advance the version. Session issuance checks the proven version under a user row lock; login OTP and MFA challenges retain the originating version; trust-token creation occurs in the MFA verification transaction. Regression tests cover stale password proof and MFA issuance after credential change. Existing sessions are preserved for MFA enrollment/regeneration; password/email/phone changes revoke all. Integration and exact-head CI pending; review migration and browser compatibility. Next: CI repair, durable processing.
+
+### Iteration 44 — Credential generation evidence
+
+VERIFIED: database integration/security, migration, backend tests and frontend quality passed on `ab620d0`, [run 46043137247](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043137247). Stale credential session and MFA issuance regressions passed. Applied actual CI formatter changes; full exact-head CI and additional OTP/MFA interleaving coverage remain pending. Next: durable upload status, cleanup and idempotency.

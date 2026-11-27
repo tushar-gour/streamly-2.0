@@ -326,13 +326,21 @@ databaseDescribe("database authentication security", () => {
                 newPassword: "UpdatedPassword123!",
             },
         });
-        await expect(auth.createLoginSession({
-            user, userAgent: undefined, ipAddress: undefined,
-        })).rejects.toThrow("Credentials changed");
+        await expect(
+            auth.createLoginSession({
+                user,
+                userAgent: undefined,
+                ipAddress: undefined,
+            })
+        ).rejects.toThrow("Credentials changed");
         const current = await users.findPublicById(user._id);
-        await expect(auth.createLoginSession({
-            user: current, userAgent: undefined, ipAddress: undefined,
-        })).resolves.toHaveProperty("accessToken");
+        await expect(
+            auth.createLoginSession({
+                user: current,
+                userAgent: undefined,
+                ipAddress: undefined,
+            })
+        ).resolves.toHaveProperty("accessToken");
     });
 
     it("does not issue an MFA challenge after the primary credential has changed", async () => {
@@ -345,9 +353,14 @@ databaseDescribe("database authentication security", () => {
             },
         });
         const mfa = new MfaService();
-        await expect(mfa.createChallenge(
-            user._id, "email-password", { deviceId: "test" }, user.credentialVersion
-        )).rejects.toThrow("Credentials changed");
+        await expect(
+            mfa.createChallenge(
+                user._id,
+                "email-password",
+                { deviceId: "test" },
+                user.credentialVersion
+            )
+        ).rejects.toThrow("Credentials changed");
     });
 
     it("never treats an onboarding credential as an access token", async () => {

@@ -342,7 +342,8 @@ class AuthPlatformService {
         if (
             !user ||
             user.onboardingStatus !== "active" ||
-            challenge.metadataJson?.credentialVersion !== user.credentialVersion ||
+            challenge.metadataJson?.credentialVersion !==
+                user.credentialVersion ||
             (method !== "email-otp" && !user.phoneVerifiedAt) ||
             challenge.identifierHash !==
                 hashValue(

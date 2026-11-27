@@ -17,7 +17,9 @@ class PrismaSessionRepository extends SessionRepository {
                 user.onboardingStatus !== "active" ||
                 user.credentialVersion !== sessionData.expectedCredentialVersion
             ) {
-                throw new UnauthorizedError("Credentials changed; sign in again");
+                throw new UnauthorizedError(
+                    "Credentials changed; sign in again"
+                );
             }
             const session = await tx.session.create({
                 data: {
