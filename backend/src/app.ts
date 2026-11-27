@@ -22,6 +22,10 @@ import {
 
 import healthcheckRouter from "./presentation/routes/healthcheck.routes.js";
 import userRouter from "./presentation/routes/user.routes.js";
+import mfaManagementRouter from "./presentation/routes/mfa-management.routes.js";
+import notificationRouter from "./presentation/routes/notification.routes.js";
+import moderationRouter from "./presentation/routes/moderation.routes.js";
+import credentialRouter from "./presentation/routes/credential.routes.js";
 import authPlatformRouter from "./presentation/routes/auth-platform.routes.js";
 import videoRouter from "./presentation/routes/video.routes.js";
 import commentRouter from "./presentation/routes/comment.routes.js";
@@ -29,6 +33,7 @@ import dashboardRouter from "./presentation/routes/dashboard.routes.js";
 import likeRouter from "./presentation/routes/like.routes.js";
 import playlistRouter from "./presentation/routes/playlist.routes.js";
 import subscriptionRouter from "./presentation/routes/subscription.routes.js";
+import watchLaterRouter from "./presentation/routes/watch-later.routes.js";
 
 class Application {
     constructor() {
@@ -55,6 +60,7 @@ class Application {
                     "Authorization",
                     "X-Requested-With",
                     "X-Refresh-Token",
+                    "X-Streamly-Account",
                     "Range",
                     "X-Request-Id",
                     "X-Correlation-Id",
@@ -64,6 +70,7 @@ class Application {
                         .split(",")
                         .map((header) => header.trim())
                         .filter(Boolean),
+                    "X-Streamly-Session",
                     "X-Request-Id",
                     "X-Correlation-Id",
                 ],
@@ -82,6 +89,8 @@ class Application {
 
         this.app.use(compression());
 
+        // Never expose legacy staging files through the public static mount.
+        this.app.use("/temp", (_req, res) => res.sendStatus(404));
         this.app.use(express.static("public"));
 
         this.app.use(httpLoggerMiddleware);
@@ -133,18 +142,27 @@ class Application {
     #configureRoutes() {
         const API_PREFIX = "/api/v1";
 
+        this.app.use(API_PREFIX, (_req, res, next) => {
+            res.set("Cache-Control", "private, no-store");
+            next();
+        });
         this.app.use(API_PREFIX, globalApiRateLimiter);
 
         this.app.use(`${API_PREFIX}/healthcheck`, healthcheckRouter);
 
         this.app.use(`${API_PREFIX}/users`, userRouter);
+        this.app.use(`${API_PREFIX}/users/auth`, credentialRouter);
+        this.app.use(`${API_PREFIX}/users/auth/mfa`, mfaManagementRouter);
         this.app.use(`${API_PREFIX}/users/auth`, authPlatformRouter);
         this.app.use(`${API_PREFIX}/videos`, videoRouter);
+        this.app.use(`${API_PREFIX}/admin`, moderationRouter);
+        this.app.use(`${API_PREFIX}/notifications`, notificationRouter);
         this.app.use(`${API_PREFIX}/comments`, commentRouter);
         this.app.use(`${API_PREFIX}/likes`, likeRouter);
         this.app.use(`${API_PREFIX}/playlists`, playlistRouter);
         this.app.use(`${API_PREFIX}/subscriptions`, subscriptionRouter);
         this.app.use(`${API_PREFIX}/dashboard`, dashboardRouter);
+        this.app.use(`${API_PREFIX}/watch-later`, watchLaterRouter);
 
         this.app.get("/", (_, res) => {
             res.status(200).json(

@@ -2,13 +2,21 @@
 import multer from "multer";
 import path from "path";
 import crypto from "crypto";
+import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { ApiError } from "../../shared/errors/api-error.js";
 import { FileUploadConfig } from "../../shared/constants/index.js";
 
 class FileUploadMiddleware {
     static #diskStorage = multer.diskStorage({
         destination: function (req, file, cb) {
-            cb(null, "./public/temp");
+            const directory = path.join(tmpdir(), "streamly-uploads");
+            try {
+                mkdirSync(directory, { recursive: true, mode: 0o700 });
+                cb(null, directory);
+            } catch (error) {
+                cb(error);
+            }
         },
         filename: function (req, file, cb) {
             const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
@@ -98,6 +106,17 @@ class FileUploadMiddleware {
         limits: { fileSize: FileUploadConfig.MAX_FILE_SIZE },
     });
 
+    static uploadVideoAndThumbnail = this.createUploader({
+        fileFilter: (req, file, cb) => {
+            if (file.fieldname === "videoFile")
+                return this.#videoFilter(req, file, cb);
+            if (file.fieldname === "thumbnail")
+                return this.#imageFilter(req, file, cb);
+            cb(new ApiError(400, "Unexpected media field"), false);
+        },
+        limits: { files: 2 },
+    });
+
     static uploadMedia = this.createUploader({
         fileFilter: this.#mediaFilter,
     });
@@ -143,3 +162,6 @@ export const uploadVideo = FileUploadMiddleware.uploadVideo;
 export const uploadMedia = FileUploadMiddleware.uploadMedia;
 export const handleUploadError = FileUploadMiddleware.handleError;
 export { FileUploadMiddleware };
+
+export const uploadVideoAndThumbnail =
+    FileUploadMiddleware.uploadVideoAndThumbnail;

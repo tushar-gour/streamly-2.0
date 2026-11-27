@@ -27,6 +27,7 @@ type CreateChallengeInput = {
     channel: OtpChannel;
     purpose: string;
     username?: string;
+    credentialVersion?: number;
 };
 
 class OtpService {
@@ -40,6 +41,7 @@ class OtpService {
         channel,
         purpose,
         username,
+        credentialVersion,
     }: CreateChallengeInput) {
         if (!appConfig.otp.enabled) {
             throw new ApiError(503, "OTP authentication is disabled");
@@ -58,6 +60,9 @@ class OtpService {
                     Date.now() + appConfig.otp.expirySeconds * 1000
                 ),
                 maxAttempts: appConfig.otp.maxAttempts,
+                ...(credentialVersion !== undefined
+                    ? { metadataJson: { credentialVersion } }
+                    : {}),
             },
         });
 
@@ -107,18 +112,29 @@ class OtpService {
             throw new ApiError(429, "OTP attempt limit exceeded");
         }
 
+        const available = {
+            id: challenge.id,
+            purpose,
+            consumedAt: null,
+            expiresAt: { gt: new Date() },
+            failedAttempts: { lt: challenge.maxAttempts },
+        };
+
         if (hashValue(code) !== challenge.codeHash) {
-            await prisma.authChallenge.update({
-                where: { id: challenge.id },
+            await prisma.authChallenge.updateMany({
+                where: available,
                 data: { failedAttempts: { increment: 1 } },
             });
             throw new ApiError(400, "Invalid OTP code");
         }
 
-        await prisma.authChallenge.update({
-            where: { id: challenge.id },
+        const consumed = await prisma.authChallenge.updateMany({
+            where: available,
             data: { consumedAt: new Date() },
         });
+        if (consumed.count !== 1) {
+            throw new ApiError(400, "OTP challenge is no longer available");
+        }
 
         return challenge;
     }

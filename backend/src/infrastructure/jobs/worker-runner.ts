@@ -4,6 +4,7 @@ import connectDB, {
     databaseConnection,
 } from "../database/prisma-connection.js";
 import { createLogger, serializeError } from "../logger/logger.js";
+import { queueRegistry } from "./queue-registry.js";
 import { redisService } from "../redis/redis.service.js";
 import { JobNames, QueueNames } from "./job.constants.js";
 import { processCleanupJob } from "./processors/cleanup.processor.js";
@@ -31,6 +32,17 @@ class WorkerRunner {
         await redisService.connect();
 
         this.#registerWorkers();
+        if (appConfig.jobs.cleanupQueueEnabled) {
+            const cleanupQueue = queueRegistry.getQueue(QueueNames.CLEANUP);
+            await cleanupQueue.add(
+                JobNames.CLEANUP_EXPIRED_AUTH,
+                {},
+                {
+                    repeat: { every: 5 * 60_000 },
+                    jobId: "periodic-expired-auth-and-uploads",
+                }
+            );
+        }
 
         workerRunnerLogger.info(
             {

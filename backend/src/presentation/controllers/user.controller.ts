@@ -1,10 +1,12 @@
 // @ts-nocheck
 import { container } from "../../core/container/index.js";
+import { appConfig } from "../../config/env.js";
 import { asyncHandler } from "../../shared/helpers/async-handler.js";
 import { ApiResponse } from "../../shared/responses/api-response.js";
 
 const userService = container.services.userService;
 const authService = container.services.authService;
+const authorizationService = container.services.authorizationService;
 
 class UserController {
     static register = asyncHandler(async (req, res) => {
@@ -23,6 +25,9 @@ class UserController {
             userAgent: req.get("user-agent"),
             ipAddress: req.ip,
         });
+        result.data.user = await authorizationService.describeUser(
+            result.data.user
+        );
         const cookieOptions = authService.getCookieOptions();
 
         return res
@@ -47,6 +52,7 @@ class UserController {
             .status(200)
             .clearCookie("accessToken", cookieOptions)
             .clearCookie("refreshToken", cookieOptions)
+            .clearCookie(appConfig.mfa.trustCookieName, cookieOptions)
             .json(ApiResponse.success(result.data, result.message));
     });
 
@@ -58,6 +64,7 @@ class UserController {
             .status(200)
             .clearCookie("accessToken", cookieOptions)
             .clearCookie("refreshToken", cookieOptions)
+            .clearCookie(appConfig.mfa.trustCookieName, cookieOptions)
             .json(ApiResponse.success(result.data, result.message));
     });
 
@@ -81,8 +88,28 @@ class UserController {
             .json(ApiResponse.success(result.data, result.message));
     });
 
+    static listSessions = asyncHandler(async (req, res) => {
+        const sessions = await authService.listSessions(
+            req.user._id,
+            req.auth.sessionId
+        );
+        return res
+            .status(200)
+            .json(ApiResponse.success(sessions, "Active sessions"));
+    });
+
+    static revokeSession = asyncHandler(async (req, res) => {
+        await authService.revokeOwnedSession(
+            req.user._id,
+            req.params.sessionId,
+            req.auth.sessionId
+        );
+        return res.status(200).json(ApiResponse.success({}, "Session revoked"));
+    });
+
     static getCurrentUser = asyncHandler(async (req, res) => {
-        const result = userService.getCurrentUser(req.user);
+        const user = await authorizationService.describeUser(req.user);
+        const result = userService.getCurrentUser(user);
         return res
             .status(200)
             .json(ApiResponse.success(result.data, result.message));
@@ -93,8 +120,12 @@ class UserController {
             userId: req.user._id,
             body: req.body,
         });
+        const cookieOptions = authService.getCookieOptions();
         return res
             .status(200)
+            .clearCookie("accessToken", cookieOptions)
+            .clearCookie("refreshToken", cookieOptions)
+            .clearCookie(appConfig.mfa.trustCookieName, cookieOptions)
             .json(ApiResponse.success(result.data, result.message));
     });
 
@@ -128,6 +159,27 @@ class UserController {
             .json(ApiResponse.success(result.data, result.message));
     });
 
+    static profileMedia = asyncHandler(async (req, res) => {
+        const { userId, kind } = req.params;
+        if (
+            !/^[a-f0-9]{24}$/.test(userId) ||
+            !["avatar", "cover"].includes(kind)
+        ) {
+            return res.sendStatus(404);
+        }
+        const user =
+            await container.repositories.userRepository.findById(userId);
+        // Channel avatars and covers are public for active accounts only.
+        if (!user || user.onboardingStatus !== "active") {
+            return res.sendStatus(404);
+        }
+        const source = kind === "avatar" ? user.avatar : user.coverImage;
+        const result =
+            await container.services.mediaStreamService.streamImage(source);
+        res.status(result.statusCode).set(result.headers);
+        return result.body ? result.body.pipe(res) : res.end();
+    });
+
     static getChannelProfile = asyncHandler(async (req, res) => {
         const result = await userService.getChannelProfile({
             username: req.params.username,
@@ -153,6 +205,8 @@ export const logoutAllSessions = UserController.logoutAll;
 export const refreshAccessToken = UserController.refreshAccessToken;
 export const changeCurrentPassword = UserController.changePassword;
 export const getCurrentUser = UserController.getCurrentUser;
+export const listSessions = UserController.listSessions;
+export const revokeSession = UserController.revokeSession;
 export const updateAccountDetails = UserController.updateAccountDetails;
 export const updateUserAvatar = UserController.updateAvatar;
 export const updateCoverImage = UserController.updateCoverImage;

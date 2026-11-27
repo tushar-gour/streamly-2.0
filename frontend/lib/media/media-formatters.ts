@@ -9,8 +9,14 @@ export function safeMediaUrl(value?: string | null) {
       return parsedUrl.toString();
     }
   } catch {
-    if (value.startsWith("/")) {
-      return value;
+    if (
+      value.startsWith("/") &&
+      !value.startsWith("//") &&
+      !value.startsWith("/\\")
+    ) {
+      return value.startsWith("/api/v1/")
+        ? `${frontendConfig.apiBaseUrl}${value}`
+        : value;
     }
   }
 

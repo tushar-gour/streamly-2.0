@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Router } from "express";
 
 import { verifyJWT, optionalAuth } from "../middlewares/auth.middleware.js";
@@ -12,7 +11,10 @@ const router = Router();
 
 router.route("/c/:channelId").get(optionalAuth, getUserChannelSubscribers);
 
-router.route("/c/:channelId").post(verifyJWT, toggleSubscription);
+router
+    .route("/c/:channelId")
+    .post(verifyJWT, toggleSubscription)
+    .put(verifyJWT, toggleSubscription);
 
 router.route("/u/:subscriberId").get(getSubscribedChannels);
 

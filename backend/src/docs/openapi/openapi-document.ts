@@ -64,6 +64,278 @@ const openApiDocument = {
     ],
     components,
     paths: {
+        "/api/v1/notifications": {
+            get: {
+                tags: ["Users"],
+                summary: "List own notifications and unread count",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, default: 1 },
+                    },
+                ],
+                responses: {
+                    200: successResponse("Notification inbox", {
+                        type: "object",
+                        properties: {
+                            items: { type: "array", items: { type: "object" } },
+                            unread: { type: "integer" },
+                        },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/notifications/read-all": {
+            patch: {
+                tags: ["Users"],
+                summary: "Mark own notifications read",
+                security: authSecurity,
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
+        "/api/v1/notifications/{notificationId}/read": {
+            patch: {
+                tags: ["Users"],
+                summary: "Mark own notification read",
+                security: authSecurity,
+                parameters: [idParameter("notificationId", "Notification ID")],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
+        "/api/v1/admin/overview": {
+            get: {
+                tags: ["Dashboard"],
+                summary: "Moderation counts",
+                description: protectedDescription("video:publish:any"),
+                security: authSecurity,
+                responses: {
+                    200: successResponse("Publication counts", {
+                        type: "object",
+                        properties: {
+                            published: { type: "integer" },
+                            held: { type: "integer" },
+                            unpublished: { type: "integer" },
+                        },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/admin/videos": {
+            get: {
+                tags: ["Dashboard"],
+                summary: "Moderation video listing",
+                description: protectedDescription("video:publish:any"),
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: {
+                            type: "integer",
+                            minimum: 1,
+                            maximum: 10000,
+                            default: 1,
+                        },
+                    },
+                ],
+                responses: {
+                    200: successResponse("25 videos per page", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/admin/videos/{videoId}/hold": {
+            patch: {
+                tags: ["Dashboard"],
+                summary: "Place or release an audited moderation hold",
+                description:
+                    protectedDescription("video:publish:any") +
+                    " Release leaves the video unpublished.",
+                security: authSecurity,
+                parameters: [idParameter("videoId", "Video ID")],
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["held", "reason"],
+                        properties: {
+                            held: { type: "boolean" },
+                            reason: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 500,
+                            },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Moderation updated", {
+                        type: "object",
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/admin/comments": {
+            get: {
+                tags: ["Dashboard"],
+                summary: "List comments for moderation",
+                description: protectedDescription("comment:delete:any"),
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, maximum: 10000 },
+                    },
+                ],
+                responses: {
+                    200: successResponse("25 comments per page", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/admin/comments/{commentId}/hold": {
+            patch: {
+                tags: ["Dashboard"],
+                summary: "Place or release an audited comment hold",
+                description: protectedDescription("comment:delete:any"),
+                security: authSecurity,
+                parameters: [idParameter("commentId", "Comment ID")],
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["held", "reason"],
+                        properties: {
+                            held: { type: "boolean" },
+                            reason: {
+                                type: "string",
+                                minLength: 1,
+                                maxLength: 500,
+                            },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Moderation updated", {
+                        type: "object",
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/recovery/start": {
+            post: {
+                tags: ["Auth"],
+                summary: "Request password recovery",
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["email"],
+                        properties: {
+                            email: { type: "string", format: "email" },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Challenge accepted", {
+                        type: "object",
+                        properties: { challengeId: { type: "string" } },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/recovery/complete": {
+            post: {
+                tags: ["Auth"],
+                summary: "Complete password recovery",
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["challengeId", "code", "password"],
+                        properties: {
+                            challengeId: { type: "string" },
+                            code: {
+                                type: "string",
+                                minLength: 32,
+                                maxLength: 32,
+                            },
+                            password: { type: "string", minLength: 8 },
+                        },
+                    }),
+                },
+                responses: {
+                    200: emptySuccessResponse,
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/email-change/start": {
+            post: {
+                tags: ["Auth"],
+                summary: "Request verified email replacement",
+                security: authSecurity,
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["email", "password"],
+                        properties: {
+                            email: { type: "string", format: "email" },
+                            password: { type: "string", minLength: 8 },
+                            mfaCode: { type: "string" },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Challenge accepted", {
+                        type: "object",
+                        properties: { challengeId: { type: "string" } },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/auth/email-change/complete": {
+            post: {
+                tags: ["Auth"],
+                summary: "Complete verified email replacement",
+                security: authSecurity,
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["challengeId", "code"],
+                        properties: {
+                            challengeId: { type: "string" },
+                            code: {
+                                type: "string",
+                                minLength: 32,
+                                maxLength: 32,
+                            },
+                        },
+                    }),
+                },
+                responses: {
+                    200: emptySuccessResponse,
+                    ...standardErrors,
+                },
+            },
+        },
         "/": {
             get: {
                 tags: ["Root"],
@@ -203,7 +475,11 @@ const openApiDocument = {
                     }),
                 },
                 responses: {
-                    200: successResponse("Email verified.", { type: "object" }),
+                    200: successResponse("Email verified.", {
+                        type: "object",
+                        required: ["onboardingToken"],
+                        properties: { onboardingToken: { type: "string" } },
+                    }),
                     ...standardErrors,
                 },
             },
@@ -211,16 +487,21 @@ const openApiDocument = {
         "/api/v1/users/auth/signup/phone/start": {
             post: {
                 tags: ["Auth"],
-                summary: "Start optional phone verification",
+                summary: "Start reauthenticated phone enrollment",
                 description: protectedDescription(),
                 security: authSecurity,
                 requestBody: {
                     required: true,
                     content: jsonContent({
                         type: "object",
-                        required: ["phoneNumber", "channel"],
+                        required: ["phoneNumber", "channel", "password"],
                         properties: {
                             phoneNumber: { type: "string" },
+                            password: { type: "string", format: "password" },
+                            mfaCode: {
+                                type: "string",
+                                description: "Required when MFA is enabled",
+                            },
                             channel: {
                                 type: "string",
                                 enum: ["sms", "whatsapp"],
@@ -237,7 +518,9 @@ const openApiDocument = {
         "/api/v1/users/auth/signup/phone/verify": {
             post: {
                 tags: ["Auth"],
-                summary: "Verify optional phone OTP",
+                summary: "Verify phone OTP and revoke existing sessions",
+                description: protectedDescription(),
+                security: authSecurity,
                 requestBody: {
                     required: true,
                     content: jsonContent({
@@ -263,8 +546,9 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Create authenticator app setup",
-                description: protectedDescription(),
-                security: authSecurity,
+                description:
+                    "Bearer onboarding credential from email verification. Normal access tokens are not accepted.",
+                security: [{ bearerAuth: [] }],
                 responses: {
                     200: successResponse("Authenticator setup.", {
                         type: "object",
@@ -278,8 +562,9 @@ const openApiDocument = {
             post: {
                 tags: ["Auth"],
                 summary: "Verify authenticator setup",
-                description: protectedDescription(),
-                security: authSecurity,
+                description:
+                    "Bearer onboarding credential. Activates the account without creating a login session.",
+                security: [{ bearerAuth: [] }],
                 requestBody: {
                     required: true,
                     content: jsonContent({
@@ -419,6 +704,136 @@ const openApiDocument = {
                 summary: "Logout all sessions",
                 description: protectedDescription(),
                 security: authSecurity,
+                responses: {
+                    200: emptySuccessResponse,
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/watch-later": {
+            get: {
+                tags: ["Playlists"],
+                summary: "List the signed-in user's saved videos",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "page",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1 },
+                    },
+                    {
+                        name: "limit",
+                        in: "query",
+                        schema: { type: "integer", minimum: 1, maximum: 100 },
+                    },
+                ],
+                responses: {
+                    200: successResponse("Saved videos.", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/watch-later/{videoId}": {
+            get: {
+                tags: ["Playlists"],
+                summary: "Check whether a video is saved",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
+                responses: {
+                    200: successResponse("Saved status.", {
+                        type: "object",
+                        properties: { saved: { type: "boolean" } },
+                    }),
+                    ...standardErrors,
+                },
+            },
+            put: {
+                tags: ["Playlists"],
+                summary: "Save a published video (idempotent)",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+            delete: {
+                tags: ["Playlists"],
+                summary: "Remove a saved video (idempotent)",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "videoId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
+                responses: { 200: emptySuccessResponse, ...standardErrors },
+            },
+        },
+        "/api/v1/users/sessions": {
+            get: {
+                tags: ["Auth"],
+                summary: "List the current user's active sessions",
+                description:
+                    "Returns up to 100 most recently refreshed active sessions without token hashes.",
+                security: authSecurity,
+                responses: {
+                    200: successResponse("Active sessions.", {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                id: { type: "string" },
+                                userAgent: { type: ["string", "null"] },
+                                createdAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
+                                lastUsedAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
+                                expiresAt: {
+                                    type: "string",
+                                    format: "date-time",
+                                },
+                                isCurrent: { type: "boolean" },
+                            },
+                        },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/sessions/{sessionId}": {
+            delete: {
+                tags: ["Auth"],
+                summary: "Revoke another session owned by the current user",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "sessionId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string" },
+                    },
+                ],
                 responses: {
                     200: emptySuccessResponse,
                     ...standardErrors,
@@ -570,7 +985,9 @@ const openApiDocument = {
             post: {
                 tags: ["Videos"],
                 summary: "Publish video",
-                description: protectedDescription("video:create"),
+                description:
+                    protectedDescription("video:create") +
+                    " Optional multipart requestId (UUID v4) provides idempotent publication; use the upload status endpoints to reconcile an interrupted response.",
                 security: authSecurity,
                 requestBody: {
                     required: true,
@@ -581,6 +998,59 @@ const openApiDocument = {
                 responses: {
                     201: successResponse("Video published.", {
                         $ref: "#/components/schemas/Video",
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/videos/uploads": {
+            get: {
+                tags: ["Videos"],
+                summary: "List the signed-in creator's recent upload attempts",
+                security: authSecurity,
+                responses: {
+                    200: successResponse("Upload attempts.", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/videos/uploads/{requestId}": {
+            get: {
+                tags: ["Videos"],
+                summary: "Get an owner-scoped upload attempt",
+                security: authSecurity,
+                parameters: [
+                    {
+                        name: "requestId",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string", format: "uuid" },
+                    },
+                ],
+                responses: {
+                    200: successResponse("Upload status.", {
+                        type: "object",
+                        properties: {
+                            requestId: { type: "string", format: "uuid" },
+                            title: { type: "string" },
+                            status: {
+                                type: "string",
+                                enum: [
+                                    "validating",
+                                    "storing",
+                                    "ready",
+                                    "failed",
+                                    "interrupted",
+                                ],
+                            },
+                            videoId: { type: ["string", "null"] },
+                            error: { type: ["string", "null"] },
+                            createdAt: { type: "string", format: "date-time" },
+                            updatedAt: { type: "string", format: "date-time" },
+                        },
                     }),
                     ...standardErrors,
                 },
@@ -633,6 +1103,39 @@ const openApiDocument = {
                 parameters: [idParameter("videoId", "Video id.")],
                 responses: {
                     200: emptySuccessResponse,
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/videos/{videoId}/thumbnail": {
+            get: {
+                tags: ["Videos"],
+                summary: "Deliver thumbnail using current video visibility",
+                parameters: [idParameter("videoId", "Video id.")],
+                responses: {
+                    200: {
+                        description:
+                            "Authorized image bytes; never shared-cacheable.",
+                    },
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/users/{userId}/media/{kind}": {
+            get: {
+                tags: ["Users"],
+                summary: "Deliver an active channel's public profile image",
+                parameters: [
+                    idParameter("userId", "User id."),
+                    {
+                        name: "kind",
+                        in: "path",
+                        required: true,
+                        schema: { type: "string", enum: ["avatar", "cover"] },
+                    },
+                ],
+                responses: {
+                    200: { description: "Image bytes." },
                     ...standardErrors,
                 },
             },
@@ -1008,6 +1511,35 @@ const openApiDocument = {
                 parameters: [idParameter("channelId", "Channel user id.")],
                 responses: {
                     200: successResponse("Subscription toggled.", {
+                        type: "object",
+                    }),
+                    201: successResponse("Subscription created.", {
+                        type: "object",
+                    }),
+                    ...standardErrors,
+                },
+            },
+            put: {
+                tags: ["Subscriptions"],
+                summary: "Set desired channel subscription state",
+                description:
+                    protectedDescription() +
+                    " Idempotent across concurrent retries.",
+                security: authSecurity,
+                parameters: [idParameter("channelId", "Channel user id.")],
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["isSubscribed"],
+                        properties: { isSubscribed: { type: "boolean" } },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Subscription state set.", {
+                        type: "object",
+                    }),
+                    201: successResponse("Subscription created.", {
                         type: "object",
                     }),
                     ...standardErrors,

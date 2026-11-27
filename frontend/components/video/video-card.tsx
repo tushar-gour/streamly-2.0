@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MoreVertical } from "lucide-react";
+import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/class-name";
@@ -25,18 +25,27 @@ type VideoCardProps = Readonly<{
 export function VideoCard({ video, variant = "large" }: VideoCardProps) {
   return (
     <article className="group">
-      <Link href={`/watch/${video.id}`} className="block">
+      <Link
+        href={`/watch/${video.id}`}
+        className="block"
+        aria-label={`Watch ${video.title}`}
+      >
         <div
           className={cn(
             "relative overflow-hidden rounded-card border border-[color:var(--color-border)] bg-[linear-gradient(135deg,#111521,#261f56_45%,#0b1020)] bg-cover bg-center transition duration-180 ease-streamly group-hover:-translate-y-0.5 group-hover:border-[rgba(141,132,255,0.48)]",
             variant === "compact" ? "aspect-[16/10]" : "aspect-video"
           )}
-          style={
-            video.thumbnail
-              ? { backgroundImage: `url(${video.thumbnail})` }
-              : undefined
-          }
         >
+          {video.thumbnail ? (
+            <Image
+              src={video.thumbnail}
+              alt=""
+              fill
+              sizes="(max-width: 639px) 100vw, (max-width: 1279px) 50vw, 25vw"
+              className="object-cover"
+              unoptimized
+            />
+          ) : null}
           <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.68))]" />
           <Badge className="absolute bottom-3 right-3 bg-black/50 text-white">
             {video.duration}
@@ -79,12 +88,6 @@ export function VideoCard({ video, variant = "large" }: VideoCardProps) {
             </p>
           ) : null}
         </div>
-        <button
-          aria-label="Video actions"
-          className="text-[color:var(--color-text-muted)]"
-        >
-          <MoreVertical size={18} />
-        </button>
       </div>
     </article>
   );

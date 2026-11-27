@@ -28,8 +28,8 @@ export function PasswordInput({
       <span>{label}</span>
       <span
         className={cn(
-          "flex min-h-12 items-center gap-3 rounded-input border border-[color:var(--color-border)] bg-[rgba(8,11,19,0.38)] px-4 transition duration-180 ease-streamly focus-within:border-periwinkle focus-within:shadow-[0_0_0_4px_rgba(141,132,255,0.12)]",
-          error && "border-[#FF6B6B]",
+          "flex min-h-12 items-center gap-3 rounded-input border border-[color:var(--color-border)] bg-[color:var(--color-background-soft)] px-4 transition duration-180 ease-streamly focus-within:border-periwinkle focus-within:shadow-[0_0_0_4px_rgba(141,132,255,0.12)]",
+          error && "border-[color:var(--color-error)]",
           className
         )}
       >
@@ -52,7 +52,10 @@ export function PasswordInput({
         </button>
       </span>
       {error ? (
-        <span id={`${id}-error`} className="text-sm text-[#FF8A8A]">
+        <span
+          id={`${id}-error`}
+          className="text-sm text-[color:var(--color-error)]"
+        >
           {error}
         </span>
       ) : null}

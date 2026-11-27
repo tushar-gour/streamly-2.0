@@ -1,5 +1,6 @@
 // @ts-nocheck
 import {
+    ApiError,
     BadRequestError,
     ForbiddenError,
     NotFoundError,
@@ -7,7 +8,6 @@ import {
 import { PaginationDefaults } from "../../shared/constants/index.js";
 import { PaginationBuilder } from "../../shared/responses/api-response.js";
 import { ObjectIdValidator } from "../../shared/validators/object-id.validator.js";
-import { appConfig } from "../../config/env.js";
 import { CacheKeys } from "../../infrastructure/cache/cache.keys.js";
 
 class CommentService {
@@ -25,29 +25,20 @@ class CommentService {
 
     async getVideoComments({ videoId, currentUserId, query }) {
         ObjectIdValidator.ensureValid(videoId, "video ID");
+        await this.#ensureVideoAccess(videoId, currentUserId);
 
         const { pageNum, limitNum } = this.#getPagination(
             query.page ?? PaginationDefaults.PAGE,
             query.limit ?? PaginationDefaults.LIMIT
         );
 
-        const loadComments = () =>
-            this.commentRepository.getVideoComments({
+        const { comments, totalDocs } =
+            await this.commentRepository.getVideoComments({
                 videoId,
                 currentUserId,
                 pageNum,
                 limitNum,
             });
-        const { comments, totalDocs } = currentUserId
-            ? await loadComments()
-            : await this.cacheService.remember(
-                  CacheKeys.videoComments(videoId, {
-                      page: pageNum,
-                      limit: limitNum,
-                  }),
-                  appConfig.cache.videoCommentsTtlSeconds,
-                  loadComments
-              );
 
         return {
             data: comments,
@@ -63,14 +54,15 @@ class CommentService {
     async addComment({ videoId, content, userId }) {
         ObjectIdValidator.ensureValid(videoId, "video ID");
 
-        if (!content?.trim()) {
+        if (
+            typeof content !== "string" ||
+            !content.trim() ||
+            content.trim().length > 2000
+        ) {
             throw new BadRequestError("Comment content is required");
         }
 
-        const video = await this.videoRepository.findById(videoId);
-        if (!video) {
-            throw new NotFoundError("Video", videoId);
-        }
+        await this.#ensureVideoAccess(videoId, userId);
 
         const comment = await this.commentRepository.create({
             content: content.trim(),
@@ -94,7 +86,11 @@ class CommentService {
     async updateComment({ commentId, content, userId }) {
         ObjectIdValidator.ensureValid(commentId, "comment ID");
 
-        if (!content?.trim()) {
+        if (
+            typeof content !== "string" ||
+            !content.trim() ||
+            content.trim().length > 2000
+        ) {
             throw new BadRequestError("Comment content is required");
         }
 
@@ -103,8 +99,11 @@ class CommentService {
 
         const updatedComment = await this.commentRepository.updateByIdWithOwner(
             commentId,
-            content.trim()
+            content.trim(),
+            userId
         );
+        if (!updatedComment)
+            throw new ApiError(409, "Comment is held or no longer available");
 
         await this.#invalidateAllCommentCache();
 
@@ -148,6 +147,13 @@ class CommentService {
             this.cacheService.deleteByPattern(CacheKeys.videoDetailPattern()),
             this.cacheService.deleteByPattern(CacheKeys.videoListPattern()),
         ]);
+    }
+
+    async #ensureVideoAccess(videoId, userId) {
+        const video = await this.videoRepository.findById(videoId);
+        if (!video || (!video.isPublished && video.owner !== userId)) {
+            throw new NotFoundError("Video", videoId);
+        }
     }
 
     async #findCommentOrFail(commentId) {

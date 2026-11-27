@@ -1,9 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 
 type ThemeMode = "dark" | "light";
-
 type ThemeContextValue = Readonly<{
   theme: ThemeMode;
   toggleTheme: () => void;
@@ -11,34 +16,59 @@ type ThemeContextValue = Readonly<{
 }>;
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+const storageKey = "streamly-theme";
+const listeners = new Set<() => void>();
+let fallbackTheme: ThemeMode = "dark";
 
-type ThemeProviderProps = Readonly<{
-  children: React.ReactNode;
-}>;
+function getTheme(): ThemeMode {
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    return saved === "dark" || saved === "light" ? saved : fallbackTheme;
+  } catch {
+    return fallbackTheme;
+  }
+}
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === storageKey || event.key === null) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
 
-  useEffect(() => {
-    const savedTheme = window.localStorage.getItem("streamly-theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      setTheme(savedTheme);
-    }
-  }, []);
+function setTheme(theme: ThemeMode) {
+  fallbackTheme = theme;
+  try {
+    window.localStorage.setItem(storageKey, theme);
+  } catch {
+    // Theme remains usable without persistence.
+  }
+  for (const listener of listeners) listener();
+}
+
+function toggleTheme() {
+  setTheme(getTheme() === "dark" ? "light" : "dark");
+}
+
+const getServerTheme = (): ThemeMode => "dark";
+
+export function ThemeProvider({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  const theme = useSyncExternalStore(subscribe, getTheme, getServerTheme);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle("dark", theme === "dark");
-    window.localStorage.setItem("streamly-theme", theme);
   }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({
-      theme,
-      setTheme,
-      toggleTheme: () =>
-        setTheme((current) => (current === "dark" ? "light" : "dark")),
-    }),
+    () => ({ theme, setTheme, toggleTheme }),
     [theme]
   );
 

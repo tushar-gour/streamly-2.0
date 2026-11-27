@@ -20,28 +20,26 @@ class AuthMiddleware {
 
             const authContext = await authService.verifyAccessToken(token);
 
+            const expectedAccount = req.get("X-Streamly-Account");
+            if (expectedAccount && authContext.user._id !== expectedAccount) {
+                res.set("X-Streamly-Session", "changed");
+                throw new ApiError(409, "Account changed in another tab");
+            }
             req.user = authContext.user;
             req.auth = { sessionId: authContext.sessionId };
             next();
         } catch (error) {
-            if (error instanceof ApiError) {
-                throw error;
+            if (error instanceof ApiError && error.statusCode === 401) {
+                res.set("X-Streamly-Session", "expired");
             }
-
-            if (error.name === "JsonWebTokenError") {
-                throw new UnauthorizedError("Invalid access token");
-            }
-            if (error.name === "TokenExpiredError") {
-                throw new UnauthorizedError("Access token has expired");
-            }
-
-            throw new UnauthorizedError(
-                error?.message || "Authentication failed"
-            );
+            throw error;
         }
     });
 
     static optionalAuth = asyncHandler(async (req, res, next) => {
+        if (req.get("X-Streamly-Account")) {
+            return AuthMiddleware.verifyJWT(req, res, next);
+        }
         try {
             const token = AuthMiddleware.#extractToken(req);
 

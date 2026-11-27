@@ -1,4 +1,4 @@
-// @ts-nocheck
+import type { SubscriptionRepository } from "../../domain/repositories/subscription.repository.js";
 import {
     BadRequestError,
     NotFoundError,
@@ -7,13 +7,32 @@ import { PaginationDefaults } from "../../shared/constants/index.js";
 import { PaginationBuilder } from "../../shared/responses/api-response.js";
 import { ObjectIdValidator } from "../../shared/validators/object-id.validator.js";
 
+type UserLookup = { findById(id: string): Promise<unknown> };
+type PageQuery = { page?: unknown; limit?: unknown };
+
 class SubscriptionService {
-    constructor({ subscriptionRepository, userRepository }) {
+    private readonly subscriptionRepository: SubscriptionRepository;
+    private readonly userRepository: UserLookup;
+    constructor({
+        subscriptionRepository,
+        userRepository,
+    }: {
+        subscriptionRepository: SubscriptionRepository;
+        userRepository: UserLookup;
+    }) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
     }
 
-    async toggleSubscription({ channelId, userId }) {
+    async toggleSubscription({
+        channelId,
+        userId,
+        desired,
+    }: {
+        channelId: string;
+        userId: string;
+        desired?: unknown;
+    }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         if (channelId === userId.toString()) {
@@ -25,31 +44,18 @@ class SubscriptionService {
             throw new NotFoundError("Channel", channelId);
         }
 
-        const existingSubscription =
-            await this.subscriptionRepository.findBySubscriberAndChannel(
-                userId,
-                channelId
-            );
-
-        let isSubscribed;
-        if (existingSubscription) {
-            await this.subscriptionRepository.deleteById(
-                existingSubscription._id
-            );
-            isSubscribed = false;
-        } else {
-            await this.subscriptionRepository.create({
-                channel: channelId,
-                subscriber: userId,
-            });
-            isSubscribed = true;
+        if (desired !== undefined && typeof desired !== "boolean") {
+            throw new BadRequestError("Invalid subscription state");
         }
-
-        const subscribersCount =
-            await this.subscriptionRepository.countByChannel(channelId);
+        const { isSubscribed, subscribersCount, created } =
+            await this.subscriptionRepository.setSubscription(
+                userId,
+                channelId,
+                desired
+            );
 
         return {
-            statusCode: isSubscribed ? 201 : 200,
+            statusCode: created ? 201 : 200,
             data: { isSubscribed, subscribersCount },
             message: isSubscribed
                 ? "Subscribed successfully"
@@ -57,7 +63,15 @@ class SubscriptionService {
         };
     }
 
-    async getChannelSubscribers({ channelId, currentUserId, query }) {
+    async getChannelSubscribers({
+        channelId,
+        currentUserId,
+        query,
+    }: {
+        channelId: string;
+        currentUserId?: string | null;
+        query: PageQuery;
+    }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -75,16 +89,22 @@ class SubscriptionService {
 
         return {
             data: subscribers,
-            pagination: new PaginationBuilder()
-                .setPage(pageNum)
-                .setLimit(limitNum)
-                .setTotalDocs(totalDocs)
-                .build(),
+            pagination: new PaginationBuilder(
+                pageNum,
+                limitNum,
+                totalDocs
+            ).build(),
             message: "Channel subscribers fetched successfully",
         };
     }
 
-    async getSubscribedChannels({ subscriberId, query }) {
+    async getSubscribedChannels({
+        subscriberId,
+        query,
+    }: {
+        subscriberId: string;
+        query: PageQuery;
+    }) {
         ObjectIdValidator.ensureValid(subscriberId, "subscriber ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -101,22 +121,31 @@ class SubscriptionService {
 
         return {
             data: channels,
-            pagination: new PaginationBuilder()
-                .setPage(pageNum)
-                .setLimit(limitNum)
-                .setTotalDocs(totalDocs)
-                .build(),
+            pagination: new PaginationBuilder(
+                pageNum,
+                limitNum,
+                totalDocs
+            ).build(),
             message: "Subscribed channels fetched successfully",
         };
     }
 
-    #getPagination(page, limit) {
+    #getPagination(page: unknown, limit: unknown) {
+        const positiveInteger = (value: unknown, maximum: number) => {
+            if (
+                (typeof value !== "string" && typeof value !== "number") ||
+                !/^[0-9]+$/.test(String(value))
+            ) {
+                throw new BadRequestError("Invalid pagination");
+            }
+            const n = Number(value);
+            if (!Number.isSafeInteger(n) || n < 1)
+                throw new BadRequestError("Invalid pagination");
+            return Math.min(n, maximum);
+        };
         return {
-            pageNum: Math.max(1, parseInt(page, 10)),
-            limitNum: Math.min(
-                Math.max(1, parseInt(limit, 10)),
-                PaginationDefaults.MAX_LIMIT
-            ),
+            pageNum: positiveInteger(page, 10000),
+            limitNum: positiveInteger(limit, PaginationDefaults.MAX_LIMIT),
         };
     }
 }

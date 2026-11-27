@@ -1,4 +1,8 @@
 import { apiRequest } from "@/lib/api/client";
+import {
+  createSessionCoordinator,
+  withSessionLock,
+} from "@/lib/auth/session-coordinator";
 import type {
   AuthenticatedUserPayload,
   AuthResult,
@@ -21,6 +25,7 @@ export const authApi = {
       {
         method: "POST",
         body: JSON.stringify(payload),
+        skipSessionRecovery: true,
       }
     );
 
@@ -30,7 +35,7 @@ export const authApi = {
   async currentUser(accessToken?: string | null) {
     const response = await apiRequest<CurrentUser>(
       "/api/v1/users/current-user",
-      { accessToken }
+      { accessToken, skipSessionRecovery: true, cache: "no-store" }
     );
 
     return response.data;
@@ -39,7 +44,7 @@ export const authApi = {
   async refreshSession() {
     const response = await apiRequest<AuthTokens>(
       "/api/v1/users/refresh-token",
-      { method: "POST" }
+      { method: "POST", skipSessionRecovery: true }
     );
 
     return {
@@ -61,3 +66,9 @@ export const authApi = {
     });
   },
 };
+
+export const recoverSession = createSessionCoordinator({
+  load: authApi.currentUser,
+  rotate: authApi.refreshSession,
+  exclusive: withSessionLock,
+});

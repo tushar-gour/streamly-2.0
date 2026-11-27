@@ -71,6 +71,19 @@ class PrismaVideoRepository extends VideoRepository {
         );
     }
 
+    async toggleOwnedPublication(videoId, ownerId, published) {
+        const result = await prisma.video.updateMany({
+            where: {
+                id: videoId,
+                ownerId,
+                moderationHeld: false,
+                isPublished: !published,
+            },
+            data: { isPublished: published },
+        });
+        return result.count === 1 ? this.findByIdWithOwner(videoId) : null;
+    }
+
     async updateThumbnail(videoId, thumbnail) {
         return toVideo(
             await prisma.video.update({
@@ -116,7 +129,12 @@ class PrismaVideoRepository extends VideoRepository {
                 where,
                 include: {
                     owner: { select: ownerSelect },
-                    _count: { select: { likes: true, comments: true } },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: { where: { moderationHeld: false } },
+                        },
+                    },
                 },
                 orderBy: {
                     [this.#toSortField(sortBy)]:
@@ -152,7 +170,12 @@ class PrismaVideoRepository extends VideoRepository {
             include: {
                 owner: { select: ownerSelect },
                 ...likeInclude,
-                _count: { select: { likes: true, comments: true } },
+                _count: {
+                    select: {
+                        likes: true,
+                        comments: { where: { moderationHeld: false } },
+                    },
+                },
             },
         });
 
@@ -184,7 +207,12 @@ class PrismaVideoRepository extends VideoRepository {
             prisma.video.findMany({
                 where,
                 include: {
-                    _count: { select: { likes: true, comments: true } },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: { where: { moderationHeld: false } },
+                        },
+                    },
                 },
                 orderBy: {
                     [this.#toSortField(sortBy)]:

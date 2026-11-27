@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ListVideo, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { CreatePlaylist } from "@/components/playlists/create-playlist";
 
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
@@ -14,13 +15,15 @@ import { safeMediaUrl } from "@/lib/media/media-formatters";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function PlaylistsPanel() {
-  const user = useAuthStore((state) => state.user);
-  const userId = user?._id ?? user?.id ?? "";
+  const userId = useAuthStore(
+    (state) => state.user?._id ?? state.user?.id ?? ""
+  );
+  const token = useAuthStore((state) => state.accessToken);
 
   const playlistsQuery = useQuery({
     enabled: Boolean(userId),
     queryFn: async () => {
-      const response = await playlistsApi.listByUser(userId);
+      const response = await playlistsApi.listByUser(userId, token);
       return response.data;
     },
     queryKey: queryKeys.playlists.list(userId),
@@ -58,22 +61,27 @@ export function PlaylistsPanel() {
       <h1 className="mt-2 text-4xl font-semibold tracking-[-0.03em]">
         Your playlists
       </h1>
+      <div className="mt-6">
+        <CreatePlaylist />
+      </div>
       {playlists.length === 0 ? (
         <div className="mt-16 grid place-items-center">
           <EmptyState
             eyebrow="Playlists"
             title="No playlists yet."
-            description="Playlists from your backend account will appear here."
+            description="Create a playlist to organize videos you want to revisit."
           />
         </div>
       ) : (
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {playlists.map((playlist) => {
-            const thumbnail = safeMediaUrl(playlist.videos?.[0]?.thumbnail);
+            const thumbnail = safeMediaUrl(
+              playlist.thumbnail ?? playlist.videos?.[0]?.thumbnail
+            );
 
             return (
               <Link
-                className="group rounded-card border border-[color:var(--color-border)] bg-[rgba(17,21,33,0.72)] p-4 transition duration-180 hover:border-[rgba(141,132,255,0.5)]"
+                className="group rounded-card border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4 transition duration-180 hover:border-[rgba(141,132,255,0.5)]"
                 href={`/playlists/${playlist._id}`}
                 key={playlist._id}
               >
@@ -90,6 +98,10 @@ export function PlaylistsPanel() {
                 <h2 className="mt-4 font-semibold group-hover:text-periwinkle">
                   {playlist.name}
                 </h2>
+                <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
+                  {playlist.videosCount ?? 0} videos ·{" "}
+                  {playlist.isPublic ? "Public" : "Private"}
+                </p>
                 {playlist.description ? (
                   <p className="mt-2 line-clamp-2 text-sm text-[color:var(--color-text-secondary)]">
                     {playlist.description}

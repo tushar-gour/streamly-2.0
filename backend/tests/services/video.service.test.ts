@@ -5,7 +5,7 @@ import { VideoService } from "../../src/application/services/video.service.js";
 import { createTestVideo } from "../factories/video.factory.js";
 
 describe("VideoService", () => {
-    it("uses cache wrapper for video list reads", async () => {
+    it("reads current publication state without stale list caching", async () => {
         const videos = [createTestVideo()];
         const videoRepository = {
             getPublishedVideos: vi.fn().mockResolvedValue({
@@ -29,7 +29,7 @@ describe("VideoService", () => {
 
         expect(result.data).toEqual(videos);
         expect(result.pagination.totalCount).toBe(1);
-        expect(cacheService.remember).toHaveBeenCalledTimes(1);
+        expect(cacheService.remember).not.toHaveBeenCalled();
         expect(videoRepository.getPublishedVideos).toHaveBeenCalledTimes(1);
     });
 

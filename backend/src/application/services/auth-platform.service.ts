@@ -13,7 +13,7 @@ import {
 import { ApiError, UnauthorizedError } from "../../shared/errors/api-error.js";
 import { SuccessMessages } from "../../shared/constants/index.js";
 import { createId } from "../../shared/helpers/id-generator.js";
-import { OtpService } from "./otp.service.js";
+import { OtpService, hashValue } from "./otp.service.js";
 import type { MfaService } from "./mfa.service.js";
 
 type RequestContext = {
@@ -36,57 +36,89 @@ class AuthPlatformService {
         otpService,
         mfaService,
         authService,
+        tokenService,
         roleRepository,
         userRoleRepository,
     }) {
         this.#otpService = otpService;
         this.#mfaService = mfaService;
         this.authService = authService;
+        this.tokenService = tokenService;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
     }
 
     async signupStart({ email, password, fullName, username }) {
-        if (!email || !password || !fullName || !username) {
-            throw new ApiError(
-                400,
-                "Email, password, full name, and username are required"
-            );
+        if (!appConfig.otp.enabled || !appConfig.mfa.enabled) {
+            throw new ApiError(503, "Account registration is unavailable");
+        }
+        if (
+            typeof email !== "string" ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email.trim()) ||
+            email.length > 254 ||
+            typeof password !== "string" ||
+            password.length < 8 ||
+            Buffer.byteLength(password, "utf8") > 72 ||
+            typeof fullName !== "string" ||
+            !fullName.trim() ||
+            fullName.trim().length > 100 ||
+            typeof username !== "string" ||
+            !/^[a-z0-9_-]{3,30}$/iu.test(username.trim())
+        ) {
+            throw new ApiError(400, "Invalid registration details");
         }
 
-        const existingUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    { email: normalizeIdentifier(email) },
-                    { username: normalizeIdentifier(username) },
-                ],
-            },
-        });
-
-        if (existingUser) throw new ApiError(409, "User already exists");
-
-        const saltRounds = isProduction() ? 12 : 10;
-        const user = await prisma.user.create({
-            data: {
-                id: createId(),
-                email: normalizeIdentifier(email),
-                username: normalizeIdentifier(username),
-                fullName,
-                password: await bcrypt.hash(password, saltRounds),
-                avatar: `${appConfig.publicBaseUrl}/default-avatar.png`,
-                coverImage: "",
-                onboardingStatus: "email_pending",
-            },
+        email = normalizeIdentifier(email);
+        username = normalizeIdentifier(username);
+        let user = await prisma.user.findFirst({
+            where: { OR: [{ email }, { username }] },
         });
 
         const defaultRole = await this.roleRepository.findByName(
             appConfig.rbac.defaultRole
         );
-        if (defaultRole) {
+        if (!defaultRole) {
+            throw new ApiError(503, "Account registration is unavailable");
+        }
+
+        if (user) {
+            // Resume a pending signup only after proving its password.
+            if (
+                user.email !== email ||
+                user.username !== username ||
+                !["email_pending", "mfa_pending"].includes(
+                    user.onboardingStatus
+                ) ||
+                !(await bcrypt.compare(password, user.password))
+            ) {
+                throw new ApiError(409, "Account already exists");
+            }
             await this.userRoleRepository.assignRoleToUser(
                 user.id,
                 defaultRole._id
             );
+        } else {
+            user = await prisma.user.create({
+                data: {
+                    id: createId(),
+                    email,
+                    username,
+                    fullName: fullName.trim(),
+                    password: await bcrypt.hash(
+                        password,
+                        isProduction() ? 12 : 10
+                    ),
+                    avatar: "",
+                    coverImage: "",
+                    onboardingStatus: "email_pending",
+                    userRoles: {
+                        create: {
+                            id: createId(),
+                            roleId: defaultRole._id,
+                        },
+                    },
+                },
+            });
         }
 
         const otp = await this.#otpService.createChallenge({
@@ -112,73 +144,67 @@ class AuthPlatformService {
         if (!challenge.userId)
             throw new ApiError(400, "Invalid signup challenge");
 
-        const user = await prisma.user.update({
+        const user = await prisma.user.findUnique({
             where: { id: challenge.userId },
+        });
+        if (
+            !user ||
+            !["email_pending", "mfa_pending"].includes(user.onboardingStatus) ||
+            challenge.identifierHash !==
+                hashValue(normalizeIdentifier(user.email))
+        ) {
+            throw new ApiError(400, "Invalid signup challenge");
+        }
+
+        const updated = await prisma.user.updateMany({
+            where: {
+                id: user.id,
+                email: user.email,
+                onboardingStatus: { in: ["email_pending", "mfa_pending"] },
+            },
             data: {
                 emailVerifiedAt: new Date(),
                 onboardingStatus: "mfa_pending",
             },
         });
+        if (updated.count !== 1) {
+            throw new ApiError(400, "Account setup is no longer available");
+        }
 
         return {
-            data: { user: toPublicUser(user) },
+            data: {
+                onboardingToken:
+                    this.tokenService.generateOnboardingToken(user),
+            },
             message: "Email verified. Set up authenticator app to continue.",
         };
     }
 
-    async signupPhoneStart({ userId, phoneNumber, channel }) {
-        if (!["sms", "whatsapp"].includes(channel)) {
-            throw new ApiError(
-                400,
-                "Phone verification channel must be sms or whatsapp"
-            );
+    async verifyOnboardingCredential(token: string) {
+        const payload = this.tokenService.verifyOnboardingToken(token);
+        const user = await prisma.user.findUnique({
+            where: { id: payload._id },
+        });
+        if (
+            !user ||
+            user.email !== payload.email ||
+            !user.emailVerifiedAt ||
+            user.onboardingStatus !== "mfa_pending"
+        ) {
+            throw new UnauthorizedError("Invalid onboarding credential");
         }
-
-        const user = await prisma.user.update({
-            where: { id: userId },
-            data: { phoneNumber },
-        });
-
-        const otp = await this.#otpService.createChallenge({
-            userId,
-            identifier: phoneNumber,
-            channel,
-            purpose:
-                channel === "whatsapp"
-                    ? "phone_verification_whatsapp"
-                    : "phone_verification_sms",
-            username: user.username,
-        });
-
-        return {
-            data: { otp },
-            message: "Phone verification OTP sent.",
-        };
-    }
-
-    async signupPhoneVerify({ challengeId, code, channel }) {
-        const challenge = await this.#otpService.verifyChallenge({
-            challengeId,
-            code,
-            purpose:
-                channel === "whatsapp"
-                    ? "phone_verification_whatsapp"
-                    : "phone_verification_sms",
-        });
-        if (!challenge.userId)
-            throw new ApiError(400, "Invalid phone challenge");
-
-        await prisma.user.update({
-            where: { id: challenge.userId },
-            data: { phoneVerifiedAt: new Date() },
-        });
-
-        return { data: {}, message: "Phone verified successfully." };
+        return withId(user);
     }
 
     async setupSignupMfa(userId: string) {
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user) throw new ApiError(404, "User not found");
+        if (
+            !user ||
+            !user.emailVerifiedAt ||
+            user.onboardingStatus !== "mfa_pending"
+        ) {
+            throw new UnauthorizedError("Invalid onboarding credential");
+        }
 
         const setup = await this.#mfaService.setupTotp(user.id, user.email);
         return {
@@ -196,10 +222,20 @@ class AuthPlatformService {
     }
 
     async loginStart({ method, identifier, password, context, captchaToken }) {
-        if (!method || !identifier) {
+        if (
+            ![
+                "email-password",
+                "email-otp",
+                "phone-sms-otp",
+                "phone-whatsapp-otp",
+            ].includes(method) ||
+            typeof identifier !== "string" ||
+            !identifier.trim()
+        ) {
             throw new ApiError(400, "Login method and identifier are required");
         }
 
+        identifier = normalizeIdentifier(identifier);
         const risk = await this.#captchaRiskService.shouldRequireCaptcha(
             "login",
             identifier
@@ -255,7 +291,13 @@ class AuthPlatformService {
                     ? { email: normalizeIdentifier(identifier) }
                     : { phoneNumber: identifier },
         });
-        if (!user) throw new UnauthorizedError("Invalid credentials");
+        if (
+            !user ||
+            user.onboardingStatus !== "active" ||
+            (otpChannel !== "email" && !user.phoneVerifiedAt)
+        ) {
+            throw new UnauthorizedError("Invalid credentials");
+        }
 
         const otp = await this.#otpService.createChallenge({
             userId: user.id,
@@ -263,6 +305,7 @@ class AuthPlatformService {
             channel: otpChannel,
             purpose,
             username: user.username,
+            credentialVersion: user.credentialVersion,
         });
 
         return {
@@ -272,6 +315,13 @@ class AuthPlatformService {
     }
 
     async loginVerifyOtp({ challengeId, code, method, context }) {
+        if (
+            !["email-otp", "phone-sms-otp", "phone-whatsapp-otp"].includes(
+                method
+            )
+        ) {
+            throw new ApiError(400, "Invalid login method");
+        }
         const purpose =
             method === "email-otp"
                 ? "login_email_otp"
@@ -289,7 +339,23 @@ class AuthPlatformService {
         const user = await prisma.user.findUnique({
             where: { id: challenge.userId },
         });
-        if (!user) throw new UnauthorizedError("Invalid credentials");
+        if (
+            !user ||
+            user.onboardingStatus !== "active" ||
+            challenge.metadataJson?.credentialVersion !==
+                user.credentialVersion ||
+            (method !== "email-otp" && !user.phoneVerifiedAt) ||
+            challenge.identifierHash !==
+                hashValue(
+                    normalizeIdentifier(
+                        method === "email-otp"
+                            ? user.email
+                            : user.phoneNumber || ""
+                    )
+                )
+        ) {
+            throw new UnauthorizedError("Invalid credentials");
+        }
 
         return this.#completeOrChallenge(user, method, context);
     }
@@ -306,7 +372,8 @@ class AuthPlatformService {
         const user = await prisma.user.findUnique({
             where: { id: challenge?.userId || "" },
         });
-        if (!user) throw new UnauthorizedError("Invalid MFA challenge");
+        if (!user || challenge?.credentialVersion !== user.credentialVersion)
+            throw new UnauthorizedError("Invalid MFA challenge");
 
         const session = await this.authService.createLoginSession({
             user: withId(user),
@@ -329,6 +396,9 @@ class AuthPlatformService {
     }
 
     async #completeOrChallenge(user, method: string, context: RequestContext) {
+        if (user.onboardingStatus !== "active") {
+            throw new UnauthorizedError("Account setup is incomplete");
+        }
         const publicUser = toPublicUser(user);
         const mfaEnabled = Boolean(user.mfaEnabledAt);
         const trusted =
@@ -344,7 +414,8 @@ class AuthPlatformService {
             const challenge = await this.#mfaService.createChallenge(
                 user.id,
                 method,
-                context
+                context,
+                user.credentialVersion
             );
             return {
                 data: {

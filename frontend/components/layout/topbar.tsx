@@ -1,38 +1,64 @@
+"use client";
+
 import Link from "next/link";
-import { Bell, Command, Search, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Bell, Search, Settings, Upload } from "lucide-react";
 
 import { ThemeToggle } from "@/components/brand/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function Topbar() {
+  const router = useRouter();
+  const canUpload = useAuthStore((state) =>
+    state.hasAnyPermission(["video:create"])
+  );
+
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        router.push("/search");
+      }
+    }
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [router]);
+
   return (
-    <header className="sticky top-0 z-30 border-b border-[color:var(--color-border)] bg-[rgba(8,11,19,0.82)] px-4 py-4 backdrop-blur md:px-6">
-      <div className="mx-auto flex max-w-[1500px] items-center gap-4">
+    <header className="sticky top-0 z-30 border-b border-[color:var(--color-border)] bg-[color:var(--color-background-soft)] px-3 py-3 md:px-6">
+      <div className="mx-auto flex max-w-[1500px] items-center gap-2 sm:gap-3">
         <Link
-          className="hidden min-h-11 max-w-2xl flex-1 items-center gap-3 rounded-input border border-[color:var(--color-border)] bg-[rgba(13,17,27,0.82)] px-4 text-[color:var(--color-text-muted)] md:flex"
+          aria-label="Search videos"
+          aria-keyshortcuts="Control+K Meta+K"
+          className="flex min-h-11 min-w-11 max-w-2xl flex-1 items-center justify-center gap-3 rounded-input border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 text-[color:var(--color-text-muted)] md:justify-start"
           href="/search"
         >
-          <Search size={18} />
-          <span className="text-sm">
-            Search for videos, creators, playlists...
-          </span>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs">
-            <Command size={12} /> K
-          </span>
+          <Search size={18} aria-hidden="true" />
+          <span className="hidden text-sm sm:inline">Search videos</span>
+          <kbd className="ml-auto hidden rounded-md border border-[color:var(--color-border)] px-2 py-1 text-xs md:inline">
+            Ctrl / ⌘ K
+          </kbd>
         </Link>
-        <Button asChild size="sm">
-          <Link href="/studio/upload">
-            <Upload size={16} />
-            Upload
+        {canUpload ? (
+          <Button asChild size="sm">
+            <Link href="/studio/upload" aria-label="Upload a video">
+              <Upload size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">Upload</span>
+            </Link>
+          </Button>
+        ) : null}
+        <Button asChild variant="ghost" size="icon">
+          <Link href="/notifications" aria-label="Notifications">
+            <Bell size={18} aria-hidden="true" />
           </Link>
         </Button>
-        <Link
-          aria-label="Notifications"
-          className="inline-flex size-11 items-center justify-center rounded-full border border-[color:var(--color-border)] bg-[rgba(24,29,43,0.72)] text-[color:var(--color-text-secondary)] transition hover:border-[rgba(141,132,255,0.48)] hover:text-[color:var(--color-text-primary)]"
-          href="/notifications"
-        >
-          <Bell size={18} />
-        </Link>
+        <Button asChild variant="ghost" size="icon" className="lg:hidden">
+          <Link href="/settings" aria-label="Settings">
+            <Settings size={18} aria-hidden="true" />
+          </Link>
+        </Button>
         <ThemeToggle />
       </div>
     </header>

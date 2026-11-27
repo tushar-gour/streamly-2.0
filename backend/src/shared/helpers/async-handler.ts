@@ -1,24 +1,24 @@
-// @ts-nocheck
-const asyncHandler = (requestHandler) => {
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+
+type AsyncRequestHandler = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => unknown;
+
+const asyncHandler = (requestHandler: AsyncRequestHandler): RequestHandler => {
     return (req, res, next) => {
-        Promise.resolve(requestHandler(req, res, next)).catch((err) =>
-            next(err)
-        );
+        void Promise.resolve()
+            .then(() => requestHandler(req, res, next))
+            .catch(next);
     };
 };
 
-const tryCatch = (fn) => {
-    return async (req, res, next) => {
-        try {
-            await fn(req, res, next);
-        } catch (error) {
-            next(error);
-        }
-    };
-};
+const tryCatch = (fn: AsyncRequestHandler): RequestHandler => asyncHandler(fn);
 
-const handleService = async (serviceFunction, ...args) => {
-    return serviceFunction(...args);
-};
+const handleService = async <Args extends unknown[], Result>(
+    serviceFunction: (...args: Args) => Result,
+    ...args: Args
+): Promise<Awaited<Result>> => await serviceFunction(...args);
 
 export { asyncHandler, tryCatch, handleService };

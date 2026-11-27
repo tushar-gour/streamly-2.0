@@ -8,6 +8,7 @@ import { ApiResponse } from "../../shared/responses/api-response.js";
 
 const authPlatformService = container.services.authPlatformService;
 const authService = container.services.authService;
+const authorizationService = container.services.authorizationService;
 
 const getDeviceContext = (req, res) => {
     let deviceId = req.cookies?.[appConfig.mfa.deviceCookieName];
@@ -65,20 +66,32 @@ class AuthPlatformController {
     });
 
     static signupPhoneStart = asyncHandler(async (req, res) => {
-        const result = await authPlatformService.signupPhoneStart({
-            userId: req.user._id,
-            ...req.body,
-        });
+        const otp = await container.services.phoneEnrollmentService.start(
+            req.user._id,
+            req.auth.sessionId,
+            req.body ?? {}
+        );
         return res
             .status(200)
-            .json(ApiResponse.success(result.data, result.message));
+            .json(
+                ApiResponse.success({ otp }, "Phone verification code sent.")
+            );
     });
 
     static signupPhoneVerify = asyncHandler(async (req, res) => {
-        const result = await authPlatformService.signupPhoneVerify(req.body);
+        await container.services.phoneEnrollmentService.verify(
+            req.user._id,
+            req.auth.sessionId,
+            req.body ?? {}
+        );
+        const { secure, httpOnly, sameSite } = authService.getCookieOptions();
+        const options = { secure, httpOnly, sameSite };
         return res
             .status(200)
-            .json(ApiResponse.success(result.data, result.message));
+            .clearCookie("accessToken", options)
+            .clearCookie("refreshToken", options)
+            .clearCookie(appConfig.mfa.trustCookieName, options)
+            .json(ApiResponse.success({}, "Phone verified. Sign in again."));
     });
 
     static signupMfaSetup = asyncHandler(async (req, res) => {
@@ -103,6 +116,11 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
+        }
         setLoginCookies(res, result);
         return res
             .status(200)
@@ -114,6 +132,11 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
+        }
         setLoginCookies(res, result);
         return res
             .status(200)
@@ -125,6 +148,11 @@ class AuthPlatformController {
             ...req.body,
             context: getDeviceContext(req, res),
         });
+        if (result.accessToken && result.data.user) {
+            result.data.user = await authorizationService.describeUser(
+                result.data.user
+            );
+        }
         setLoginCookies(res, result);
         return res
             .status(200)

@@ -1,10 +1,17 @@
 // @ts-nocheck
+import { deliverCredentialChallenge } from "../../../application/services/credential-challenge.service.js";
 import { JobNames } from "../job.constants.js";
 import { createEmailProvider } from "../../notifications/email/email-provider.factory.js";
 
 const emailDeliveryProvider = createEmailProvider();
 
 const processEmailJob = async (job) => {
+    if (job.name === JobNames.SEND_CREDENTIAL_CHALLENGE) {
+        await deliverCredentialChallenge(job.data.challengeId, (payload) =>
+            emailDeliveryProvider.sendOtp(payload)
+        );
+        return { processed: true };
+    }
     if (job.name !== JobNames.SEND_EMAIL_VERIFICATION) {
         throw new Error(`Unsupported email job: ${job.name}`);
     }

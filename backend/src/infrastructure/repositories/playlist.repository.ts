@@ -24,6 +24,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                     name: playlistData.name,
                     description: playlistData.description || "",
                     ownerId: playlistData.owner,
+                    isPublic: playlistData.isPublic,
                 },
                 include: { owner: { select: ownerSelect }, videos: true },
             })
@@ -49,6 +50,19 @@ class PrismaPlaylistRepository extends PlaylistRepository {
         };
     }
 
+    addVideo(playlistId, videoId) {
+        return prisma.playlistVideo.createMany({
+            data: { playlistId, videoId },
+            skipDuplicates: true,
+        });
+    }
+
+    removeVideo(playlistId, videoId) {
+        return prisma.playlistVideo.deleteMany({
+            where: { playlistId, videoId },
+        });
+    }
+
     async findByIdWithOwner(playlistId) {
         return toPlaylist(
             await prisma.playlist.findUnique({
@@ -65,6 +79,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                 include: {
                     owner: { select: ownerSelect },
                     videos: {
+                        where: { video: { isPublished: true } },
                         include: {
                             video: true,
                         },
@@ -95,6 +110,7 @@ class PrismaPlaylistRepository extends PlaylistRepository {
             include: {
                 owner: { select: ownerSelect },
                 videos: {
+                    where: { video: { isPublished: true } },
                     include: {
                         video: {
                             include: {
@@ -124,12 +140,18 @@ class PrismaPlaylistRepository extends PlaylistRepository {
         ];
     }
 
-    async getUserPlaylists(userId) {
+    async getUserPlaylists(userId, includePrivate = false) {
         const playlists = await prisma.playlist.findMany({
-            where: { ownerId: userId },
+            where: {
+                ownerId: userId,
+                ...(includePrivate ? {} : { isPublic: true }),
+            },
             include: {
                 videos: {
-                    include: { video: { select: { thumbnail: true } } },
+                    where: { video: { isPublished: true } },
+                    include: {
+                        video: { select: { id: true, thumbnail: true } },
+                    },
                     orderBy: { createdAt: "asc" },
                 },
             },
@@ -142,8 +164,10 @@ class PrismaPlaylistRepository extends PlaylistRepository {
                 _id: playlist.id,
                 name: playlist.name,
                 description: playlist.description,
+                isPublic: playlist.isPublic,
                 videosCount: playlist.videos.length,
                 thumbnail: firstVideo?.thumbnail,
+                thumbnailVideoId: firstVideo?.id,
                 createdAt: playlist.createdAt,
                 updatedAt: playlist.updatedAt,
             };

@@ -1,10 +1,11 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AuthBootstrap } from "@/components/auth/auth-bootstrap";
 import { ThemeProvider } from "@/lib/theme/theme-provider";
+import { useAuthStore } from "@/stores/auth-store";
 
 type AppProvidersProps = Readonly<{
   children: React.ReactNode;
@@ -22,6 +23,16 @@ export function AppProviders({ children }: AppProvidersProps) {
           },
         },
       })
+  );
+
+  useEffect(
+    () =>
+      useAuthStore.subscribe((next, previous) => {
+        if (next.user?._id !== previous.user?._id) {
+          queryClient.clear();
+        }
+      }),
+    [queryClient]
   );
 
   return (

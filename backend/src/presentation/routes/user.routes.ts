@@ -1,15 +1,19 @@
 // @ts-nocheck
 import { Router } from "express";
 
-import { upload } from "../middlewares/multer.middleware.js";
+import { uploadImage } from "../middlewares/multer.middleware.js";
+import { validateStagedMedia } from "../middlewares/validate-media.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requirePermission } from "../middlewares/authorization.middleware.js";
 import { authRateLimiter } from "../middlewares/security.middleware.js";
 import {
+    UserController,
     registerUser,
     loginUser,
     logoutUser,
     logoutAllSessions,
+    listSessions,
+    revokeSession,
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
@@ -24,10 +28,11 @@ const router = Router();
 
 router.route("/register").post(
     authRateLimiter,
-    upload.fields([
+    uploadImage.fields([
         { name: "avatar", maxCount: 1 },
         { name: "coverImage", maxCount: 1 },
     ]),
+    validateStagedMedia,
     registerUser
 );
 
@@ -38,8 +43,12 @@ router.route("/refresh-token").post(authRateLimiter, refreshAccessToken);
 router.route("/logout").post(verifyJWT, logoutUser);
 
 router.route("/logout-all").post(verifyJWT, logoutAllSessions);
+router.route("/sessions").get(verifyJWT, listSessions);
+router.route("/sessions/:sessionId").delete(verifyJWT, revokeSession);
 
-router.route("/change-password").post(verifyJWT, changeCurrentPassword);
+router
+    .route("/change-password")
+    .post(verifyJWT, authRateLimiter, changeCurrentPassword);
 
 router
     .route("/current-user")
@@ -58,7 +67,8 @@ router
     .patch(
         verifyJWT,
         requirePermission("user:update:self"),
-        upload.single("avatar"),
+        uploadImage.single("avatar"),
+        validateStagedMedia,
         updateUserAvatar
     );
 
@@ -67,12 +77,14 @@ router
     .patch(
         verifyJWT,
         requirePermission("user:update:self"),
-        upload.single("coverImage"),
+        uploadImage.single("coverImage"),
+        validateStagedMedia,
         updateCoverImage
     );
 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 
 router.route("/watch-history").get(verifyJWT, getWatchHistory);
+router.route("/:userId/media/:kind").get(UserController.profileMedia);
 
 export default router;

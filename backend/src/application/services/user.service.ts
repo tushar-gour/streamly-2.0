@@ -36,6 +36,11 @@ class UserService {
     }
 
     async register({ body, files }) {
+        if (appConfig.otp.enabled || appConfig.mfa.enabled) {
+            throw new BadRequestError(
+                "Use staged registration to create an account"
+            );
+        }
         const { username, email, fullName, password } = body;
 
         this.#validateRequired({ username, email, fullName, password }, [
@@ -141,6 +146,17 @@ class UserService {
             throw new UnauthorizedError("Invalid credentials");
         }
 
+        // Legacy clients must use challenge-aware sign-in when required.
+        if (
+            user.mfaEnabledAt ||
+            user.onboardingStatus !== "active" ||
+            appConfig.captcha.enabled
+        ) {
+            throw new UnauthorizedError(
+                "Use the advanced sign-in flow to continue"
+            );
+        }
+
         const { accessToken, refreshToken } =
             await this.authService.createLoginSession({
                 user,
@@ -210,6 +226,17 @@ class UserService {
             "newPassword",
         ]);
 
+        if (
+            typeof oldPassword !== "string" ||
+            typeof newPassword !== "string" ||
+            newPassword.length < 8 ||
+            Buffer.byteLength(newPassword, "utf8") > 72
+        ) {
+            throw new BadRequestError(
+                "New password must have at least 8 characters and at most 72 UTF-8 bytes"
+            );
+        }
+
         const user = await this.userRepository.findByIdWithPassword(userId);
 
         if (!user) {
@@ -222,7 +249,18 @@ class UserService {
             throw new BadRequestError("Current password is incorrect");
         }
 
-        await this.userRepository.updatePassword(userId, newPassword);
+        const changed =
+            await this.userRepository.changePasswordAndRevokeSessions(
+                userId,
+                user.password,
+                newPassword
+            );
+        if (!changed) {
+            throw new ConflictError(
+                "Credentials changed; sign in and try again"
+            );
+        }
+        audit.info("auth.password_changed", { userId });
 
         return { data: {}, message: SuccessMessages.PASSWORD_CHANGED };
     }
@@ -230,27 +268,20 @@ class UserService {
     async updateAccountDetails({ userId, body }) {
         const { fullName, email } = body;
 
-        if (!fullName && !email) {
+        if (email !== undefined) {
             throw new BadRequestError(
-                "At least one field is required to update"
+                "Email replacement requires a separate verification workflow"
             );
         }
-
-        const updateData = {};
-        if (fullName) updateData.fullName = fullName;
-        if (email) updateData.email = email.toLowerCase();
-
-        if (email) {
-            const existingUser =
-                await this.userRepository.findByEmailExcludingUser(
-                    email,
-                    userId
-                );
-
-            if (existingUser) {
-                throw new ConflictError("Email is already in use");
-            }
+        if (
+            typeof fullName !== "string" ||
+            !fullName.trim() ||
+            fullName.trim().length > 100
+        ) {
+            throw new BadRequestError("A valid full name is required");
         }
+
+        const updateData = { fullName: fullName.trim() };
 
         const user = await this.userRepository.updateById(
             userId,
@@ -269,10 +300,12 @@ class UserService {
         }
 
         const currentUser = await this.userRepository.findById(userId);
-        const oldAvatarPublicId = this.cloudinaryService.extractPublicId(
+        const oldAvatarPublicId = this.mediaStorageService.extractPublicId(
             currentUser.avatar
         );
-        const avatar = await this.mediaStorageService.upload(avatarLocalPath);
+        const avatar = await this.mediaStorageService.upload(avatarLocalPath, {
+            contentType: file.mimetype,
+        });
 
         if (!avatar) {
             throw new ApiError(500, "Failed to upload avatar");
@@ -306,11 +339,13 @@ class UserService {
         }
 
         const currentUser = await this.userRepository.findById(userId);
-        const oldCoverPublicId = this.cloudinaryService.extractPublicId(
+        const oldCoverPublicId = this.mediaStorageService.extractPublicId(
             currentUser.coverImage
         );
-        const coverImage =
-            await this.mediaStorageService.upload(coverImageLocalPath);
+        const coverImage = await this.mediaStorageService.upload(
+            coverImageLocalPath,
+            { contentType: file.mimetype }
+        );
 
         if (!coverImage) {
             throw new ApiError(500, "Failed to upload cover image");

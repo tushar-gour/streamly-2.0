@@ -19,11 +19,14 @@ import { PrismaSubscriptionRepository } from "../../infrastructure/repositories/
 import { PrismaUserRepository } from "../../infrastructure/repositories/user.repository.js";
 import { PrismaUserRoleRepository } from "../../infrastructure/repositories/user-role.repository.js";
 import { PrismaVideoRepository } from "../../infrastructure/repositories/video.repository.js";
+import { PrismaWatchLaterRepository } from "../../infrastructure/repositories/watch-later.repository.js";
+import { WatchLaterService } from "../../application/services/watch-later.service.js";
 import { PrismaEmailVerificationTokenRepository } from "../../infrastructure/repositories/email-verification-token.repository.js";
 import { CleanupJobProducer } from "../../infrastructure/jobs/producers/cleanup-job.producer.js";
 import { EmailJobProducer } from "../../infrastructure/jobs/producers/email-job.producer.js";
 import { NotificationJobProducer } from "../../infrastructure/jobs/producers/notification-job.producer.js";
 import { ThumbnailJobProducer } from "../../infrastructure/jobs/producers/thumbnail-job.producer.js";
+import { CredentialChallengeService } from "../../application/services/credential-challenge.service.js";
 import { AuthService } from "../../application/services/auth.service.js";
 import { AuthPlatformService } from "../../application/services/auth-platform.service.js";
 import { AuthorizationService } from "../../application/services/authorization.service.js";
@@ -37,12 +40,18 @@ import { LikeService } from "../../application/services/like.service.js";
 import { PlaylistService } from "../../application/services/playlist.service.js";
 import { PolicyService } from "../../application/services/policy.service.js";
 import { SubscriptionService } from "../../application/services/subscription.service.js";
+import { PrismaVideoUploadRepository } from "../../infrastructure/repositories/video-upload.repository.js";
+import { PhoneEnrollmentService } from "../../application/services/phone-enrollment.service.js";
+import { createSmsProvider } from "../../infrastructure/notifications/sms/sms-provider.factory.js";
+import { createWhatsAppProvider } from "../../infrastructure/notifications/whatsapp/whatsapp-provider.factory.js";
 import { TokenService } from "../../application/services/token.service.js";
 import { UserService } from "../../application/services/user.service.js";
 import { VideoService } from "../../application/services/video.service.js";
 
 const userRepository = new PrismaUserRepository();
 const videoRepository = new PrismaVideoRepository();
+const videoUploadRepository = new PrismaVideoUploadRepository();
+const watchLaterRepository = new PrismaWatchLaterRepository();
 const commentRepository = new PrismaCommentRepository();
 const likeRepository = new PrismaLikeRepository();
 const playlistRepository = new PrismaPlaylistRepository();
@@ -67,6 +76,8 @@ const mediaStreamService = new MediaStreamService(mediaProvider);
 
 const tokenService = new TokenService();
 const otpService = new OtpService();
+const smsProvider = createSmsProvider();
+const whatsappProvider = createWhatsAppProvider();
 const mfaService = new MfaService();
 const authService = new AuthService({
     userRepository,
@@ -91,6 +102,7 @@ const authPlatformService = new AuthPlatformService({
     otpService,
     mfaService,
     authService,
+    tokenService,
     roleRepository,
     userRoleRepository,
 });
@@ -99,6 +111,8 @@ const container = Object.freeze({
     repositories: {
         userRepository,
         videoRepository,
+        videoUploadRepository,
+        watchLaterRepository,
         commentRepository,
         likeRepository,
         playlistRepository,
@@ -116,6 +130,52 @@ const container = Object.freeze({
         mfaService,
         authService,
         authPlatformService,
+        phoneEnrollmentService: new PhoneEnrollmentService(
+            async ({ phoneNumber, channel, code, userId }) => {
+                if (
+                    !appConfig.otp.enabled ||
+                    !appConfig.sms.enabled ||
+                    appConfig.sms.provider !== "twilio" ||
+                    (channel === "whatsapp" &&
+                        !appConfig.sms.twilioWhatsAppFrom)
+                ) {
+                    throw new Error("Phone delivery unavailable");
+                }
+                const message =
+                    "Your Streamly phone verification code is " +
+                    code +
+                    ". It expires in 5 minutes.";
+                const result =
+                    channel === "sms"
+                        ? await smsProvider.sendSms({
+                              to: phoneNumber,
+                              message,
+                              userId,
+                          })
+                        : await whatsappProvider.sendWhatsApp({
+                              to: phoneNumber,
+                              body: message,
+                          });
+                if (!result.delivered)
+                    throw new Error("Phone delivery unavailable");
+            },
+            (userId, code) => mfaService.verifyCurrentTotp(userId, code)
+        ),
+        credentialChallengeService: new CredentialChallengeService(
+            async (id) => {
+                if (
+                    !appConfig.email.enabled ||
+                    !appConfig.jobs.emailQueueEnabled ||
+                    !appConfig.jobs.enabled
+                ) {
+                    throw new Error("Credential email delivery unavailable");
+                }
+                if (!(await emailJobProducer.enqueueCredentialChallenge(id))) {
+                    throw new Error("Credential email queue unavailable");
+                }
+            },
+            (userId, code) => mfaService.verifyCurrentTotp(userId, code)
+        ),
         authorizationService,
         policyService,
         emailVerificationService,
@@ -130,6 +190,7 @@ const container = Object.freeze({
         }),
         videoService: new VideoService({
             videoRepository,
+            videoUploadRepository,
             userRepository,
             likeRepository,
             commentRepository,
@@ -172,6 +233,7 @@ const container = Object.freeze({
             databaseHealthService,
             redisService,
         }),
+        watchLaterService: new WatchLaterService(watchLaterRepository),
         cacheService,
         mediaStorageService,
         mediaStreamService,

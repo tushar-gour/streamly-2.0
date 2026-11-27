@@ -73,6 +73,15 @@ class VideoController {
             .json(ApiResponse.success(result.data, result.message));
     });
 
+    static thumbnail = asyncHandler(async (req, res) => {
+        const result = await videoService.streamThumbnail({
+            videoId: req.params.videoId,
+            currentUserId: req.user?._id,
+        });
+        res.status(result.statusCode).set(result.headers);
+        return result.body ? result.body.pipe(res) : res.end();
+    });
+
     static stream = asyncHandler(async (req, res) => {
         const range = Array.isArray(req.headers.range)
             ? req.headers.range[0]
@@ -111,5 +120,6 @@ export const updateVideo = VideoController.update;
 export const deleteVideo = VideoController.delete;
 export const togglePublishStatus = VideoController.togglePublish;
 export const streamVideo = VideoController.stream;
+export const streamThumbnail = VideoController.thumbnail;
 
 export { VideoController };

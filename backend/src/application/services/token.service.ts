@@ -45,6 +45,27 @@ class TokenService {
         );
     }
 
+    generateOnboardingToken(user) {
+        return jwt.sign(
+            {
+                _id: user.id,
+                email: user.email,
+                sessionId: createId(),
+                type: "onboarding",
+            },
+            appConfig.jwt.accessTokenSecret,
+            { expiresIn: "10m" }
+        );
+    }
+
+    verifyOnboardingToken(token) {
+        return this.#verifyToken(
+            token,
+            appConfig.jwt.accessTokenSecret,
+            "onboarding"
+        );
+    }
+
     verifyAccessToken(token) {
         const payload = this.#verifyToken(
             token,
@@ -111,7 +132,14 @@ class TokenService {
         try {
             const payload = jwt.verify(token, secret);
 
-            if (payload.type !== expectedType) {
+            if (
+                typeof payload !== "object" ||
+                payload.type !== expectedType ||
+                typeof payload._id !== "string" ||
+                !payload._id ||
+                typeof payload.sessionId !== "string" ||
+                !payload.sessionId
+            ) {
                 throw new UnauthorizedError("Invalid token type");
             }
 

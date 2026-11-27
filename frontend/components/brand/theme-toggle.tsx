@@ -10,7 +10,8 @@ export function ThemeToggle() {
   return (
     <button
       aria-label="Toggle theme"
-      className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[rgba(24,29,43,0.72)] px-3 text-[color:var(--color-text-secondary)]"
+      aria-pressed={theme === "light"}
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] px-3 text-[color:var(--color-text-secondary)]"
       type="button"
       onClick={toggleTheme}
     >

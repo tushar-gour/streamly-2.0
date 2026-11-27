@@ -4,6 +4,7 @@ import {
     BadRequestError,
     ForbiddenError,
     NotFoundError,
+    UnauthorizedError,
 } from "../../shared/errors/api-error.js";
 import {
     PaginationDefaults,
@@ -14,12 +15,14 @@ import { ObjectIdValidator } from "../../shared/validators/object-id.validator.j
 import { createLogger } from "../../infrastructure/logger/logger.js";
 import { appConfig } from "../../config/env.js";
 import { CacheKeys } from "../../infrastructure/cache/cache.keys.js";
+import { probeVideoDuration } from "../../infrastructure/media/probe-video.js";
 
 const videoServiceLogger = createLogger("video-service");
 
 class VideoService {
     constructor({
         videoRepository,
+        videoUploadRepository,
         userRepository,
         likeRepository,
         commentRepository,
@@ -31,6 +34,7 @@ class VideoService {
         thumbnailJobProducer,
     }) {
         this.videoRepository = videoRepository;
+        this.videoUploadRepository = videoUploadRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -55,27 +59,16 @@ class VideoService {
         const { pageNum, limitNum } = this.#getPagination(page, limit);
         if (userId) ObjectIdValidator.ensureValid(userId, "user ID");
 
-        const cacheKey = CacheKeys.videoList({
-            page: pageNum,
-            limit: limitNum,
-            query,
-            sortBy,
-            sortType,
-            userId,
-        });
-        const { videos, totalDocs } = await this.cacheService.remember(
-            cacheKey,
-            appConfig.cache.videoListTtlSeconds,
-            () =>
-                this.videoRepository.getPublishedVideos({
-                    pageNum,
-                    limitNum,
-                    query,
-                    sortBy,
-                    sortType,
-                    userId,
-                })
-        );
+        // Visibility cannot depend on eventually invalidated cache entries.
+        const { videos, totalDocs } =
+            await this.videoRepository.getPublishedVideos({
+                pageNum,
+                limitNum,
+                query,
+                sortBy,
+                sortType,
+                userId,
+            });
 
         return {
             data: videos,
@@ -105,6 +98,7 @@ class VideoService {
         };
 
         const video = await loadVideoDetails();
+        await this.#ensureViewAccess(video, currentUserId);
 
         await this.videoRepository.incrementViews(videoId);
 
@@ -138,7 +132,14 @@ class VideoService {
     async publish({ body, files, ownerId }) {
         const { title, description } = body;
 
-        if (!title?.trim() || !description?.trim()) {
+        if (
+            typeof title !== "string" ||
+            typeof description !== "string" ||
+            !title.trim() ||
+            !description.trim() ||
+            title.trim().length > 200 ||
+            description.trim().length > 5000
+        ) {
             throw new BadRequestError("Title and description are required");
         }
 
@@ -153,53 +154,101 @@ class VideoService {
             throw new BadRequestError("Thumbnail image is required");
         }
 
-        const [videoUpload, thumbnailUpload] = await Promise.all([
-            this.mediaStorageService.upload(videoFile.path, {
-                resource_type: "video",
-            }),
-            this.mediaStorageService.upload(thumbnailFile.path),
-        ]);
-
-        if (!videoUpload) {
-            throw new ApiError(500, "Failed to upload video");
-        }
-
-        if (!thumbnailUpload) {
-            throw new ApiError(500, "Failed to upload thumbnail");
-        }
-
-        const video = await this.videoRepository.create({
-            title: title.trim(),
-            description: description.trim(),
-            videoFile: videoUpload.secureUrl || videoUpload.url,
-            thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
-            duration: videoUpload.duration || 0,
-            owner: ownerId,
-            isPublished: true,
-        });
-
-        const publishedVideo = await this.videoRepository.findByIdWithOwner(
-            video._id
+        const { attempt, started } = await this.videoUploadRepository.begin(
+            ownerId,
+            title.trim(),
+            body.requestId,
+            appConfig.media.storageProvider === "s3"
         );
-
-        this.thumbnailJobProducer
-            ?.enqueueThumbnailGeneration({
-                videoId: video._id,
-                videoUrl: video.videoFile,
-            })
-            .catch((error) => {
-                this.thumbnailJobProducer?.logEnqueueFailure(
-                    error,
-                    "thumbnail.generate"
+        if (!started) {
+            if (attempt.status === "ready" && attempt.videoId) {
+                const existing = await this.videoRepository.findByIdWithOwner(
+                    attempt.videoId
                 );
-                videoServiceLogger.warn(
-                    { videoId: video._id },
-                    "thumbnail generation job enqueue failed"
-                );
-            });
+                if (existing)
+                    return {
+                        statusCode: 201,
+                        data: existing,
+                        message: SuccessMessages.VIDEO_CREATED,
+                    };
+            }
+            throw new ApiError(
+                409,
+                "Upload identifier already used. Check Creator Studio."
+            );
+        }
 
+        let videoUpload, thumbnailUpload, videoId;
+        try {
+            const duration = await probeVideoDuration(videoFile.path);
+            await this.videoUploadRepository.markStoring(attempt.id);
+            const outcomes = await Promise.allSettled([
+                this.mediaStorageService.upload(videoFile.path, {
+                    resource_type: "video",
+                    contentType: videoFile.mimetype,
+                    ...(attempt.videoKey
+                        ? { objectKey: attempt.videoKey }
+                        : {}),
+                }),
+                this.mediaStorageService.upload(thumbnailFile.path, {
+                    contentType: thumbnailFile.mimetype,
+                    ...(attempt.thumbnailKey
+                        ? { objectKey: attempt.thumbnailKey }
+                        : {}),
+                }),
+            ]);
+            videoUpload =
+                outcomes[0].status === "fulfilled" ? outcomes[0].value : null;
+            thumbnailUpload =
+                outcomes[1].status === "fulfilled" ? outcomes[1].value : null;
+            if (!videoUpload || !thumbnailUpload)
+                throw new ApiError(503, "Media storage is unavailable");
+            videoId = await this.videoUploadRepository.complete(
+                attempt.id,
+                ownerId,
+                {
+                    title: title.trim(),
+                    description: description.trim(),
+                    videoFile: videoUpload.secureUrl || videoUpload.url,
+                    thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
+                    duration: videoUpload.duration || duration,
+                }
+            );
+        } catch (error) {
+            // Only clean failed attempts, never an ambiguously committed published video.
+            const failed = await this.videoUploadRepository.fail(
+                attempt.id,
+                error?.statusCode === 422
+                    ? "Invalid or unsupported video file"
+                    : "Processing failed. Start a new upload."
+            );
+            if (failed.count === 1) {
+                if (attempt.videoKey) {
+                    await this.videoUploadRepository.cleanupFailed(
+                        attempt.id,
+                        (key, resource) =>
+                            this.mediaStorageService.delete(key, resource)
+                    );
+                } else {
+                    await Promise.allSettled([
+                        videoUpload &&
+                            this.mediaStorageService.delete(
+                                videoUpload.publicId,
+                                "video"
+                            ),
+                        thumbnailUpload &&
+                            this.mediaStorageService.delete(
+                                thumbnailUpload.publicId
+                            ),
+                    ]);
+                }
+            }
+            throw error;
+        }
+        // The supplied thumbnail is intentional; do not overwrite it with a generated frame.
+        const publishedVideo =
+            await this.videoRepository.findByIdWithOwner(videoId);
         await this.#invalidateAllVideoCache();
-
         return {
             statusCode: 201,
             data: publishedVideo,
@@ -218,12 +267,14 @@ class VideoService {
         if (body.description?.trim())
             updateData.description = body.description.trim();
 
+        let oldThumbnailPublicId;
         if (file) {
-            const oldThumbnailPublicId = this.cloudinaryService.extractPublicId(
+            oldThumbnailPublicId = this.mediaStorageService.extractPublicId(
                 video.thumbnail
             );
             const thumbnailUpload = await this.mediaStorageService.upload(
-                file.path
+                file.path,
+                { contentType: file.mimetype }
             );
 
             if (!thumbnailUpload) {
@@ -232,17 +283,6 @@ class VideoService {
 
             updateData.thumbnail =
                 thumbnailUpload.secureUrl || thumbnailUpload.url;
-
-            if (oldThumbnailPublicId) {
-                this.mediaStorageService
-                    .delete(oldThumbnailPublicId)
-                    .catch((error) =>
-                        videoServiceLogger.warn(
-                            { error: { message: error.message } },
-                            "failed to delete old thumbnail"
-                        )
-                    );
-            }
         }
 
         if (Object.keys(updateData).length === 0) {
@@ -256,6 +296,17 @@ class VideoService {
             updateData
         );
 
+        if (oldThumbnailPublicId) {
+            this.mediaStorageService
+                .delete(oldThumbnailPublicId)
+                .catch((error) =>
+                    videoServiceLogger.warn(
+                        { error: { message: error.message } },
+                        "failed to delete old thumbnail"
+                    )
+                );
+        }
+
         await this.#invalidateVideoCache(videoId);
 
         return { data: updatedVideo, message: SuccessMessages.VIDEO_UPDATED };
@@ -267,10 +318,10 @@ class VideoService {
         const video = await this.#findVideoOrFail(videoId);
         this.#verifyOwnership(video, userId);
 
-        const videoPublicId = this.cloudinaryService.extractPublicId(
+        const videoPublicId = this.mediaStorageService.extractPublicId(
             video.videoFile
         );
-        const thumbnailPublicId = this.cloudinaryService.extractPublicId(
+        const thumbnailPublicId = this.mediaStorageService.extractPublicId(
             video.thumbnail
         );
 
@@ -303,10 +354,17 @@ class VideoService {
         const video = await this.#findVideoOrFail(videoId);
         this.#verifyOwnership(video, userId);
 
-        const updatedVideo = await this.videoRepository.updateByIdWithOwner(
+        const updatedVideo = await this.videoRepository.toggleOwnedPublication(
             videoId,
-            { isPublished: !video.isPublished }
+            userId,
+            !video.isPublished
         );
+        if (!updatedVideo) {
+            throw new ApiError(
+                409,
+                "Publication changed or is held by moderation"
+            );
+        }
 
         const message = updatedVideo.isPublished
             ? "Video published successfully"
@@ -326,34 +384,47 @@ class VideoService {
 
         const video = await this.#findVideoOrFail(videoId);
 
-        if (!video.isPublished) {
-            if (!currentUserId) {
-                throw new ApiError(
-                    401,
-                    "Authentication required to stream this video"
-                );
-            }
+        await this.#ensureViewAccess(video, currentUserId);
+        const result = await this.mediaStreamService.streamVideo(
+            video.videoFile,
+            range
+        );
+        return {
+            ...result,
+            headers: {
+                ...result.headers,
+                "Cache-Control": "private, no-store",
+            },
+        };
+    }
 
-            const ownsVideo =
-                video.owner?.toString() === currentUserId.toString();
-            const canStreamPrivateVideo =
-                await this.authorizationService.hasAnyPermission(
-                    currentUserId,
-                    [
-                        "video:update:any",
-                        "video:delete:any",
-                        "video:publish:any",
-                    ]
-                );
+    async streamThumbnail({ videoId, currentUserId }) {
+        ObjectIdValidator.ensureValid(videoId, "video ID");
+        const video = await this.#findVideoOrFail(videoId);
+        await this.#ensureViewAccess(video, currentUserId);
+        return this.mediaStreamService.streamImage(video.thumbnail);
+    }
 
-            if (!ownsVideo && !canStreamPrivateVideo) {
-                throw new ForbiddenError(
-                    "You are not authorized to stream this video"
-                );
-            }
+    async #ensureViewAccess(video, currentUserId) {
+        if (video.isPublished) return;
+        if (!currentUserId) {
+            throw new UnauthorizedError(
+                "Authentication required to view this video"
+            );
         }
-
-        return this.mediaStreamService.streamVideo(video.videoFile, range);
+        const ownerId = video.owner?._id ?? video.owner;
+        if (ownerId === currentUserId) return;
+        if (
+            !(await this.authorizationService.hasAnyPermission(currentUserId, [
+                "video:update:any",
+                "video:delete:any",
+                "video:publish:any",
+            ]))
+        ) {
+            throw new ForbiddenError(
+                "You are not authorized to view this video"
+            );
+        }
     }
 
     async #findVideoOrFail(videoId) {

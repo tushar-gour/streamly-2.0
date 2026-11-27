@@ -6,6 +6,10 @@
   color-scheme: dark;
   --color-background: #080b13;
   --color-background-soft: #0d111b;
+  --color-background-end: #090d17;
+  --color-skeleton: #151a26;
+  --color-skeleton-highlight: #232a3b;
+  --color-error: #ff8a8a;
   --color-surface: #111521;
   --color-surface-elevated: #181d2b;
   --color-accent: #6c5ce7;
@@ -29,16 +33,20 @@
   color-scheme: light;
   --color-background: #f7f8fb;
   --color-background-soft: #ffffff;
+  --color-background-end: #edf0f7;
+  --color-skeleton: #e1e6ef;
+  --color-skeleton-highlight: #f4f6fa;
+  --color-error: #b42318;
   --color-surface: #eef1f7;
   --color-surface-elevated: #ffffff;
   --color-accent: #6c5ce7;
   --color-accent-hover: #5f50da;
   --color-accent-pressed: #4e42bf;
-  --color-accent-soft: #8d84ff;
+  --color-accent-soft: #5445c7;
   --color-accent-cool: #6c5ce7;
   --color-text-primary: #111521;
   --color-text-secondary: #4b5565;
-  --color-text-muted: #7b8495;
+  --color-text-muted: #596476;
   --color-border: #dde2ec;
   --focus-ring: rgba(108, 92, 231, 0.28);
 }
@@ -66,7 +74,11 @@ body {
       rgba(141, 132, 255, 0.08),
       transparent 30rem
     ),
-    linear-gradient(180deg, var(--color-background) 0%, #090d17 100%);
+    linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      var(--color-background-end) 100%
+    );
   color: var(--color-text-primary);
   font-family:
     Inter,
@@ -116,7 +128,12 @@ select {
 }
 
 .streamly-shimmer {
-  background: linear-gradient(90deg, #151a26 0%, #232a3b 45%, #151a26 100%);
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton) 0%,
+    var(--color-skeleton-highlight) 45%,
+    var(--color-skeleton) 100%
+  );
   background-size: 220% 100%;
   animation: streamly-shimmer 1400ms var(--ease-streamly) infinite;
 }

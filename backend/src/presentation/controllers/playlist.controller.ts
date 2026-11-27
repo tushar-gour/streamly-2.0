@@ -17,7 +17,10 @@ class PlaylistController {
     });
 
     static getById = asyncHandler(async (req, res) => {
-        const result = await playlistService.getById(req.params.playlistId);
+        const result = await playlistService.getById(
+            req.params.playlistId,
+            req.user._id
+        );
         return res
             .status(200)
             .json(ApiResponse.success(result.data, result.message));
@@ -25,7 +28,8 @@ class PlaylistController {
 
     static getUserPlaylists = asyncHandler(async (req, res) => {
         const result = await playlistService.getUserPlaylists(
-            req.params.userId
+            req.params.userId,
+            req.user._id
         );
         return res
             .status(200)

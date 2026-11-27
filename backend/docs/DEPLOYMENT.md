@@ -227,3 +227,9 @@ curl https://streamly.zytheran.me/api/v1/docs/openapi.json
 - Backups.
 - External monitoring.
 - Blue-green or canary deployment.
+
+## Private media production gate (required before enabling the new API)
+
+Provision a dedicated AWS S3 bucket in the application account. Enable all four S3 Block Public Access flags and Object Ownership BucketOwnerEnforced (ACLs disabled). The API checks these and refuses startup if any bucket policy exists, including CDN grants. Use only a narrowly scoped identity-based IAM role for API and worker: GetObject, PutObject, DeleteObject on the dedicated media prefix/bucket, and GetBucketPublicAccessBlock, GetBucketOwnershipControls, GetBucketPolicy on the bucket for startup validation. Do not grant other identities access to the private objects; disallow public access points, S3 website endpoints and CDN origin grants. Keep AWS_S3_PUBLIC_BASE_URL and AWS_S3_ENDPOINT empty in production. An infrastructure operator must independently verify account/access-point policies and access using unsigned requests. Never cache /api/v1 at a shared reverse proxy or Cloudflare.
+
+Existing public URLs are incompatible with the new key-only storage model. Before rollout, inventory database videoFile, thumbnail, avatar and coverImage fields; copy required content into the dedicated private bucket with verified content types and checksums, update records to the corresponding keys using an approved migration, verify object counts and owner/read access, and revoke old public origin access and invalidate old CDN copies. Do not delete old objects before a verified private backup and migration. This requires separate operator authorization, isolated testing and a maintenance window. Do not roll back to public delivery: restore the previous compatible database/application snapshot in a restricted environment or keep media routes unavailable until corrected. The development Cloudinary provider is not a production privacy boundary.

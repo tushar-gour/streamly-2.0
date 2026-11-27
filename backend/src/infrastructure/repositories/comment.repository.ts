@@ -18,6 +18,18 @@ class PrismaCommentRepository extends CommentRepository {
         );
     }
 
+    async findOnPublishedVideo(commentId) {
+        return toComment(
+            await prisma.comment.findFirst({
+                where: {
+                    id: commentId,
+                    moderationHeld: false,
+                    video: { isPublished: true },
+                },
+            })
+        );
+    }
+
     async create(commentData) {
         return toComment(
             await prisma.comment.create({
@@ -41,14 +53,13 @@ class PrismaCommentRepository extends CommentRepository {
         );
     }
 
-    async updateByIdWithOwner(commentId, content) {
-        return toComment(
-            await prisma.comment.update({
-                where: { id: commentId },
-                data: { content },
-                include: { owner: { select: ownerSelect } },
-            })
-        );
+    async updateByIdWithOwner(commentId, content, ownerId) {
+        const changed = await prisma.comment.updateMany({
+            where: { id: commentId, ownerId, moderationHeld: false },
+            data: { content },
+        });
+        if (changed.count !== 1) return null;
+        return this.findByIdWithOwner(commentId);
     }
 
     deleteById(commentId) {
@@ -60,12 +71,14 @@ class PrismaCommentRepository extends CommentRepository {
     }
 
     countByVideo(videoId) {
-        return prisma.comment.count({ where: { videoId } });
+        return prisma.comment.count({
+            where: { videoId, moderationHeld: false },
+        });
     }
 
     countByVideos(videoIds) {
         return prisma.comment.count({
-            where: { videoId: { in: videoIds } },
+            where: { videoId: { in: videoIds }, moderationHeld: false },
         });
     }
 
@@ -80,7 +93,7 @@ class PrismaCommentRepository extends CommentRepository {
             : {};
         const [comments, totalDocs] = await Promise.all([
             prisma.comment.findMany({
-                where: { videoId },
+                where: { videoId, moderationHeld: false },
                 include: {
                     owner: { select: ownerSelect },
                     ...likeInclude,

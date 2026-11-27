@@ -21,6 +21,15 @@ export const subscriptionsApi = {
       `/api/v1/subscriptions/u/${subscriberId}`
     );
   },
+  setChannel(channelId: string, isSubscribed: boolean) {
+    return apiRequest<unknown>(
+      `/api/v1/subscriptions/c/${encodeURIComponent(channelId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ isSubscribed }),
+      }
+    );
+  },
   toggleChannel(channelId: string) {
     return apiRequest<unknown>(`/api/v1/subscriptions/c/${channelId}`, {
       method: "POST",

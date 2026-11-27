@@ -17,6 +17,7 @@ model User {
   password                String
   emailVerifiedAt         DateTime?
   passwordChangedAt       DateTime?
+  credentialVersion       Int                      @default(0)
   lastLoginAt             DateTime?
   phoneNumber             String?                  @unique @db.VarChar(32)
   phoneVerifiedAt         DateTime?
@@ -25,6 +26,7 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   videos                  Video[]
+  uploadAttempts          VideoUploadAttempt[]
   comments                Comment[]
   likes                   Like[]
   playlists               Playlist[]
@@ -34,14 +36,30 @@ model User {
   subscribers             Subscription[]           @relation("ChannelSubscriptions")
   subscribedTo            Subscription[]           @relation("SubscriberSubscriptions")
   watchHistory            WatchHistory[]
+  watchLater              WatchLater[]
   authChallenges          AuthChallenge[]
   mfaMethods              UserMfa[]
   mfaChallenges           MfaChallenge[]
   mfaTrustTokens          MfaTrustToken[]
+  notifications           Notification[]
 
   @@index([email, username])
   @@index([createdAt])
   @@map("users")
+}
+
+model Notification {
+  id String @id @db.Char(24)
+  userId String @db.Char(24)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind String @db.VarChar(40)
+  message String @db.VarChar(500)
+  readAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
 }
 
 model AuthChallenge {
@@ -89,6 +107,7 @@ model MfaChallenge {
   userId                String    @db.Char(24)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   loginMethod           String    @db.VarChar(40)
+  credentialVersion     Int?
   expiresAt             DateTime
   consumedAt            DateTime?
   failedAttempts        Int       @default(0)
@@ -221,12 +240,15 @@ model Video {
   duration     Float
   views        Int             @default(0)
   isPublished  Boolean         @default(true)
+  moderationHeld Boolean       @default(false)
+  uploadAttempt VideoUploadAttempt?
   ownerId      String          @db.Char(24)
   owner        User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   comments     Comment[]
   likes        Like[]
   playlists    PlaylistVideo[]
   watchHistory WatchHistory[]
+  watchLater   WatchLater[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -236,9 +258,46 @@ model Video {
   @@map("videos")
 }
 
+model VideoUploadAttempt {
+  id String @id @db.Char(24)
+  ownerId String @db.Char(24)
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  requestId String @db.Uuid
+  title String @db.VarChar(200)
+  status String @db.VarChar(20)
+  error String? @db.VarChar(200)
+  videoId String? @unique @db.Char(24)
+  video Video? @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  videoKey String?
+  thumbnailKey String?
+  expiresAt DateTime
+  cleanedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, requestId])
+  @@index([ownerId, createdAt])
+  @@index([status, expiresAt])
+  @@map("video_upload_attempts")
+}
+
+model ModerationAction {
+  id String @id @db.Char(24)
+  actorId String @db.Char(24)
+  resourceId String @db.Char(24)
+  action String @db.VarChar(40)
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@index([resourceId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("moderation_actions")
+}
+
 model Comment {
   id        String   @id @db.Char(24)
   content   String   @db.VarChar(2000)
+  moderationHeld Boolean @default(false)
   videoId   String   @db.Char(24)
   ownerId   String   @db.Char(24)
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
@@ -249,6 +308,7 @@ model Comment {
 
   @@index([videoId, createdAt])
   @@index([ownerId, createdAt])
+  @@index([videoId, moderationHeld, createdAt])
   @@map("comments")
 }
 
@@ -326,4 +386,17 @@ model WatchHistory {
 
   @@id([userId, videoId])
   @@map("watch_history")
+}
+
+model WatchLater {
+  userId    String   @db.Char(24)
+  videoId   String   @db.Char(24)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, videoId])
+  @@index([userId, createdAt])
+  @@index([videoId])
+  @@map("watch_later")
 }

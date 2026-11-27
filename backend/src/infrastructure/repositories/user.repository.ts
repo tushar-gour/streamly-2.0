@@ -1,5 +1,6 @@
 // @ts-nocheck
 import bcrypt from "bcrypt";
+import { revokeCredentialSessions } from "../database/credential-revocation.js";
 
 import { isProduction } from "../../config/env.js";
 import { UserRepository } from "../../domain/repositories/user.repository.js";
@@ -114,6 +115,27 @@ class PrismaUserRepository extends UserRepository {
         });
     }
 
+    async changePasswordAndRevokeSessions(
+        userId: string,
+        expectedPasswordHash: string,
+        password: string
+    ): Promise<boolean> {
+        const passwordHash = await bcrypt.hash(
+            password,
+            isProduction() ? 12 : 10
+        );
+        const now = new Date();
+        return prisma.$transaction(async (tx) => {
+            const changed = await tx.user.updateMany({
+                where: { id: userId, password: expectedPasswordHash },
+                data: { password: passwordHash, passwordChangedAt: now },
+            });
+            if (changed.count !== 1) return false;
+            await revokeCredentialSessions(tx, userId, now, "password-changed");
+            return true;
+        });
+    }
+
     clearRefreshToken(userId) {
         return this.findById(userId);
     }
@@ -156,7 +178,6 @@ class PrismaUserRepository extends UserRepository {
                 _id: channel.id,
                 username: channel.username,
                 fullName: channel.fullName,
-                email: channel.email,
                 avatar: channel.avatar,
                 coverImage: channel.coverImage,
                 subscribersCount: channel.subscribers.length,
@@ -177,6 +198,7 @@ class PrismaUserRepository extends UserRepository {
             where: { id: userId },
             include: {
                 watchHistory: {
+                    where: { video: { isPublished: true } },
                     include: {
                         video: {
                             include: {

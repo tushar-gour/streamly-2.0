@@ -75,7 +75,7 @@ export function SubscriptionsPanel() {
 
             return (
               <Link
-                className="flex items-center gap-4 rounded-card border border-[color:var(--color-border)] bg-[rgba(17,21,33,0.72)] p-4 transition duration-180 hover:border-[rgba(141,132,255,0.5)]"
+                className="flex items-center gap-4 rounded-card border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4 transition duration-180 hover:border-[rgba(141,132,255,0.5)]"
                 href={`/channel/${channel.username}`}
                 key={channel._id}
               >
