@@ -933,7 +933,7 @@ const openApiDocument = {
             post: {
                 tags: ["Videos"],
                 summary: "Publish video",
-                description: protectedDescription("video:create"),
+                description: protectedDescription("video:create") + " Optional multipart requestId (UUID v4) provides idempotent publication; use the upload status endpoints to reconcile an interrupted response.",
                 security: authSecurity,
                 requestBody: {
                     required: true,
@@ -944,6 +944,42 @@ const openApiDocument = {
                 responses: {
                     201: successResponse("Video published.", {
                         $ref: "#/components/schemas/Video",
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/videos/uploads": {
+            get: {
+                tags: ["Videos"],
+                summary: "List the signed-in creator's recent upload attempts",
+                security: authSecurity,
+                responses: {
+                    200: successResponse("Upload attempts.", { type: "array", items: { type: "object" } }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/videos/uploads/{requestId}": {
+            get: {
+                tags: ["Videos"],
+                summary: "Get an owner-scoped upload attempt",
+                security: authSecurity,
+                parameters: [
+                    { name: "requestId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+                ],
+                responses: {
+                    200: successResponse("Upload status.", {
+                        type: "object",
+                        properties: {
+                            requestId: { type: "string", format: "uuid" },
+                            title: { type: "string" },
+                            status: { type: "string", enum: ["validating", "storing", "ready", "failed", "interrupted"] },
+                            videoId: { type: ["string", "null"] },
+                            error: { type: ["string", "null"] },
+                            createdAt: { type: "string", format: "date-time" },
+                            updatedAt: { type: "string", format: "date-time" },
+                        },
                     }),
                     ...standardErrors,
                 },

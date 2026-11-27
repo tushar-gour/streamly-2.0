@@ -394,3 +394,7 @@ VERIFIED: database integration/security, migration, backend tests and frontend q
 ### Iteration 45 — Durable video upload processing backend
 
 PROD-01 IN_PROGRESS: added owner-scoped upload attempt ledger (validating/storing/ready/failed; expired attempts reported interrupted), optional client request UUID, atomic video creation and ready transition, idempotent completed requests, private preallocated object keys and periodic cleanup of failed/expired S3 attempts. Existing synchronous upload contract preserved; no invented transcoding status. The user-selected thumbnail is no longer overwritten by an unnecessary background generation job. New storage and API tests, OpenAPI and frontend recovery UI pending. Legacy Cloudinary crash cleanup remains limited; production is private S3 only. No production migrations or objects touched.
+
+### Iteration 46 — Upload status UI and real storage assertions
+
+PROD-01 IMPLEMENTED: multipart request IDs reconcile lost responses without duplicates; settings-independent owner status/list APIs and Creator Studio recent attempts display real stages and failure feedback. Failed or expired attempts use new identifiers; unknown responses retain the same identifier. API docs and isolated storage tests added for replay, owner scope, failure and expired-object cleanup. CI pending; no deployment. Next: repair checks, broaden moderation.

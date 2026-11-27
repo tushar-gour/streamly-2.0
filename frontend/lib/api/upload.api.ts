@@ -1,10 +1,11 @@
-import { expectedSessionAccount } from "@/lib/api/client";
+import { apiRequest, expectedSessionAccount } from "@/lib/api/client";
 import { createApiError, createNetworkError } from "@/lib/api/errors";
 import type { ApiResponse } from "@/lib/api/types";
 import type { VideoListItem } from "@/lib/api/videos.api";
 import { frontendConfig } from "@/lib/config/env";
 
 export type VideoUpload = Readonly<{
+  requestId: string;
   title: string;
   description: string;
   video: File;
@@ -17,6 +18,7 @@ export function uploadVideo(
   onProgress: (percent: number | null) => void
 ): Promise<ApiResponse<VideoListItem>> {
   const form = new FormData();
+  form.append("requestId", input.requestId);
   form.append("title", input.title.trim());
   form.append("description", input.description.trim());
   form.append("videoFile", input.video);
@@ -56,5 +58,27 @@ export function uploadVideo(
       }
     };
     request.send(form);
+  });
+}
+
+export type UploadAttempt = Readonly<{
+  requestId: string;
+  title: string;
+  status: "validating" | "storing" | "ready" | "failed" | "interrupted";
+  error: string | null;
+  videoId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}>;
+
+export function uploadStatus(requestId: string, token: string | null) {
+  return apiRequest<UploadAttempt>(`/api/v1/videos/uploads/${encodeURIComponent(requestId)}`, {
+    accessToken: token,
+  });
+}
+
+export function listUploadAttempts(token: string | null) {
+  return apiRequest<UploadAttempt[]>("/api/v1/videos/uploads", {
+    accessToken: token,
   });
 }

@@ -11,6 +11,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import ffmpegPath from "ffmpeg-static";
 import { app } from "../../src/app.js";
 import { appConfig } from "../../src/config/env.js";
@@ -106,9 +108,11 @@ storageDescribe("private media through real isolated object storage", () => {
     it("uploads, proxies ranges and images, enforces privacy after unpublish, and deletes media", async () => {
         const owner = await account();
         const viewer = await account();
+        const requestId = randomUUID();
         const upload = await request(app)
             .post("/api/v1/videos")
             .set("Authorization", owner.bearer)
+            .field("requestId", requestId)
             .field("title", "Private origin integration")
             .field("description", "Real generated WebM")
             .attach("videoFile", video, {
@@ -121,6 +125,19 @@ storageDescribe("private media through real isolated object storage", () => {
             });
         expect(upload.status, JSON.stringify(upload.body)).toBe(201);
         const id = upload.body.data._id;
+        const replay = await request(app).post("/api/v1/videos").set("Authorization", owner.bearer)
+            .field("requestId", requestId).field("title", "Private origin integration").field("description", "Real generated WebM")
+            .attach("videoFile", video, { filename: "video.webm", contentType: "video/webm" })
+            .attach("thumbnail", thumbnail, { filename: "thumb.png", contentType: "image/png" });
+        expect(replay.status).toBe(201);
+        expect(replay.body.data._id).toBe(id);
+        expect(await prisma.video.count({ where: { ownerId: owner.id } })).toBe(1);
+        const statusPath = "/api/v1/videos/uploads/" + requestId;
+        const status = await request(app).get(statusPath).set("Authorization", owner.bearer);
+        expect(status.body.data).toMatchObject({ status: "ready", videoId: id });
+        expect(status.body.data).not.toHaveProperty("videoKey");
+        expect((await request(app).get(statusPath).set("Authorization", viewer.bearer)).status).toBe(404);
+        expect((await request(app).get(statusPath)).status).toBe(401);
         const base = "/api/v1/videos/" + id;
         const stored = await prisma.video.findUniqueOrThrow({ where: { id } });
         expect(stored.duration).toBeGreaterThan(0);
@@ -245,4 +262,33 @@ storageDescribe("private media through real isolated object storage", () => {
             });
         expect(forged.status).toBe(400);
     });
+    it("persists failed processing and cleans expired private staging objects", async () => {
+        const owner = await account();
+        const requestId = randomUUID();
+        const failed = await request(app).post("/api/v1/videos").set("Authorization", owner.bearer)
+            .field("requestId", requestId).field("title", "Invalid video").field("description", "Invalid but matching signature")
+            .attach("videoFile", Buffer.from([26, 69, 223, 163, 0, 0, 0, 0]), { filename: "bad.webm", contentType: "video/webm" })
+            .attach("thumbnail", thumbnail, { filename: "thumb.png", contentType: "image/png" });
+        expect(failed.status).toBe(422);
+        const state = await request(app).get("/api/v1/videos/uploads/" + requestId).set("Authorization", owner.bearer);
+        expect(state.body.data).toMatchObject({ status: "failed", videoId: null });
+        const repository = container.repositories.videoUploadRepository;
+        const { attempt } = await repository.begin(owner.id, "Interrupted", randomUUID(), true);
+        if (!attempt.videoKey || !attempt.thumbnailKey) throw new Error("Missing staging keys");
+        for (const key of [attempt.videoKey, attempt.thumbnailKey]) {
+            await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: thumbnail }));
+        }
+        await prisma.videoUploadAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(0) } });
+        const interrupted = await repository.status(owner.id, attempt.requestId);
+        expect(interrupted.status).toBe("interrupted");
+        await repository.cleanupExpired((key, resource) => container.services.mediaStorageService.delete(key, resource));
+        const cleaned = await prisma.videoUploadAttempt.findUniqueOrThrow({ where: { id: attempt.id } });
+        expect(cleaned.status).toBe("failed");
+        expect(cleaned.cleanedAt).not.toBeNull();
+        for (const key of [attempt.videoKey, attempt.thumbnailKey]) {
+            await expect(client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))).rejects.toThrow();
+        }
+        expect(await prisma.video.count({ where: { ownerId: owner.id } })).toBe(0);
+    });
+
 });

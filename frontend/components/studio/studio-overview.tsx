@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { StatCard } from "@/components/cards/stat-card";
+import { UploadHistory } from "@/components/studio/upload-history";
 import { VideoManagement } from "@/components/studio/video-management";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ export function StudioOverview() {
           ))}
         </div>
       ) : null}
+      <UploadHistory />
       <section className="grid gap-4" aria-label="Your uploads">
         <h2 className="text-xl font-semibold">Your uploads</h2>
         {videos.isPending ? <LoadingState label="Loading uploads" /> : null}

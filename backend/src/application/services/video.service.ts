@@ -132,7 +132,7 @@ class VideoService {
     async publish({ body, files, ownerId }) {
         const { title, description } = body;
 
-        if (!title?.trim() || !description?.trim()) {
+        if (typeof title !== "string" || typeof description !== "string" || !title.trim() || !description.trim() || title.trim().length > 200 || description.trim().length > 5000) {
             throw new BadRequestError("Title and description are required");
         }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -9,7 +9,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StreamlyApiError } from "@/lib/api/errors";
-import { uploadVideo } from "@/lib/api/upload.api";
+import { uploadStatus, uploadVideo } from "@/lib/api/upload.api";
 import {
   thumbnailTypes,
   validateUploadFile,
@@ -30,6 +30,17 @@ export function UploadForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [publishedId, setPublishedId] = useState<string | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const status = useQuery({
+    queryKey: ["studio", userId, "upload-status", requestId],
+    queryFn: async () => (await uploadStatus(requestId!, token)).data,
+    enabled: Boolean(requestId && userId && !pending && !publishedId),
+    retry: false,
+    refetchInterval: (query) => ["validating", "storing"].includes(query.state.data?.status ?? "") ? 2000 : false,
+  });
+  const serverStatus = status.data?.status;
+  const serverActive = serverStatus === "validating" || serverStatus === "storing";
+  const completedId = publishedId ?? status.data?.videoId;
   const videoError = video && validateUploadFile(video, videoTypes);
   const thumbnailError =
     thumbnail && validateUploadFile(thumbnail, thumbnailTypes);
@@ -38,6 +49,7 @@ export function UploadForm() {
     event.preventDefault();
     if (
       submitting.current ||
+      serverActive ||
       !video ||
       !thumbnail ||
       videoError ||
@@ -51,9 +63,11 @@ export function UploadForm() {
     setPending(true);
     setProgress(null);
     setError("");
+    const nextId = !requestId || serverStatus === "failed" || serverStatus === "interrupted" || serverStatus === "ready" ? crypto.randomUUID() : requestId;
+    setRequestId(nextId);
     try {
       const result = await uploadVideo(
-        { title, description, video, thumbnail },
+        { requestId: nextId, title, description, video, thumbnail },
         token,
         setProgress
       );
@@ -69,12 +83,13 @@ export function UploadForm() {
             : "Publishing could not be confirmed. Check Creator Studio before retrying to avoid duplicates."
       );
     } finally {
+      void queryClient.invalidateQueries({ queryKey: ["studio", userId] });
       submitting.current = false;
       setPending(false);
     }
   }
 
-  if (publishedId) {
+  if (completedId) {
     return (
       <section className="grid gap-4 rounded-card border border-[color:var(--color-border)] p-6">
         <h1 className="text-2xl font-semibold" role="status">
@@ -82,7 +97,7 @@ export function UploadForm() {
         </h1>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
-            <Link href={`/watch/${encodeURIComponent(publishedId)}`}>
+            <Link href={`/watch/${encodeURIComponent(completedId)}`}>
               Watch video
             </Link>
           </Button>
@@ -105,7 +120,7 @@ export function UploadForm() {
       </div>
       <fieldset
         className="grid gap-5 rounded-card border border-[color:var(--color-border)] p-5"
-        disabled={pending}
+        disabled={pending || serverActive}
       >
         <legend className="sr-only">Video details and media</legend>
         <label className="grid gap-2 rounded-card border border-dashed border-[color:var(--color-border)] p-5 text-sm">
@@ -132,12 +147,13 @@ export function UploadForm() {
             onChange={(event) => setThumbnail(event.target.files?.[0] ?? null)}
           />
           <span id="thumbnail-help">
-            {thumbnailError || "JPEG, PNG, GIF or WebP, up to 50 MB."}
+            {thumbnailError || "JPEG, PNG, GIF or WebP, up to 10 MB."}
           </span>
         </label>
         <Input
           label="Title"
           required
+          maxLength={200}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -146,6 +162,7 @@ export function UploadForm() {
           <textarea
             className="min-h-32 rounded-input border border-[color:var(--color-border)] bg-transparent p-3"
             required
+            maxLength={5000}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -167,11 +184,24 @@ export function UploadForm() {
         </div>
       ) : null}
       {error ? <p role="alert">{error}</p> : null}
+      {requestId && !pending && !completedId ? (
+        <div className="grid gap-2 rounded-input border border-[color:var(--color-border)] p-4">
+          <p role="status">
+            {serverActive
+              ? serverStatus === "validating" ? "Server is validating your media." : "Server is storing your media."
+              : status.data?.error
+                ? status.data.error
+                : status.isFetching ? "Checking server status…" : "Publication is not yet confirmed. Retrying uses the same request identifier unless processing has failed."}
+          </p>
+          <Button type="button" variant="secondary" className="w-fit" disabled={status.isFetching} onClick={() => void status.refetch()}>Check upload status</Button>
+        </div>
+      ) : null}
       <Button
         className="w-fit"
         type="submit"
         disabled={
           pending ||
+          serverActive ||
           !video ||
           !thumbnail ||
           Boolean(videoError || thumbnailError) ||
