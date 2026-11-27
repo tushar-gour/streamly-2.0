@@ -434,3 +434,7 @@ Removed `@ts-nocheck` from subscription domain port, repository, service, contro
 ### Iteration 55 — Strict subscription diagnostic repair
 
 CI caught legacy helper signatures (NotFoundError identifier inferred null and PaginationBuilder requiring constructor arguments). Fixed signatures/call sites without suppressing checking and applied formatter output. Dependency candidate npm audit fix hit an npm resolver error; no forced major upgrades applied. Candidate contains bcrypt 6; review actual diff and remaining advisories.
+
+### Iteration 56 — Dependency remediation candidate applied
+
+Applied reviewed CI-generated lockfile diff from run 46045094417: bcrypt 5.1.1 to 6.0.0 (removes obsolete node-pre-gyp/tar chain), frontend compatible-range audit refresh (Next 15.5.20 to 15.5.29 and related packages). No forced Prisma or Next major upgrade. Candidate audit still reports high/critical issues, including proxy-addr; npm audit fix backend resolver crashed. Switched read-only diagnostic to npm update within declared ranges. Full install/test gates and final production audit pending.
