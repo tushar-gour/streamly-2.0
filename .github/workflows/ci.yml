@@ -121,13 +121,14 @@ jobs:
           node-version: 20
       - name: Generate candidate lockfile without running install scripts
         run: |
-          npm update --package-lock-only --ignore-scripts --no-audit
+          npm install --package-lock-only --ignore-scripts --no-audit multer@2
           npm audit --omit=dev --audit-level=high || true
           git diff -- package.json package-lock.json
       - name: Frontend candidate
         working-directory: frontend
         run: |
-          npm update --package-lock-only --ignore-scripts --no-audit
+          npm install --package-lock-only --ignore-scripts --no-audit next@16.4.6
+          npm install --package-lock-only --ignore-scripts --no-audit --save-dev eslint-config-next@16.4.6
           npm audit --omit=dev --audit-level=high || true
           git diff -- package.json package-lock.json
 

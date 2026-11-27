@@ -446,3 +446,7 @@ Extended existing Playwright smoke using isolated moderator fixture, actual play
 ### Iteration 58 — Strict shared API primitives
 
 Removed type suppressions from API error/response, pagination, identifier validation and async request handling. Request IDs now require strings instead of invoking arbitrary object coercion. Subscription row locking uses FOR NO KEY UPDATE to avoid cross-channel foreign-key lock conflicts. CI pending; if any caller depends on legacy helper behavior, correct the caller rather than reinstate suppressions.
+
+### Iteration 59 — Compatible security refresh
+
+Applied CI-generated compatible-range dependency candidate from 46045680724. Candidate production audit dropped to 4 high backend (Prisma CLI dependency chain) and 1 high frontend (Next major required); no critical reported. Retained existing independent Prettier lock entries to avoid a repository-wide style-only change. Full npm ci/build/runtime tests required. Next candidate: Multer 2 and Next 16.4.6; do not force Prisma major migration or claim advisories resolved without actual audit and tests.
