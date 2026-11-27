@@ -183,13 +183,14 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
         folder,
         contentType,
         resourceType = "auto",
+        objectKey: requestedKey,
     }: MediaUploadRequest): Promise<MediaUploadResult | null> {
         if (!localFilePath || !fs.existsSync(localFilePath)) {
             s3Logger.warn("s3 upload file missing");
             return null;
         }
 
-        const objectKey = createObjectKey(folder, localFilePath);
+        const objectKey = requestedKey ? getObjectKeyFromTrustedUrl(requestedKey) : createObjectKey(folder, localFilePath);
         const resolvedContentType = getContentType(localFilePath, contentType);
         const stats = fs.statSync(localFilePath);
 
@@ -200,7 +201,8 @@ class S3MediaProvider implements MediaStorageProvider, MediaStreamProvider {
                     Key: objectKey,
                     Body: fs.createReadStream(localFilePath),
                     ContentType: resolvedContentType,
-                })
+                }),
+                { abortSignal: AbortSignal.timeout(10 * 60_000) }
             );
 
             fs.unlinkSync(localFilePath);

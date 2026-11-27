@@ -390,3 +390,7 @@ SEC-03/04/PROD-03 race containment IMPLEMENTED: additive credentialVersion on us
 ### Iteration 44 — Credential generation evidence
 
 VERIFIED: database integration/security, migration, backend tests and frontend quality passed on `ab620d0`, [run 46043137247](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043137247). Stale credential session and MFA issuance regressions passed. Applied actual CI formatter changes; full exact-head CI and additional OTP/MFA interleaving coverage remain pending. Next: durable upload status, cleanup and idempotency.
+
+### Iteration 45 — Durable video upload processing backend
+
+PROD-01 IN_PROGRESS: added owner-scoped upload attempt ledger (validating/storing/ready/failed; expired attempts reported interrupted), optional client request UUID, atomic video creation and ready transition, idempotent completed requests, private preallocated object keys and periodic cleanup of failed/expired S3 attempts. Existing synchronous upload contract preserved; no invented transcoding status. The user-selected thumbnail is no longer overwritten by an unnecessary background generation job. New storage and API tests, OpenAPI and frontend recovery UI pending. Legacy Cloudinary crash cleanup remains limited; production is private S3 only. No production migrations or objects touched.

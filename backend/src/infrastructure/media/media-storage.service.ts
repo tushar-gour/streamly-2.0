@@ -29,6 +29,7 @@ class MediaStorageService {
                     options.resource_type || options.resourceType || "auto"
                 ) as "auto" | "image" | "video" | "raw",
                 contentType: options.contentType as string | undefined,
+                objectKey: typeof options.objectKey === "string" ? options.objectKey : undefined,
             });
         }
 

@@ -26,6 +26,7 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   videos                  Video[]
+  uploadAttempts          VideoUploadAttempt[]
   comments                Comment[]
   likes                   Like[]
   playlists               Playlist[]
@@ -240,6 +241,7 @@ model Video {
   views        Int             @default(0)
   isPublished  Boolean         @default(true)
   moderationHeld Boolean       @default(false)
+  uploadAttempt VideoUploadAttempt?
   ownerId      String          @db.Char(24)
   owner        User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   comments     Comment[]
@@ -254,6 +256,29 @@ model Video {
   @@index([isPublished, createdAt])
   @@index([views])
   @@map("videos")
+}
+
+model VideoUploadAttempt {
+  id String @id @db.Char(24)
+  ownerId String @db.Char(24)
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  requestId String @db.Uuid
+  title String @db.VarChar(200)
+  status String @db.VarChar(20)
+  error String? @db.VarChar(200)
+  videoId String? @unique @db.Char(24)
+  video Video? @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  videoKey String?
+  thumbnailKey String?
+  expiresAt DateTime
+  cleanedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, requestId])
+  @@index([ownerId, createdAt])
+  @@index([status, expiresAt])
+  @@map("video_upload_attempts")
 }
 
 model ModerationAction {

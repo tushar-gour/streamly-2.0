@@ -1,5 +1,8 @@
 // @ts-nocheck
 import { Router } from "express";
+import { container } from "../../core/container/index.js";
+import { asyncHandler } from "../../shared/helpers/async-handler.js";
+import { ApiResponse } from "../../shared/responses/api-response.js";
 
 import { verifyJWT, optionalAuth } from "../middlewares/auth.middleware.js";
 import {
@@ -25,6 +28,15 @@ import {
 const router = Router();
 
 router.route("/").get(getAllVideos);
+
+router.get("/uploads", verifyJWT, requirePermission("video:create"), asyncHandler(async (req, res) => {
+    const attempts = await container.repositories.videoUploadRepository.list(req.user._id);
+    res.json(ApiResponse.success(attempts));
+}));
+router.get("/uploads/:requestId", verifyJWT, requirePermission("video:create"), asyncHandler(async (req, res) => {
+    const attempt = await container.repositories.videoUploadRepository.status(req.user._id, req.params.requestId);
+    res.json(ApiResponse.success(attempt));
+}));
 
 router.route("/:videoId").get(optionalAuth, getVideoById);
 router.route("/:videoId/stream").get(optionalAuth, streamVideo);

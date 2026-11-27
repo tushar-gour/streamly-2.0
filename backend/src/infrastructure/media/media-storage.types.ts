@@ -20,6 +20,7 @@ export type MediaUploadRequest = {
     folder: string;
     resourceType?: "image" | "video" | "raw" | "auto";
     contentType?: string;
+    objectKey?: string;
 };
 
 export type MediaUploadResult = {

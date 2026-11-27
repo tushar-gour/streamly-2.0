@@ -22,6 +22,7 @@ const videoServiceLogger = createLogger("video-service");
 class VideoService {
     constructor({
         videoRepository,
+        videoUploadRepository,
         userRepository,
         likeRepository,
         commentRepository,
@@ -33,6 +34,7 @@ class VideoService {
         thumbnailJobProducer,
     }) {
         this.videoRepository = videoRepository;
+        this.videoUploadRepository = videoUploadRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -145,76 +147,66 @@ class VideoService {
             throw new BadRequestError("Thumbnail image is required");
         }
 
-        const duration = await probeVideoDuration(videoFile.path);
-        const [videoUpload, thumbnailUpload] = await Promise.all([
-            this.mediaStorageService.upload(videoFile.path, {
-                resource_type: "video",
-                contentType: videoFile.mimetype,
-            }),
-            this.mediaStorageService.upload(thumbnailFile.path, {
-                contentType: thumbnailFile.mimetype,
-            }),
-        ]);
-
-        if (!videoUpload || !thumbnailUpload) {
-            await Promise.allSettled([
-                videoUpload &&
-                    this.mediaStorageService.delete(
-                        videoUpload.publicId,
-                        "video"
-                    ),
-                thumbnailUpload &&
-                    this.mediaStorageService.delete(thumbnailUpload.publicId),
-            ]);
-            throw new ApiError(500, "Failed to upload media");
+        const { attempt, started } = await this.videoUploadRepository.begin(
+            ownerId, title.trim(), body.requestId,
+            appConfig.media.storageProvider === "s3"
+        );
+        if (!started) {
+            if (attempt.status === "ready" && attempt.videoId) {
+                const existing = await this.videoRepository.findByIdWithOwner(attempt.videoId);
+                if (existing) return { statusCode: 201, data: existing, message: SuccessMessages.VIDEO_CREATED };
+            }
+            throw new ApiError(409, "Upload identifier already used. Check Creator Studio.");
         }
 
-        let video;
+        let videoUpload, thumbnailUpload, videoId;
         try {
-            video = await this.videoRepository.create({
+            const duration = await probeVideoDuration(videoFile.path);
+            await this.videoUploadRepository.markStoring(attempt.id);
+            const outcomes = await Promise.allSettled([
+                this.mediaStorageService.upload(videoFile.path, {
+                    resource_type: "video",
+                    contentType: videoFile.mimetype,
+                    ...(attempt.videoKey ? { objectKey: attempt.videoKey } : {}),
+                }),
+                this.mediaStorageService.upload(thumbnailFile.path, {
+                    contentType: thumbnailFile.mimetype,
+                    ...(attempt.thumbnailKey ? { objectKey: attempt.thumbnailKey } : {}),
+                }),
+            ]);
+            videoUpload = outcomes[0].status === "fulfilled" ? outcomes[0].value : null;
+            thumbnailUpload = outcomes[1].status === "fulfilled" ? outcomes[1].value : null;
+            if (!videoUpload || !thumbnailUpload) throw new ApiError(503, "Media storage is unavailable");
+            videoId = await this.videoUploadRepository.complete(attempt.id, ownerId, {
                 title: title.trim(),
                 description: description.trim(),
                 videoFile: videoUpload.secureUrl || videoUpload.url,
                 thumbnail: thumbnailUpload.secureUrl || thumbnailUpload.url,
                 duration: videoUpload.duration || duration,
-                owner: ownerId,
-                isPublished: true,
             });
         } catch (error) {
-            await Promise.allSettled([
-                this.mediaStorageService.delete(videoUpload.publicId, "video"),
-                this.mediaStorageService.delete(thumbnailUpload.publicId),
-            ]);
+            // Only clean failed attempts, never an ambiguously committed published video.
+            const failed = await this.videoUploadRepository.fail(attempt.id,
+                error?.statusCode === 422 ? "Invalid or unsupported video file" : "Processing failed. Start a new upload."
+            );
+            if (failed.count === 1) {
+                if (attempt.videoKey) {
+                    await this.videoUploadRepository.cleanupFailed(attempt.id,
+                        (key, resource) => this.mediaStorageService.delete(key, resource)
+                    );
+                } else {
+                    await Promise.allSettled([
+                        videoUpload && this.mediaStorageService.delete(videoUpload.publicId, "video"),
+                        thumbnailUpload && this.mediaStorageService.delete(thumbnailUpload.publicId),
+                    ]);
+                }
+            }
             throw error;
         }
-
-        const publishedVideo = await this.videoRepository.findByIdWithOwner(
-            video._id
-        );
-
-        this.thumbnailJobProducer
-            ?.enqueueThumbnailGeneration({
-                videoId: video._id,
-                videoUrl: video.videoFile,
-            })
-            .catch((error) => {
-                this.thumbnailJobProducer?.logEnqueueFailure(
-                    error,
-                    "thumbnail.generate"
-                );
-                videoServiceLogger.warn(
-                    { videoId: video._id },
-                    "thumbnail generation job enqueue failed"
-                );
-            });
-
+        // The supplied thumbnail is intentional; do not overwrite it with a generated frame.
+        const publishedVideo = await this.videoRepository.findByIdWithOwner(videoId);
         await this.#invalidateAllVideoCache();
-
-        return {
-            statusCode: 201,
-            data: publishedVideo,
-            message: SuccessMessages.VIDEO_CREATED,
-        };
+        return { statusCode: 201, data: publishedVideo, message: SuccessMessages.VIDEO_CREATED };
     }
 
     async update({ videoId, body, file, userId }) {

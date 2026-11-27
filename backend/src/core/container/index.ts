@@ -40,6 +40,7 @@ import { LikeService } from "../../application/services/like.service.js";
 import { PlaylistService } from "../../application/services/playlist.service.js";
 import { PolicyService } from "../../application/services/policy.service.js";
 import { SubscriptionService } from "../../application/services/subscription.service.js";
+import { PrismaVideoUploadRepository } from "../../infrastructure/repositories/video-upload.repository.js";
 import { PhoneEnrollmentService } from "../../application/services/phone-enrollment.service.js";
 import { createSmsProvider } from "../../infrastructure/notifications/sms/sms-provider.factory.js";
 import { createWhatsAppProvider } from "../../infrastructure/notifications/whatsapp/whatsapp-provider.factory.js";
@@ -49,6 +50,7 @@ import { VideoService } from "../../application/services/video.service.js";
 
 const userRepository = new PrismaUserRepository();
 const videoRepository = new PrismaVideoRepository();
+const videoUploadRepository = new PrismaVideoUploadRepository();
 const watchLaterRepository = new PrismaWatchLaterRepository();
 const commentRepository = new PrismaCommentRepository();
 const likeRepository = new PrismaLikeRepository();
@@ -109,6 +111,7 @@ const container = Object.freeze({
     repositories: {
         userRepository,
         videoRepository,
+        videoUploadRepository,
         watchLaterRepository,
         commentRepository,
         likeRepository,
@@ -187,6 +190,7 @@ const container = Object.freeze({
         }),
         videoService: new VideoService({
             videoRepository,
+            videoUploadRepository,
             userRepository,
             likeRepository,
             commentRepository,
