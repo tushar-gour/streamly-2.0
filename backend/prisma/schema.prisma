@@ -297,6 +297,7 @@ model ModerationAction {
 model Comment {
   id        String   @id @db.Char(24)
   content   String   @db.VarChar(2000)
+  moderationHeld Boolean @default(false)
   videoId   String   @db.Char(24)
   ownerId   String   @db.Char(24)
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
@@ -307,6 +308,7 @@ model Comment {
 
   @@index([videoId, createdAt])
   @@index([ownerId, createdAt])
+  @@index([videoId, moderationHeld, createdAt])
   @@map("comments")
 }
 

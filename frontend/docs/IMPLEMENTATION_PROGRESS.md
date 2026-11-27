@@ -402,3 +402,7 @@ PROD-01 IMPLEMENTED: multipart request IDs reconcile lost responses without dupl
 ### Iteration 47 — Upload verification
 
 PROD-01 storage regressions VERIFIED at `d540036`: database integration, including actual S3-compatible storage, passed in [run 46043687314](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043687314). Applied backend and frontend formatter output; exact-head CI pending. Credential checkpoint `5514b40` passed all eight jobs ([46043384721](https://github.com/tushar-gour/streamly-2.0/actions/runs/46043384721)). Next: audited comment moderation.
+
+### Iteration 48 — Comment moderation (implemented, unverified)
+
+Added durable reversible comment holds with permission-scoped moderator endpoints, atomic audit and notification, no cached held content, filtered counts and rejection of author edits while held. Database regression added; CI and frontend panel pending.

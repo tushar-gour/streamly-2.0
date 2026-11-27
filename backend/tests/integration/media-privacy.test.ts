@@ -196,6 +196,38 @@ databaseDescribe("media and object privacy", () => {
         );
     });
 
+    it("holds comments without exposing held content or allowing authors to edit it", async () => {
+        const { owner, viewer, video } = await fixture();
+        const mod = await account();
+        const role = await prisma.role.findUniqueOrThrow({ where: { name: "moderator" } });
+        const userRole = await prisma.role.findUniqueOrThrow({ where: { name: "user" } });
+        await prisma.userRole.createMany({ data: [
+            { id: createId(), userId: mod.user._id, roleId: role.id },
+            { id: createId(), userId: owner.user._id, roleId: userRole.id },
+        ] });
+        await prisma.video.update({ where: { id: video.id }, data: { isPublished: true } });
+        const comment = await prisma.comment.findFirstOrThrow({ where: { videoId: video.id } });
+        const list = "/api/v1/comments/" + video.id;
+        const path = "/api/v1/admin/comments/" + comment.id + "/hold";
+        const hold = { held: true, reason: "Policy review" };
+        const bearer = "Bearer " + mod.token;
+        expect((await request(app).get(list)).body.data).toHaveLength(1);
+        expect((await request(app).get("/api/v1/admin/comments")).status).toBe(401);
+        expect((await request(app).get("/api/v1/admin/comments").set("Authorization", "Bearer " + viewer.token)).status).toBe(403);
+        expect((await request(app).patch(path).set("Authorization", "Bearer " + owner.token).send(hold)).status).toBe(403);
+        expect((await request(app).get("/api/v1/admin/comments").set("Authorization", bearer)).status).toBe(200);
+        expect((await request(app).patch(path).set("Authorization", bearer).send(hold)).status).toBe(200);
+        expect((await request(app).get(list)).body.data).toEqual([]);
+        expect((await request(app).get(list).set("Authorization", "Bearer " + owner.token)).body.data).toEqual([]);
+        expect((await request(app).patch("/api/v1/comments/c/" + comment.id).set("Authorization", "Bearer " + owner.token).send({ content: "changed" })).status).toBe(409);
+        expect((await request(app).patch(path).set("Authorization", bearer).send(hold)).status).toBe(409);
+        expect((await request(app).patch(path).set("Authorization", bearer).send({ held: false, reason: "Resolved" })).status).toBe(200);
+        expect((await request(app).get(list)).body.data).toHaveLength(1);
+        const actions = await prisma.moderationAction.findMany({ where: { resourceId: comment.id } });
+        expect(actions.map((action) => action.action).sort()).toEqual(["comment_hold", "comment_release"]);
+        expect(actions.every((action) => action.actorId === mod.user._id)).toBe(true);
+    });
+
     it("persists subscription notifications and scopes read state to the recipient", async () => {
         const owner = await account();
         const viewer = await account();
