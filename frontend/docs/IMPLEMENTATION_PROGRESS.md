@@ -406,3 +406,7 @@ PROD-01 storage regressions VERIFIED at `d540036`: database integration, includi
 ### Iteration 48 — Comment moderation (implemented, unverified)
 
 Added durable reversible comment holds with permission-scoped moderator endpoints, atomic audit and notification, no cached held content, filtered counts and rejection of author edits while held. Database regression added; CI and frontend panel pending.
+
+### Iteration 49 — Moderator interface (implemented, unverified)
+
+Added account-scoped comment moderation query and action panel, accessible reason form, pagination, permission-aware navigation and OpenAPI documentation. CI pending. No deployment or merge.

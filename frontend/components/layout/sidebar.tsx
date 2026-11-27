@@ -12,7 +12,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   const canUpload = user?.permissions?.includes("video:create");
-  const canAdmin = user?.permissions?.includes("video:publish:any");
+  const canAdmin = user?.permissions?.some((permission) =>
+    ["video:publish:any", "comment:delete:any"].includes(permission)
+  );
 
   const routes = [
     ...viewerRoutes,

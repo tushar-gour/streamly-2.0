@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CommentModeration } from "@/components/admin/comment-moderation";
+import { useAuthStore } from "@/stores/auth-store";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -187,11 +189,17 @@ function ModerationPanel() {
 }
 
 export default function AdminPage() {
+  const user = useAuthStore((state) => state.user);
+  const canModerateVideos = user?.permissions?.includes("video:publish:any");
+  const canModerateComments = user?.permissions?.includes("comment:delete:any");
   return (
     <AppShell
-      permission={{ authenticated: true, anyPermission: ["video:publish:any"] }}
+      permission={{ authenticated: true, anyPermission: ["video:publish:any", "comment:delete:any"] }}
     >
-      <ModerationPanel />
+      <div className="grid gap-8">
+        {canModerateVideos ? <ModerationPanel /> : null}
+        {canModerateComments ? <CommentModeration key={user?._id} /> : null}
+      </div>
     </AppShell>
   );
 }

@@ -183,6 +183,50 @@ const openApiDocument = {
                 },
             },
         },
+        "/api/v1/admin/comments": {
+            get: {
+                tags: ["Dashboard"],
+                summary: "List comments for moderation",
+                description: protectedDescription("comment:delete:any"),
+                security: authSecurity,
+                parameters: [{
+                    name: "page",
+                    in: "query",
+                    schema: { type: "integer", minimum: 1, maximum: 10000 },
+                }],
+                responses: {
+                    200: successResponse("25 comments per page", {
+                        type: "array",
+                        items: { type: "object" },
+                    }),
+                    ...standardErrors,
+                },
+            },
+        },
+        "/api/v1/admin/comments/{commentId}/hold": {
+            patch: {
+                tags: ["Dashboard"],
+                summary: "Place or release an audited comment hold",
+                description: protectedDescription("comment:delete:any"),
+                security: authSecurity,
+                parameters: [idParameter("commentId", "Comment ID")],
+                requestBody: {
+                    required: true,
+                    content: jsonContent({
+                        type: "object",
+                        required: ["held", "reason"],
+                        properties: {
+                            held: { type: "boolean" },
+                            reason: { type: "string", minLength: 1, maxLength: 500 },
+                        },
+                    }),
+                },
+                responses: {
+                    200: successResponse("Moderation updated", { type: "object" }),
+                    ...standardErrors,
+                },
+            },
+        },
         "/api/v1/users/auth/recovery/start": {
             post: {
                 tags: ["Auth"],
