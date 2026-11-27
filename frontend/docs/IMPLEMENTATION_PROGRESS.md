@@ -458,3 +458,7 @@ Typecheck exposed generic Result versus Awaited<Result> return typing in shared 
 ### Iteration 61 — Subscription listing regression repair
 
 Browser smoke exposed a subscription listing error (actual failure screenshot and API source review). Fixed escaped pagination regex rejecting all valid numeric values. Added database-backed GET list regression including default, explicit and invalid pagination. Applied formatter output; corrected Next candidate ESLint peer resolution without forcing dependencies. Run 46046088357 passed backend quality, database, tests, Docker, OpenAPI and Prisma, frontend format still failed and browser pending at inspection. Next: verify corrected browser journey, inspect Multer candidate and audit.
+
+### Iteration 62 — Multer dependency upgrade
+
+Applied exact CI-generated Multer 2.5.0 lockfile candidate, removing ten obsolete transitive packages. Candidate production audit still reports four high Prisma-chain advisories. Actual upload, malformed multipart, build and storage tests must pass before VERIFIED. Next: inspect browser and candidate CI.
