@@ -40,6 +40,9 @@ import { LikeService } from "../../application/services/like.service.js";
 import { PlaylistService } from "../../application/services/playlist.service.js";
 import { PolicyService } from "../../application/services/policy.service.js";
 import { SubscriptionService } from "../../application/services/subscription.service.js";
+import { PhoneEnrollmentService } from "../../application/services/phone-enrollment.service.js";
+import { createSmsProvider } from "../../infrastructure/notifications/sms/sms-provider.factory.js";
+import { createWhatsAppProvider } from "../../infrastructure/notifications/whatsapp/whatsapp-provider.factory.js";
 import { TokenService } from "../../application/services/token.service.js";
 import { UserService } from "../../application/services/user.service.js";
 import { VideoService } from "../../application/services/video.service.js";
@@ -71,6 +74,8 @@ const mediaStreamService = new MediaStreamService(mediaProvider);
 
 const tokenService = new TokenService();
 const otpService = new OtpService();
+const smsProvider = createSmsProvider();
+const whatsappProvider = createWhatsAppProvider();
 const mfaService = new MfaService();
 const authService = new AuthService({
     userRepository,
@@ -122,6 +127,20 @@ const container = Object.freeze({
         mfaService,
         authService,
         authPlatformService,
+        phoneEnrollmentService: new PhoneEnrollmentService(
+            async ({ phoneNumber, channel, code, userId }) => {
+                if (!appConfig.otp.enabled || !appConfig.sms.enabled || appConfig.sms.provider !== "twilio" ||
+                    (channel === "whatsapp" && !appConfig.sms.twilioWhatsAppFrom)) {
+                    throw new Error("Phone delivery unavailable");
+                }
+                const message = "Your Streamly phone verification code is " + code + ". It expires in 5 minutes.";
+                const result = channel === "sms"
+                    ? await smsProvider.sendSms({ to: phoneNumber, message, userId })
+                    : await whatsappProvider.sendWhatsApp({ to: phoneNumber, body: message });
+                if (!result.delivered) throw new Error("Phone delivery unavailable");
+            },
+            (userId, code) => mfaService.verifyCurrentTotp(userId, code)
+        ),
         credentialChallengeService: new CredentialChallengeService(
             async (id) => {
                 if (

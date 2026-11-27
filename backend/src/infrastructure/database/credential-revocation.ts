@@ -13,7 +13,9 @@ export async function revokeCredentialSessions(
         "security",
         reason === "email_change"
             ? "Your account email address was changed. Other sessions were signed out."
-            : "Your password was changed. Other sessions were signed out."
+            : reason === "phone_enrollment"
+              ? "Your verified phone number was changed. All sessions were signed out."
+              : "Your password was changed. Other sessions were signed out."
     );
     await tx.session.updateMany({
         where: { userId, revokedAt: null },

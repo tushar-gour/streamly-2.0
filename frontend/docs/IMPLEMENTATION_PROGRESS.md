@@ -370,3 +370,7 @@ PROD-02 IMPLEMENTED: migration-backed inbox, owner-scoped listing/read/read-all,
 ### Iteration 39 — MFA management and single-use recovery codes
 
 PROD-03 IN_PROGRESS: generated high-entropy hashed recovery codes at enrollment, one-time display, atomic redemption after primary authentication, no trusted device from recovery, authenticated password/TOTP-protected regeneration and legacy active account enrollment. Login accepts either authenticator or recovery code. External provider and browser verification pending; remaining phone enrollment and credential issuance races.
+
+### Iteration 40 — Secure phone enrollment backend
+
+PROD-03 phone enrollment IMPLEMENTED (backend): existing phone routes now require password and current TOTP when configured. Proposed number remains in a session-bound, expiring challenge; per-account locking serializes starts and completion, one-minute resend limit, HMAC-protected six-digit code, five attempts, single-use transaction, existing unique phone constraint, all credential sessions/trust revoked on success while MFA remains enrolled. No schema change. Existing insecure service methods removed. Real Twilio delivery remains deployment-stage; integration tests and settings UI next. Baseline e194c5f all eight jobs passed in run 45886206678.

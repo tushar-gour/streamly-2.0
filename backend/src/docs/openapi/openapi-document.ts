@@ -435,16 +435,18 @@ const openApiDocument = {
         "/api/v1/users/auth/signup/phone/start": {
             post: {
                 tags: ["Auth"],
-                summary: "Start optional phone verification",
+                summary: "Start reauthenticated phone enrollment",
                 description: protectedDescription(),
                 security: authSecurity,
                 requestBody: {
                     required: true,
                     content: jsonContent({
                         type: "object",
-                        required: ["phoneNumber", "channel"],
+                        required: ["phoneNumber", "channel", "password"],
                         properties: {
                             phoneNumber: { type: "string" },
+                            password: { type: "string", format: "password" },
+                            mfaCode: { type: "string", description: "Required when MFA is enabled" },
                             channel: {
                                 type: "string",
                                 enum: ["sms", "whatsapp"],
@@ -461,7 +463,7 @@ const openApiDocument = {
         "/api/v1/users/auth/signup/phone/verify": {
             post: {
                 tags: ["Auth"],
-                summary: "Verify optional phone OTP",
+                summary: "Verify phone OTP and revoke existing sessions",
                 description: protectedDescription(),
                 security: authSecurity,
                 requestBody: {
