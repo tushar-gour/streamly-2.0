@@ -466,3 +466,7 @@ Applied exact CI-generated Multer 2.5.0 lockfile candidate, removing ten obsolet
 ### Iteration 63 — Next security migration
 
 Resolved Next 16.4.6 with ESLint 9 and matching Next config using the successful CI candidate 46046494366. Candidate production frontend audit reported zero vulnerabilities. Applied exact lockfile, migrated lint config to flat config and React JSX transform, retained actual lint/typecheck/build/browser gates. No peer overrides or audit suppression added. Migration IMPLEMENTED, not VERIFIED. Backend Prisma advisory chain remains open. Next: resolve migration diagnostics.
+
+### Iteration 64 — React effect and pagination repairs
+
+Replaced synchronous effect state updates in video moderation (account-keyed React Query), image previews (object URL created on user action and cleaned on change/unmount) and theme persistence (external-store subscription with SSR-safe snapshot). Preserved all lint rules. Subscription listing database tests passed and browser advanced beyond subscription workflow; upload completion still failed. Backend Multer upgrade passed tests, database storage, OpenAPI, Prisma and Docker in 46046583320. Frontend migration lint/type/build verification pending.

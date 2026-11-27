@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommentModeration } from "@/components/admin/comment-moderation";
 import { useAuthStore } from "@/stores/auth-store";
 import { AppShell } from "@/components/layout/app-shell";
@@ -11,40 +12,29 @@ import { adminApi, type ModerationVideo } from "@/lib/api/admin.api";
 import { StreamlyApiError } from "@/lib/api/errors";
 
 function ModerationPanel() {
-  const [videos, setVideos] = useState<ModerationVideo[]>([]);
-  const [counts, setCounts] = useState<{
-    published: number;
-    held: number;
-    unpublished: number;
-  } | null>(null);
+  const userId = useAuthStore((state) => state.user?._id);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ModerationVideo | null>(null);
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError("");
-    Promise.all([adminApi.overview(), adminApi.videos(page)])
-      .then(([overview, list]) => {
-        if (!active) return;
-        setCounts(overview.data);
-        setVideos(list.data);
-      })
-      .catch(() => {
-        if (active) setError("Could not load moderation data.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [page, revision]);
+  const query = useQuery({
+    queryKey: ["admin", userId, "videos", page],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const [overview, list] = await Promise.all([
+        adminApi.overview(),
+        adminApi.videos(page),
+      ]);
+      return { counts: overview.data, videos: list.data };
+    },
+    retry: false,
+  });
+  const videos = query.data?.videos ?? [];
+  const counts = query.data?.counts ?? null;
+  const loading = query.isPending || query.isFetching;
+  const feedback = error || (query.isError ? "Could not load moderation data." : "");
 
   async function apply() {
     if (!selected || !reason.trim() || pending) return;
@@ -54,7 +44,7 @@ function ModerationPanel() {
       await adminApi.setHold(selected.id, !selected.moderationHeld, reason);
       setSelected(null);
       setReason("");
-      setRevision((value) => value + 1);
+      await queryClient.invalidateQueries({ queryKey: ["admin", userId, "videos"] });
     } catch (cause) {
       setError(
         cause instanceof StreamlyApiError && cause.statusCode < 500
@@ -85,19 +75,22 @@ function ModerationPanel() {
           ))}
         </div>
       ) : null}
-      {error ? (
+      {feedback ? (
         <div role="alert" className="flex flex-wrap items-center gap-3">
-          <p>{error}</p>
+          <p>{feedback}</p>
           <Button
             variant="secondary"
-            onClick={() => setRevision((value) => value + 1)}
+            onClick={() => {
+              setError("");
+              void query.refetch();
+            }}
           >
             Retry
           </Button>
         </div>
       ) : null}
       {loading ? <p role="status">Loading moderation queue…</p> : null}
-      {!loading && !error && videos.length === 0 ? (
+      {!loading && !feedback && videos.length === 0 ? (
         <p>No videos on this page.</p>
       ) : null}
       <div className="grid gap-3">
@@ -200,7 +193,7 @@ export default function AdminPage() {
       }}
     >
       <div className="grid gap-8">
-        {canModerateVideos ? <ModerationPanel /> : null}
+        {canModerateVideos ? <ModerationPanel key={user?._id} /> : null}
         {canModerateComments ? <CommentModeration key={user?._id} /> : null}
       </div>
     </AppShell>

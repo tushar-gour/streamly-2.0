@@ -511,7 +511,9 @@ databaseDescribe("media and object privacy", () => {
                 .status
         ).toBe(400);
         const listPath = "/api/v1/subscriptions/u/" + viewer.user._id;
-        const list = await request(app).get(listPath).set("Authorization", auth);
+        const list = await request(app)
+            .get(listPath)
+            .set("Authorization", auth);
         expect(list.status).toBe(200);
         expect(list.body.data).toMatchObject([{ _id: owner.user._id }]);
         expect(

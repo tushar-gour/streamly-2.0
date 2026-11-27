@@ -21,8 +21,9 @@ function ImageEditor({
 }) {
   const token = useAuthStore((state) => state.accessToken);
   const userId = useAuthStore((state) => state.user?._id);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ file: File; url: string } | null>(null);
+  const file = selection?.file;
+  const preview = selection?.url;
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<{
     text: string;
@@ -30,14 +31,10 @@ function ImageEditor({
   } | null>(null);
 
   useEffect(() => {
-    if (!file) {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   function choose(next: File | undefined) {
     setFeedback(null);
@@ -47,14 +44,14 @@ function ImageEditor({
       next.size === 0 ||
       next.size > 10 * 1024 * 1024
     ) {
-      setFile(null);
+      setSelection(null);
       setFeedback({
         text: "Choose a JPEG, PNG, GIF or WebP image up to 10 MB.",
         error: true,
       });
       return;
     }
-    setFile(next);
+    setSelection({ file: next, url: URL.createObjectURL(next) });
   }
 
   async function save() {
@@ -66,7 +63,7 @@ function ImageEditor({
       const state = useAuthStore.getState();
       if (state.user?._id === userId && result.data._id === userId) {
         state.setAuthUser({ ...state.user, ...result.data }, state.accessToken);
-        setFile(null);
+        setSelection(null);
         setFeedback({ text: label + " updated.", error: false });
       }
     } catch {
@@ -111,7 +108,7 @@ function ImageEditor({
             type="button"
             variant="ghost"
             disabled={pending}
-            onClick={() => setFile(null)}
+            onClick={() => setSelection(null)}
           >
             Cancel
           </Button>
