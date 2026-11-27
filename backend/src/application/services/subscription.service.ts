@@ -13,12 +13,26 @@ type PageQuery = { page?: unknown; limit?: unknown };
 class SubscriptionService {
     private readonly subscriptionRepository: SubscriptionRepository;
     private readonly userRepository: UserLookup;
-    constructor({ subscriptionRepository, userRepository }: { subscriptionRepository: SubscriptionRepository; userRepository: UserLookup }) {
+    constructor({
+        subscriptionRepository,
+        userRepository,
+    }: {
+        subscriptionRepository: SubscriptionRepository;
+        userRepository: UserLookup;
+    }) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
     }
 
-    async toggleSubscription({ channelId, userId, desired }: { channelId: string; userId: string; desired?: unknown }) {
+    async toggleSubscription({
+        channelId,
+        userId,
+        desired,
+    }: {
+        channelId: string;
+        userId: string;
+        desired?: unknown;
+    }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         if (channelId === userId.toString()) {
@@ -49,7 +63,15 @@ class SubscriptionService {
         };
     }
 
-    async getChannelSubscribers({ channelId, currentUserId, query }: { channelId: string; currentUserId?: string | null; query: PageQuery }) {
+    async getChannelSubscribers({
+        channelId,
+        currentUserId,
+        query,
+    }: {
+        channelId: string;
+        currentUserId?: string | null;
+        query: PageQuery;
+    }) {
         ObjectIdValidator.ensureValid(channelId, "channel ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -67,16 +89,18 @@ class SubscriptionService {
 
         return {
             data: subscribers,
-            pagination: new PaginationBuilder()
-                .setPage(pageNum)
-                .setLimit(limitNum)
-                .setTotalDocs(totalDocs)
-                .build(),
+            pagination: new PaginationBuilder(pageNum, limitNum, totalDocs).build(),
             message: "Channel subscribers fetched successfully",
         };
     }
 
-    async getSubscribedChannels({ subscriberId, query }: { subscriberId: string; query: PageQuery }) {
+    async getSubscribedChannels({
+        subscriberId,
+        query,
+    }: {
+        subscriberId: string;
+        query: PageQuery;
+    }) {
         ObjectIdValidator.ensureValid(subscriberId, "subscriber ID");
 
         const { pageNum, limitNum } = this.#getPagination(
@@ -93,22 +117,22 @@ class SubscriptionService {
 
         return {
             data: channels,
-            pagination: new PaginationBuilder()
-                .setPage(pageNum)
-                .setLimit(limitNum)
-                .setTotalDocs(totalDocs)
-                .build(),
+            pagination: new PaginationBuilder(pageNum, limitNum, totalDocs).build(),
             message: "Subscribed channels fetched successfully",
         };
     }
 
     #getPagination(page: unknown, limit: unknown) {
         const positiveInteger = (value: unknown, maximum: number) => {
-            if ((typeof value !== "string" && typeof value !== "number") || !/^\\d+$/.test(String(value))) {
+            if (
+                (typeof value !== "string" && typeof value !== "number") ||
+                !/^\\d+$/.test(String(value))
+            ) {
                 throw new BadRequestError("Invalid pagination");
             }
             const n = Number(value);
-            if (!Number.isSafeInteger(n) || n < 1) throw new BadRequestError("Invalid pagination");
+            if (!Number.isSafeInteger(n) || n < 1)
+                throw new BadRequestError("Invalid pagination");
             return Math.min(n, maximum);
         };
         return {

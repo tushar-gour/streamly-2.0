@@ -70,7 +70,7 @@ class ForbiddenError extends ApiError {
 }
 
 class NotFoundError extends ApiError {
-    constructor(resource = "Resource", identifier = null) {
+    constructor(resource = "Resource", identifier: string | null = null) {
         const message = identifier
             ? `${resource} with identifier '${identifier}' not found`
             : `${resource} not found`;

@@ -3,14 +3,16 @@ export type SubscriptionPage = Readonly<{
     limitNum: number;
 }>;
 
-export type ChannelSubscribersPage = SubscriptionPage & Readonly<{
-    channelId: string;
-    currentUserId?: string | null;
-}>;
+export type ChannelSubscribersPage = SubscriptionPage &
+    Readonly<{
+        channelId: string;
+        currentUserId?: string | null;
+    }>;
 
-export type SubscribedChannelsPage = SubscriptionPage & Readonly<{
-    subscriberId: string;
-}>;
+export type SubscribedChannelsPage = SubscriptionPage &
+    Readonly<{
+        subscriberId: string;
+    }>;
 
 type ChannelSummary = {
     _id: string;
@@ -25,7 +27,11 @@ export interface SubscriptionRepository {
     countByChannel(channelId: string): Promise<number>;
     countBySubscriber(subscriberId: string): Promise<number>;
     countRecentByChannel(channelId: string, since: Date): Promise<number>;
-    setSubscription(subscriberId: string, channelId: string, desired?: boolean): Promise<{
+    setSubscription(
+        subscriberId: string,
+        channelId: string,
+        desired?: boolean
+    ): Promise<{
         isSubscribed: boolean;
         subscribersCount: number;
         created: boolean;

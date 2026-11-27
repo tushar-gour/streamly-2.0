@@ -1522,7 +1522,9 @@ const openApiDocument = {
             put: {
                 tags: ["Subscriptions"],
                 summary: "Set desired channel subscription state",
-                description: protectedDescription() + " Idempotent across concurrent retries.",
+                description:
+                    protectedDescription() +
+                    " Idempotent across concurrent retries.",
                 security: authSecurity,
                 parameters: [idParameter("channelId", "Channel user id.")],
                 requestBody: {
@@ -1534,8 +1536,12 @@ const openApiDocument = {
                     }),
                 },
                 responses: {
-                    200: successResponse("Subscription state set.", { type: "object" }),
-                    201: successResponse("Subscription created.", { type: "object" }),
+                    200: successResponse("Subscription state set.", {
+                        type: "object",
+                    }),
+                    201: successResponse("Subscription created.", {
+                        type: "object",
+                    }),
                     ...standardErrors,
                 },
             },

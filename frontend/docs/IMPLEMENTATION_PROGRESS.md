@@ -430,3 +430,7 @@ Added OpenAPI idempotent subscription PUT. Temporary read-only CI candidate reso
 ### Iteration 54 — Strict subscription boundary and bounded queries
 
 Removed `@ts-nocheck` from subscription domain port, repository, service, controller and routes. Added typed pagination and request checks, replaced full subscriber relationship materialization with count and at-most-one viewer relation, projected latest video fields. Typecheck and integration verification pending. Dependency candidate CI running independently.
+
+### Iteration 55 — Strict subscription diagnostic repair
+
+CI caught legacy helper signatures (NotFoundError identifier inferred null and PaginationBuilder requiring constructor arguments). Fixed signatures/call sites without suppressing checking and applied formatter output. Dependency candidate npm audit fix hit an npm resolver error; no forced major upgrades applied. Candidate contains bcrypt 6; review actual diff and remaining advisories.

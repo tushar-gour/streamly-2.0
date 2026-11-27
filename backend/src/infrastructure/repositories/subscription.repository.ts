@@ -1,4 +1,8 @@
-import type { SubscriptionRepository, ChannelSubscribersPage, SubscribedChannelsPage } from "../../domain/repositories/subscription.repository.js";
+import type {
+    SubscriptionRepository,
+    ChannelSubscribersPage,
+    SubscribedChannelsPage,
+} from "../../domain/repositories/subscription.repository.js";
 import { createId } from "../../shared/helpers/id-generator.js";
 import { recordNotification } from "../database/notification-record.js";
 import { prisma } from "../database/prisma/client.js";
@@ -47,7 +51,11 @@ class PrismaSubscriptionRepository implements SubscriptionRepository {
         });
     }
 
-    async setSubscription(subscriberId: string, channelId: string, desired?: boolean) {
+    async setSubscription(
+        subscriberId: string,
+        channelId: string,
+        desired?: boolean
+    ) {
         return prisma.$transaction(async (tx) => {
             // Serialize changes initiated by the same subscriber.
             await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${subscriberId} FOR UPDATE`;
@@ -115,7 +123,11 @@ class PrismaSubscriptionRepository implements SubscriptionRepository {
                         select: {
                             ...ownerSelect,
                             _count: { select: { subscribers: true } },
-                            subscribers: { where: { subscriberId: currentUserId ?? "" }, select: { subscriberId: true }, take: 1 },
+                            subscribers: {
+                                where: { subscriberId: currentUserId ?? "" },
+                                select: { subscriberId: true },
+                                take: 1,
+                            },
                         },
                     },
                 },
@@ -145,7 +157,11 @@ class PrismaSubscriptionRepository implements SubscriptionRepository {
         };
     }
 
-    async getSubscribedChannels({ subscriberId, pageNum, limitNum }: SubscribedChannelsPage) {
+    async getSubscribedChannels({
+        subscriberId,
+        pageNum,
+        limitNum,
+    }: SubscribedChannelsPage) {
         const where = { subscriberId };
         const [subscriptions, totalDocs] = await Promise.all([
             prisma.subscription.findMany({
@@ -159,7 +175,12 @@ class PrismaSubscriptionRepository implements SubscriptionRepository {
                                 where: { isPublished: true },
                                 orderBy: { createdAt: "desc" },
                                 take: 1,
-                                select: { id: true, title: true, thumbnail: true, createdAt: true },
+                                select: {
+                                    id: true,
+                                    title: true,
+                                    thumbnail: true,
+                                    createdAt: true,
+                                },
                             },
                         },
                     },
