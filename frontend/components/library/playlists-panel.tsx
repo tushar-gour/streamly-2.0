@@ -99,7 +99,8 @@ export function PlaylistsPanel() {
                   {playlist.name}
                 </h2>
                 <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
-                  {playlist.videosCount ?? 0} videos · {playlist.isPublic ? "Public" : "Private"}
+                  {playlist.videosCount ?? 0} videos ·{" "}
+                  {playlist.isPublic ? "Public" : "Private"}
                 </p>
                 {playlist.description ? (
                   <p className="mt-2 line-clamp-2 text-sm text-[color:var(--color-text-secondary)]">

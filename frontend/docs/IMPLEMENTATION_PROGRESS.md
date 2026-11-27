@@ -418,3 +418,7 @@ Playlist create/update accepts validated boolean visibility; new playlists defau
 ### Iteration 51 — Subscription idempotency and library privacy regressions
 
 Comment moderation database regression VERIFIED in [46044233950](https://github.com/tushar-gour/streamly-2.0/actions/runs/46044233950), 27 database tests passed, 8 API tests, 2 actual storage tests. Added atomic subscriber-scoped state transitions and idempotent PUT; existing POST toggle retained. Frontend uses explicit desired state and hides self-subscribe. Added concurrent subscribe/unsubscribe and playlist visibility transition regressions. Worker repeat scheduling reformatted to stable local variable. CI pending; OpenAPI PUT contract and formatter reconciliation next.
+
+### Iteration 52 — Library integration evidence and dependency release blocker
+
+Playlist privacy and concurrent desired-subscription regressions passed database CI in [46044630070](https://github.com/tushar-gour/streamly-2.0/actions/runs/46044630070). Applied backend/frontend formatter diagnostics; exact-head CI pending. Backend npm audit report flags 40 vulnerabilities including 2 critical, 24 high (pre-existing report-only step; not a security pass). Dependency remediation must precede production review; local GitHub and npm network unavailable. Next: candidate lockfile refresh in isolated CI, review upgrades and rerun all gates.

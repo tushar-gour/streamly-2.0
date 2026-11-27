@@ -19,7 +19,11 @@ export type PlaylistDetails = PlaylistSummary &
     totalViews?: number;
   }>;
 
-type PlaylistInput = Readonly<{ name: string; description: string; isPublic: boolean }>;
+type PlaylistInput = Readonly<{
+  name: string;
+  description: string;
+  isPublic: boolean;
+}>;
 
 export const playlistsApi = {
   create(input: PlaylistInput, accessToken: string | null) {

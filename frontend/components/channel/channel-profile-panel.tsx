@@ -50,11 +50,14 @@ export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: () => subscriptionsApi.setChannel(channel?._id ?? "", !channel?.isSubscribed),
+    mutationFn: () =>
+      subscriptionsApi.setChannel(channel?._id ?? "", !channel?.isSubscribed),
     retry: false,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.channel(username) }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.users.channel(username),
+        }),
         queryClient.invalidateQueries({ queryKey: ["subscriptions"] }),
       ]);
     },
@@ -121,16 +124,22 @@ export function ChannelProfilePanel({ username }: ChannelProfilePanelProps) {
             </p>
           </div>
         </div>
-        {userId && userId !== channel._id ? <Button
-          disabled={!channel._id}
-          isLoading={subscribeMutation.isPending}
-          onClick={() => subscribeMutation.mutate()}
-          variant={channel.isSubscribed ? "secondary" : "primary"}
-        >
-          <UserPlus size={16} />
-          {channel.isSubscribed ? "Subscribed" : "Subscribe"}
-        </Button> : null}
-        {subscribeMutation.isError ? <p role="alert" className="text-sm">Could not update subscription. Please retry.</p> : null}
+        {userId && userId !== channel._id ? (
+          <Button
+            disabled={!channel._id}
+            isLoading={subscribeMutation.isPending}
+            onClick={() => subscribeMutation.mutate()}
+            variant={channel.isSubscribed ? "secondary" : "primary"}
+          >
+            <UserPlus size={16} />
+            {channel.isSubscribed ? "Subscribed" : "Subscribe"}
+          </Button>
+        ) : null}
+        {subscribeMutation.isError ? (
+          <p role="alert" className="text-sm">
+            Could not update subscription. Please retry.
+          </p>
+        ) : null}
       </div>
       {videosQuery.isLoading ? <LoadingState label="Loading uploads" /> : null}
       {videosQuery.isError ? (

@@ -20,7 +20,11 @@ export function PlaylistForm({
   initialIsPublic?: boolean;
   pending: boolean;
   submitLabel: string;
-  onSubmit: (values: { name: string; description: string; isPublic: boolean }) => void;
+  onSubmit: (values: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+  }) => void;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initialName);
@@ -29,7 +33,11 @@ export function PlaylistForm({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!pending && name.trim()) {
-      onSubmit({ name: name.trim(), description: description.trim(), isPublic });
+      onSubmit({
+        name: name.trim(),
+        description: description.trim(),
+        isPublic,
+      });
     }
   }
   return (

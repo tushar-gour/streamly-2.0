@@ -26,7 +26,10 @@ export function PlaylistDetailPanel({ playlistId }: PlaylistDetailPanelProps) {
       const response = await playlistsApi.detail(playlistId, token);
       return response.data;
     },
-    queryKey: [...queryKeys.playlists.detail(playlistId), userId ?? "anonymous"],
+    queryKey: [
+      ...queryKeys.playlists.detail(playlistId),
+      userId ?? "anonymous",
+    ],
     retry: false,
     staleTime: 0,
   });

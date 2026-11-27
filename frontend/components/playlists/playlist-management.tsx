@@ -29,7 +29,11 @@ export function PlaylistManagement({
       if (action.kind === "edit") {
         await playlistsApi.update(
           playlist._id,
-          { name: action.name, description: action.description, isPublic: action.isPublic },
+          {
+            name: action.name,
+            description: action.description,
+            isPublic: action.isPublic,
+          },
           token
         );
       } else if (action.kind === "remove-video") {

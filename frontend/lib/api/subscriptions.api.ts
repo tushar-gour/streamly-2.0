@@ -22,10 +22,13 @@ export const subscriptionsApi = {
     );
   },
   setChannel(channelId: string, isSubscribed: boolean) {
-    return apiRequest<unknown>(`/api/v1/subscriptions/c/${encodeURIComponent(channelId)}`, {
-      method: "PUT",
-      body: JSON.stringify({ isSubscribed }),
-    });
+    return apiRequest<unknown>(
+      `/api/v1/subscriptions/c/${encodeURIComponent(channelId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ isSubscribed }),
+      }
+    );
   },
   toggleChannel(channelId: string) {
     return apiRequest<unknown>(`/api/v1/subscriptions/c/${channelId}`, {

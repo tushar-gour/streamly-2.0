@@ -194,7 +194,10 @@ export default function AdminPage() {
   const canModerateComments = user?.permissions?.includes("comment:delete:any");
   return (
     <AppShell
-      permission={{ authenticated: true, anyPermission: ["video:publish:any", "comment:delete:any"] }}
+      permission={{
+        authenticated: true,
+        anyPermission: ["video:publish:any", "comment:delete:any"],
+      }}
     >
       <div className="grid gap-8">
         {canModerateVideos ? <ModerationPanel /> : null}
