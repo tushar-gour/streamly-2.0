@@ -107,31 +107,6 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
-  dependency-candidate:
-    name: Dependency remediation candidate (read-only)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Generate candidate lockfile without running install scripts
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit multer@2
-          npm audit --omit=dev --audit-level=high || true
-          git diff -- package.json package-lock.json
-      - name: Frontend candidate
-        working-directory: frontend
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit next@16.4.6
-          npm install --package-lock-only --ignore-scripts --no-audit --save-dev eslint@9 eslint-config-next@16.4.6
-          npm audit --omit=dev --audit-level=high || true
-          git diff -- package.json package-lock.json
-
   tests:
     name: Tests
     runs-on: ubuntu-latest

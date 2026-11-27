@@ -462,3 +462,7 @@ Browser smoke exposed a subscription listing error (actual failure screenshot an
 ### Iteration 62 — Multer dependency upgrade
 
 Applied exact CI-generated Multer 2.5.0 lockfile candidate, removing ten obsolete transitive packages. Candidate production audit still reports four high Prisma-chain advisories. Actual upload, malformed multipart, build and storage tests must pass before VERIFIED. Next: inspect browser and candidate CI.
+
+### Iteration 63 — Next security migration
+
+Resolved Next 16.4.6 with ESLint 9 and matching Next config using the successful CI candidate 46046494366. Candidate production frontend audit reported zero vulnerabilities. Applied exact lockfile, migrated lint config to flat config and React JSX transform, retained actual lint/typecheck/build/browser gates. No peer overrides or audit suppression added. Migration IMPLEMENTED, not VERIFIED. Backend Prisma advisory chain remains open. Next: resolve migration diagnostics.
